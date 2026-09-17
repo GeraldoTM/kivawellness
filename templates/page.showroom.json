@@ -434,124 +434,6 @@
         "padding_bottom": 0
       }
     },
-    "section_mEDENW": {
-      "type": "section",
-      "blocks": {
-        "text_VRXWkA": {
-          "type": "text",
-          "name": "t:names.heading",
-          "settings": {
-            "text": "<h3>Can't Visit Us in Person?</h3>",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "rte",
-            "font": "var(--font-body--family)",
-            "font_size": "",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "text_color": "",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        },
-        "text_7RMRUX": {
-          "type": "text",
-          "name": "t:names.text",
-          "settings": {
-            "text": "<p>We can help you choose from wherever you are.<br/></p>",
-            "width": "100%",
-            "max_width": "none",
-            "alignment": "center",
-            "type_preset": "rte",
-            "font": "var(--font-body--family)",
-            "font_size": "",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "text_color": "",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        },
-        "button_modified_ctxmKg": {
-          "type": "button-modified",
-          "name": "Custom button",
-          "settings": {
-            "label": "CHAT TO AN EXPERT",
-            "action": "link",
-            "link": "",
-            "open_in_new_tab": false,
-            "show_chevron": false,
-            "background_color": "{{ settings.color_palette.background }}",
-            "text_color": "{{ settings.color_palette.foreground }}",
-            "border_color": "#1a1a1a",
-            "hover_background_color": "",
-            "hover_text_color": "",
-            "hover_border_color": "",
-            "border_radius": 0,
-            "border_width": 1,
-            "font_size": 15,
-            "font_weight": "600",
-            "padding_vertical": 12,
-            "padding_horizontal": 24,
-            "width": "fit-content",
-            "custom_width": 100
-          },
-          "blocks": {}
-        }
-      },
-      "block_order": [
-        "text_VRXWkA",
-        "text_7RMRUX",
-        "button_modified_ctxmKg"
-      ],
-      "disabled": true,
-      "name": "t:names.rich_text_section",
-      "settings": {
-        "content_direction": "column",
-        "vertical_on_mobile": true,
-        "horizontal_alignment": "flex-start",
-        "vertical_alignment": "center",
-        "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "center",
-        "gap": 25,
-        "section_width": "page-width",
-        "section_height": "custom",
-        "section_height_custom": 25,
-        "background_media": "none",
-        "background_color": "",
-        "video_position": "cover",
-        "background_image_position": "cover",
-        "toggle_overlay": false,
-        "overlay_color": "#00000026",
-        "overlay_style": "solid",
-        "gradient_direction": "to top",
-        "border": "none",
-        "border_width": 1,
-        "border_opacity": 100,
-        "border_color": "",
-        "border_radius": 0,
-        "padding-block-start": 48,
-        "padding-block-end": 48
-      }
-    },
     "section_UXrCtV": {
       "type": "section",
       "blocks": {
@@ -688,6 +570,226 @@
         "heading": "Book an Appointment",
         "map": ""
       }
+    },
+    "retail_partners_NhGJEk": {
+      "type": "retail-partners",
+      "blocks": {
+        "store_NUVgNb": {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "Sapphire Spas",
+            "tag_text": "Authorised Retail Partner",
+            "address": "70 Mary Street, Pakenham VIC 3810",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        "store_eTBHQn": {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "Willy Pools",
+            "tag_text": "Authorised Retail Partner",
+            "address": "10 Literary Way, Williamstown VIC 3016",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Radiance 2P\nRed Light Therapy"
+          }
+        },
+        "store_N48L4F": {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "SwimCo Aquatics",
+            "tag_text": "Authorised Retail Partner",
+            "address": "45 Terra Cotta Drive, Nunawading VIC 3131",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        "store_JFcamw": {
+          "type": "store",
+          "settings": {
+            "state": "NEW SOUTH WALES",
+            "store_name": "Gym Direct",
+            "tag_text": "Authorised Retail Partner",
+            "address": "Bankstown Aerodrome, 5 Starkie Drive, Bankstown Aerodrome NSW 2198",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        "store_ECnT7t": {
+          "type": "store",
+          "settings": {
+            "state": "NEW SOUTH WALES",
+            "store_name": "Mid West Pools & Spas",
+            "tag_text": "Authorised Retail Partner",
+            "address": "Unit 1, 12 Sydney Road, Mudgee NSW 2850",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Radiance 2P\nRise 2P\nRise 3P\nRitual 2P\nRitual 6P"
+          }
+        },
+        "store_LLihhb": {
+          "type": "store",
+          "settings": {
+            "state": "QUEENSLAND",
+            "store_name": "Kiva Wellness",
+            "tag_text": "Official Showroom",
+            "address": "4/73 Township Drive, Burleigh Heads QLD 4220",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Our full range of Saunas\nIce Baths\nSleep Tech\nRed Light Therapy"
+          }
+        },
+        "store_xTadXb": {
+          "type": "store",
+          "settings": {
+            "state": "QUEENSLAND",
+            "store_name": "Brisbane Spa Super Centre",
+            "tag_text": "Authorised Retail Partner",
+            "address": "819 Beaudesert Road, Archerfield QLD 4108",
+            "phone": "",
+            "description": "",
+            "products_on_display": "Rise 2P\nRadiance 3P"
+          }
+        }
+      },
+      "block_order": [
+        "store_NUVgNb",
+        "store_eTBHQn",
+        "store_N48L4F",
+        "store_JFcamw",
+        "store_ECnT7t",
+        "store_LLihhb",
+        "store_xTadXb"
+      ],
+      "name": "Retail Partners",
+      "settings": {
+        "heading": "Where to See Us In Person",
+        "subheading": "Visit one of our retail partners to experience our range firsthand."
+      }
+    },
+    "section_mEDENW": {
+      "type": "section",
+      "blocks": {
+        "text_VRXWkA": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<h3>Can't Visit Us in Person?</h3>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_7RMRUX": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>We can help you choose from wherever you are.<br/></p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "button_modified_ctxmKg": {
+          "type": "button-modified",
+          "name": "Custom button",
+          "settings": {
+            "label": "CHAT TO AN EXPERT",
+            "action": "link",
+            "link": "",
+            "open_in_new_tab": false,
+            "show_chevron": false,
+            "background_color": "{{ settings.color_palette.background }}",
+            "text_color": "{{ settings.color_palette.foreground }}",
+            "border_color": "#1a1a1a",
+            "hover_background_color": "",
+            "hover_text_color": "",
+            "hover_border_color": "",
+            "border_radius": 0,
+            "border_width": 1,
+            "font_size": 15,
+            "font_weight": "600",
+            "padding_vertical": 12,
+            "padding_horizontal": 24,
+            "width": "fit-content",
+            "custom_width": 100
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_VRXWkA",
+        "text_7RMRUX",
+        "button_modified_ctxmKg"
+      ],
+      "name": "t:names.rich_text_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 25,
+        "section_width": "page-width",
+        "section_height": "custom",
+        "section_height_custom": 25,
+        "background_media": "none",
+        "background_color": "",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
@@ -698,10 +800,11 @@
     "column_grid_with_bg_GJWUGH",
     "section_Ud6FDb",
     "column_grid_with_bg_RG3A8H",
-    "section_mEDENW",
     "section_UXrCtV",
     "showroom_locator_embed_FMXymR",
     "announcement_bar_G3ej69",
-    "showroom_updated_nM4jm4"
+    "showroom_updated_nM4jm4",
+    "retail_partners_NhGJEk",
+    "section_mEDENW"
   ]
 }
