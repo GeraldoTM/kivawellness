@@ -23,7 +23,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: clamp(24px, 4vw, 48px);
+    gap: 14px;
   }
 
   .retail-partners-header {
@@ -45,7 +45,12 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: center;
-    margin: 0 0 4px;
+    margin: 24px 0 0;
+    color: {{ section.settings.state_heading_color | default: 'inherit' }};
+    font-weight: {{ section.settings.state_heading_weight | default: '600' }};
+  }
+  .state-group__heading:first-of-type {
+    margin-top: 0;
   }
 
   /* Generalized single-card centered row — replaces the old one-off
@@ -76,6 +81,8 @@
   .showroom-card h3 {
     font-size: clamp(18px, 4vw, 24px);
     margin: 0;
+    color: {{ section.settings.store_name_color | default: 'inherit' }};
+    font-weight: {{ section.settings.store_name_weight | default: '700' }};
   }
 
   .showroom-tag {
@@ -217,6 +224,33 @@
       "id": "subheading",
       "label": "Subheading",
       "default": "Visit one of our retail partners to experience our range firsthand."
+    },
+    { "type": "header", "content": "Typography" },
+    { "type": "color", "id": "state_heading_color", "label": "State heading color" },
+    {
+      "type": "select",
+      "id": "state_heading_weight",
+      "label": "State heading weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    { "type": "color", "id": "store_name_color", "label": "Store name color" },
+    {
+      "type": "select",
+      "id": "store_name_weight",
+      "label": "Store name weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "700"
     }
   ],
   "blocks": [
