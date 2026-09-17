@@ -200,6 +200,7 @@
     },
     "text_image_YDe6Rf": {
       "type": "text-image",
+      "disabled": true,
       "name": "Text with image",
       "settings": {
         "color_scheme": "",
