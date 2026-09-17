@@ -32,20 +32,20 @@
     margin: 0 auto;
   }
   .retail-partners-header h2 {
-    font-size: clamp(22px, 5vw, 34px);
+    font-size: clamp(13px, 5vw, 14px);
     margin-bottom: clamp(8px, 2vw, 12px);
   }
   .retail-partners-header p {
-    font-size: clamp(13px, 3vw, 15px);
+    font-size: clamp(12px, 3vw, 12px);
   }
 
   /* State group heading */
   .state-group__heading {
-    font-size: clamp(16px, 3.5vw, 20px);
+    font-size: clamp(12px, 3.5vw, 12px);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: center;
-    margin: 32px 0 4px;
+    margin: 24px 0 0;
     color: {{ section.settings.state_heading_color | default: 'inherit' }};
     font-weight: {{ section.settings.state_heading_weight | default: '600' }};
   }
@@ -53,27 +53,15 @@
     margin-top: 0;
   }
 
-  /* 2-column grid per state. If a state ends with an odd number of
-     stores, the last card is both :last-child and :nth-child(odd) —
-     meaning it's alone on the final row — so it expands to fill the
-     full row width instead of sitting awkwardly at half-width. */
-  .state-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  .state-grid > .showroom-card:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-  .state-grid > .showroom-card:last-child:nth-child(odd) .showroom-products ul {
+  /* Generalized single-card centered row — replaces the old one-off
+     .sydney-row, works for any number of stores. */
+  .partner-row {
+    display: flex;
     justify-content: center;
   }
-
-  @media (max-width: 900px) {
-    .state-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
+  .partner-row .showroom-card {
+    max-width: 920px;
+    width: 100%;
   }
 
   /* Card base — reused verbatim from the original showroom-page design */
@@ -91,7 +79,7 @@
     overflow: hidden;
   }
   .showroom-card h3 {
-    font-size: clamp(18px, 4vw, 24px);
+    font-size: clamp(12px, 4vw, 12px);
     margin: 0;
     color: {{ section.settings.store_name_color | default: 'inherit' }};
     font-weight: {{ section.settings.store_name_weight | default: '700' }};
@@ -175,52 +163,46 @@
     {%- assign previous_state = '' -%}
     {%- for block in section.blocks -%}
       {%- if block.settings.state != previous_state -%}
-        {%- unless previous_state == '' -%}
-          </div>
-        {%- endunless -%}
         <h3 class="state-group__heading">{{ block.settings.state }}</h3>
-        <div class="state-grid">
         {%- assign previous_state = block.settings.state -%}
       {%- endif -%}
 
-      <div class="showroom-card" {{ block.shopify_attributes }}>
-        <h3>{{ block.settings.store_name }}</h3>
-        {%- if block.settings.tag_text != blank -%}
-          <span class="showroom-tag">{{ block.settings.tag_text }}</span>
-        {%- endif -%}
-
-        <div class="showroom-meta">
-          {%- if block.settings.address != blank -%}
-            <p><strong>Address:</strong> {{ block.settings.address }}</p>
+      <div class="partner-row" {{ block.shopify_attributes }}>
+        <div class="showroom-card">
+          <h3>{{ block.settings.store_name }}</h3>
+          {%- if block.settings.tag_text != blank -%}
+            <span class="showroom-tag">{{ block.settings.tag_text }}</span>
           {%- endif -%}
-          {%- if block.settings.phone != blank -%}
-            <p><strong>Phone:</strong> <a href="tel:{{ block.settings.phone | remove: ' ' }}">{{ block.settings.phone }}</a></p>
-          {%- endif -%}
-        </div>
 
-        {%- if block.settings.description != blank -%}
-          <p class="showroom-desc">{{ block.settings.description }}</p>
-        {%- endif -%}
-
-        {%- if block.settings.products_on_display != blank -%}
-          <div class="showroom-products">
-            <p><strong>On Display:</strong></p>
-            <ul>
-              {%- assign products = block.settings.products_on_display | newline_to_br | strip_newlines | split: '<br />' -%}
-              {%- for product in products -%}
-                {%- assign trimmed_product = product | strip -%}
-                {%- if trimmed_product != blank -%}
-                  <li>{{ trimmed_product }}</li>
-                {%- endif -%}
-              {%- endfor -%}
-            </ul>
+          <div class="showroom-meta">
+            {%- if block.settings.address != blank -%}
+              <p><strong>Address:</strong> {{ block.settings.address }}</p>
+            {%- endif -%}
+            {%- if block.settings.phone != blank -%}
+              <p><strong>Phone:</strong> <a href="tel:{{ block.settings.phone | remove: ' ' }}">{{ block.settings.phone }}</a></p>
+            {%- endif -%}
           </div>
-        {%- endif -%}
-      </div>
 
-      {%- if forloop.last -%}
+          {%- if block.settings.description != blank -%}
+            <p class="showroom-desc">{{ block.settings.description }}</p>
+          {%- endif -%}
+
+          {%- if block.settings.products_on_display != blank -%}
+            <div class="showroom-products">
+              <p><strong>On Display:</strong></p>
+              <ul>
+                {%- assign products = block.settings.products_on_display | newline_to_br | strip_newlines | split: '<br />' -%}
+                {%- for product in products -%}
+                  {%- assign trimmed_product = product | strip -%}
+                  {%- if trimmed_product != blank -%}
+                    <li>{{ trimmed_product }}</li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endif -%}
         </div>
-      {%- endif -%}
+      </div>
     {%- endfor -%}
   </div>
 </section>
