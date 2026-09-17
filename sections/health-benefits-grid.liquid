@@ -1,0 +1,433 @@
+{% comment %}
+  Health Benefits Grid — everything in one file (markup, styles, behavior).
+
+  Modal is a native <dialog> element, opened/closed by a small custom
+  element (~15 lines of vanilla JS, no library). The open/close transition
+  uses @starting-style, a modern native CSS feature for animating elements
+  as they enter/leave the top layer — no animation library needed. Browsers
+  that don't support it just get an instant open/close instead of a fade,
+  which is a safe, harmless fallback.
+{% endcomment %}
+
+<div
+  class="hb-grid-section"
+  style="
+    --hb-pad-block-start: {{ section.settings.padding-block-start }}px;
+    --hb-pad-block-end: {{ section.settings.padding-block-end }}px;
+    {% if section.settings.background_color != blank %}--hb-bg: {{ section.settings.background_color }};{% endif %}
+  "
+>
+  <div class="hb-grid-section__inner">
+    {% if section.settings.title != blank %}
+      <h2 class="hb-grid-section__title">{{ section.settings.title }}</h2>
+    {% endif %}
+
+    <div class="hb-grid">
+      {% for block in section.blocks %}
+        {% liquid
+          assign title = block.settings.title
+          assign image = block.settings.image
+          assign description = block.settings.description
+          assign references = block.settings.references
+        %}
+
+        <health-benefit-card class="hb-card" {{ block.shopify_attributes }}>
+          <button
+            type="button"
+            class="hb-card__trigger"
+            data-open
+            aria-haspopup="dialog"
+            aria-controls="hb-dialog-{{ block.id }}"
+          >
+            <span class="hb-card__overlay">
+              <span class="hb-card__name">{{ title }}</span>
+            </span>
+
+            {% if image != blank %}
+              {{
+                image
+                | image_url: width: 1500
+                | image_tag:
+                  class: 'hb-card__image',
+                  loading: 'lazy',
+                  width: 400,
+                  height: 400,
+                  widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                  alt: title
+              }}
+            {% else %}
+              {{ 'image' | placeholder_svg_tag: 'hb-card__image placeholder-svg' }}
+            {% endif %}
+          </button>
+
+          <dialog id="hb-dialog-{{ block.id }}" class="hb-dialog">
+            <div class="hb-dialog__inner">
+              <button type="button" class="hb-dialog__close" data-close aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M12.7813 12.5313L20.4688 20.2188M20.4688 12.5313L12.7813 20.2188M32 16.375C32 18.3941 31.6023 20.3934 30.8296 22.2588C30.057 24.1241 28.9245 25.8191 27.4968 27.2468C26.0691 28.6745 24.3741 29.807 22.5088 30.5796C20.6434 31.3523 18.6441 31.75 16.625 31.75C14.6059 31.75 12.6066 31.3523 10.7412 30.5796C8.87586 29.807 7.18093 28.6745 5.75323 27.2468C4.32553 25.8191 3.19302 24.1241 2.42035 22.2588C1.64769 20.3934 1.25 18.3941 1.25 16.375C1.25 12.2973 2.86986 8.38661 5.75323 5.50323C8.6366 2.61986 12.5473 1 16.625 1C20.7027 1 24.6134 2.61986 27.4968 5.50323C30.3801 8.38661 32 12.2973 32 16.375Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+
+              <div class="hb-dialog__body">
+                <div class="hb-dialog__media">
+                  {% if image != blank %}
+                    {{
+                      image
+                      | image_url: width: 1500
+                      | image_tag:
+                        loading: 'lazy',
+                        width: 400,
+                        height: 400,
+                        widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                        alt: title
+                    }}
+                  {% else %}
+                    {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+                  {% endif %}
+                </div>
+
+                <div class="hb-dialog__content">
+                  <h3 class="hb-dialog__title">{{ title }}</h3>
+                  <div class="hb-dialog__description">{{ description }}</div>
+                  {% if references != blank %}
+                    <div class="hb-dialog__references">
+                      <p class="hb-dialog__references-title">References</p>
+                      {{ references }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </dialog>
+        </health-benefit-card>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .hb-grid-section {
+    background: var(--hb-bg, transparent);
+    padding-block: var(--hb-pad-block-start, 64px) var(--hb-pad-block-end, 64px);
+  }
+  .hb-grid-section__inner {
+    max-width: 70rem;
+    margin-inline: auto;
+    padding-inline: 12px;
+  }
+  .hb-grid-section__title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 24px;
+  }
+
+  .hb-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 400px) {
+    .hb-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 768px) {
+    .hb-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    .hb-grid-section__title {
+      font-size: 32px;
+    }
+    .hb-grid-section__inner {
+      padding-inline: 24px;
+    }
+  }
+
+  /* ---------- card ---------- */
+  .hb-card {
+    display: block;
+  }
+  .hb-card__trigger {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: none;
+    cursor: pointer;
+  }
+  .hb-card__image,
+  .hb-card__trigger .placeholder-svg {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+  }
+  .hb-card__trigger:hover .hb-card__image {
+    transform: scale(1.045);
+  }
+  .hb-card__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 60%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .hb-card__overlay::after {
+    content: '+';
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+  .hb-card__name {
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    text-align: left;
+    line-height: 1.3;
+  }
+  @media (min-width: 768px) {
+    .hb-card__name {
+      font-size: 22px;
+    }
+  }
+
+  /* ---------- dialog ---------- */
+  .hb-dialog {
+    width: min(95vw, 1024px);
+    max-width: 95vw;
+    max-height: 85vh;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+  .hb-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  /* Native open/close animation — modern browsers fade + scale in/out;
+     browsers without @starting-style support just open/close instantly. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hb-dialog {
+      transition: opacity 0.25s ease, transform 0.25s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
+      opacity: 1;
+      transform: scale(1);
+    }
+    .hb-dialog::backdrop {
+      transition: opacity 0.25s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
+      opacity: 1;
+    }
+    @starting-style {
+      .hb-dialog[open] {
+        opacity: 0;
+        transform: scale(0.96);
+      }
+      .hb-dialog[open]::backdrop {
+        opacity: 0;
+      }
+    }
+    .hb-dialog:not([open]) {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+
+  .hb-dialog__inner {
+    position: relative;
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 85vh;
+  }
+  @media (min-width: 768px) {
+    .hb-dialog__inner {
+      padding: 48px 64px;
+    }
+  }
+  .hb-dialog__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: #ca8767;
+    line-height: 0;
+  }
+  .hb-dialog__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  @media (min-width: 768px) {
+    .hb-dialog__body {
+      flex-direction: row;
+      gap: 32px;
+    }
+  }
+  .hb-dialog__media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hb-dialog__media img,
+  .hb-dialog__media .placeholder-svg {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  @media (min-width: 768px) {
+    .hb-dialog__media {
+      width: 45%;
+      max-width: 420px;
+    }
+  }
+  .hb-dialog__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .hb-dialog__title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+  }
+  @media (min-width: 768px) {
+    .hb-dialog__title {
+      font-size: 32px;
+    }
+  }
+  .hb-dialog__references {
+    font-size: 14px;
+  }
+  .hb-dialog__references-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .hb-dialog__references ol {
+    list-style: decimal;
+    padding-inline-start: 1.25em;
+    font-style: italic;
+    font-weight: 300;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class HealthBenefitCard extends HTMLElement {
+    connectedCallback() {
+      this.trigger = this.querySelector('[data-open]');
+      this.dialog = this.querySelector('dialog');
+      this.closeBtn = this.querySelector('[data-close]');
+      if (!this.trigger || !this.dialog) return;
+
+      this.trigger.addEventListener('click', () => this.dialog.showModal());
+      if (this.closeBtn) {
+        this.closeBtn.addEventListener('click', () => this.dialog.close());
+      }
+      // Clicking the backdrop (not the panel itself) closes the dialog.
+      this.dialog.addEventListener('click', (event) => {
+        if (event.target === this.dialog) this.dialog.close();
+      });
+    }
+  }
+
+  if (!customElements.get('health-benefit-card')) {
+    customElements.define('health-benefit-card', HealthBenefitCard);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Health Benefits Grid",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "default": 65
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "default": 65
+    }
+  ],
+  "blocks": [
+    {
+      "name": "Benefits",
+      "type": "list",
+      "settings": [
+        {
+          "id": "image",
+          "type": "image_picker",
+          "label": "Image"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "label": "Title"
+        },
+        {
+          "id": "description",
+          "type": "richtext",
+          "label": "Description"
+        },
+        {
+          "id": "references",
+          "type": "richtext",
+          "label": "References"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Health Benefits Grid",
+      "blocks": [
+        { "type": "list" },
+        { "type": "list" },
+        { "type": "list" }
+      ]
+    }
+  ]
+}
+{% endschema %}

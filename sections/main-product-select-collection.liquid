@@ -1,0 +1,875 @@
+{% comment %}
+  Static product grid — fully self-contained (spg- prefix throughout).
+
+  Every product is a merchant-added "Product" block (image, title, price,
+  link, badge, etc. entered by hand). Filters are "Filter group" blocks —
+  a label plus a hand-typed list of option values. Everything here — grid,
+  cards, filters — is built with its own CSS. It does not reuse any of the
+  theme's own card/grid utility classes, since those depend on inline CSS
+  custom properties the theme injects elsewhere that we have no access to
+  here; reusing them silently produces a broken, unstyled layout.
+{% endcomment %}
+
+{% liquid
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+%}
+
+<div class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"></div>
+
+{% assign product_blocks = section.blocks | where: 'type', 'product' %}
+{% assign filter_blocks = section.blocks | where: 'type', 'filter_group' %}
+{% assign product_count = product_blocks.size %}
+
+<product-filter-grid
+  class="spg-root{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  style="
+    --spg-pad-block-start: {{ section.settings.padding-block-start }}px;
+    --spg-pad-block-end: {{ section.settings.padding-block-end }}px;
+    --spg-pad-inline-start: {{ section.settings.padding-inline-start }}px;
+    --spg-pad-inline-end: {{ section.settings.padding-inline-end }}px;
+    --spg-gap-h: {{ section.settings.columns_gap_horizontal }}px;
+    --spg-gap-v: {{ section.settings.columns_gap_vertical }}px;
+  "
+  section-id="{{ section.id }}"
+  batch-size="{{ section.settings.products_per_page }}"
+>
+  <a class="spg-skip-link" href="#StaticProductGrid">Skip to results list</a>
+
+  <div class="spg-wrapper{% if section.settings.product_grid_width == 'full-width' %} spg-wrapper--full{% endif %}">
+
+    {% if product_count == 0 %}
+      <p class="spg-empty">No product blocks added yet. Add "Product" blocks in the section settings.</p>
+    {% else %}
+
+      <div class="spg-layout">
+        <aside class="spg-filters" aria-label="Filter products">
+          <div class="spg-filters__header">
+            <span class="spg-filters__count" data-result-count>{{ product_count }} products</span>
+            <button type="button" class="spg-filters__reset" data-reset-filters>Clear filters</button>
+          </div>
+
+          {% if section.settings.enable_availability_filter %}
+            <details class="spg-group" open>
+              <summary>Availability</summary>
+              <div class="spg-group__body">
+                <label class="spg-option">
+                  <input type="checkbox" data-filter-available value="true">
+                  <span>In stock only</span>
+                </label>
+              </div>
+            </details>
+          {% endif %}
+
+          {% for block in filter_blocks %}
+            {% assign options = block.settings.options | newline_to_br | strip_newlines | split: '<br />' %}
+            <details class="spg-group" open {{ block.shopify_attributes }}>
+              <summary>{{ block.settings.label }}</summary>
+              <div class="spg-group__body">
+                {% for raw_option in options %}
+                  {% assign option = raw_option | strip %}
+                  {% unless option == blank %}
+                    <label class="spg-option">
+                      <input type="checkbox" data-filter-group="{{ block.settings.key }}" value="{{ option | escape }}">
+                      <span>{{ option }}</span>
+                    </label>
+                  {% endunless %}
+                {% endfor %}
+              </div>
+            </details>
+          {% endfor %}
+
+          {% if section.settings.enable_price_filter %}
+            <details class="spg-group" open>
+              <summary>Price</summary>
+              <div class="spg-group__body">
+                <div class="spg-price-range">
+                  <input
+                    type="number"
+                    data-filter-price-min
+                    min="{{ section.settings.price_min }}"
+                    max="{{ section.settings.price_max }}"
+                    value="{{ section.settings.price_min }}"
+                    step="0.01"
+                    aria-label="Minimum price"
+                  >
+                  <span>–</span>
+                  <input
+                    type="number"
+                    data-filter-price-max
+                    min="{{ section.settings.price_min }}"
+                    max="{{ section.settings.price_max }}"
+                    value="{{ section.settings.price_max }}"
+                    step="0.01"
+                    aria-label="Maximum price"
+                  >
+                </div>
+              </div>
+            </details>
+          {% endif %}
+        </aside>
+
+        <div class="spg-main">
+          <ul id="StaticProductGrid" class="spg-grid" ref="grid">
+            {% if section.settings.video != blank or section.settings.video_url != blank %}
+              {% if section.settings.video_position == 0 %}
+                <li class="spg-video-card">
+                  {% render 'collection-video-card', section: section %}
+                </li>
+              {% endif %}
+            {% endif %}
+
+            {% for block in product_blocks %}
+              <li
+                class="spg-card"
+                data-product-item
+                data-vendor="{{ block.settings.vendor | escape }}"
+                data-type="{{ block.settings.type | escape }}"
+                data-tags="{{ block.settings.tags | split: ',' | join: '|' | escape }}"
+                data-price="{{ block.settings.price_value }}"
+                data-available="{{ block.settings.available }}"
+                {{ block.shopify_attributes }}
+              >
+                <a
+                  class="spg-card__media"
+                  href="{{ block.settings.url | default: '#' }}"
+                  aria-label="{{ block.settings.title | escape }}"
+                  {% if block.settings.url == blank %}tabindex="-1" aria-hidden="true"{% endif %}
+                >
+                  {% if block.settings.image != blank %}
+                    {{
+                      block.settings.image
+                      | image_url: width: 800
+                      | image_tag: loading: 'lazy', widths: '400, 600, 800', sizes: '(min-width: 750px) 25vw, 50vw'
+                    }}
+                  {% else %}
+                    {{ 'product-1' | placeholder_svg_tag: 'spg-card__placeholder' }}
+                  {% endif %}
+
+                  {% if block.settings.badge_text != blank %}
+                    <span class="spg-badge">{{ block.settings.badge_text }}</span>
+                  {% endif %}
+                </a>
+
+                <div class="spg-card__body">
+                  {% if block.settings.url != blank %}
+                    <a class="spg-card__title-link" href="{{ block.settings.url }}">
+                      <h3 class="spg-card__title">{{ block.settings.title }}</h3>
+                    </a>
+                  {% else %}
+                    <h3 class="spg-card__title">{{ block.settings.title }}</h3>
+                  {% endif %}
+
+                  <div class="spg-price">
+                    {% if block.settings.compare_at_price != blank %}
+                      <span class="spg-price__sale">
+                        <span class="visually-hidden">Sale price&nbsp;</span>{{ block.settings.price_display }}
+                      </span>
+                      <span class="spg-price__compare">
+                        <span class="visually-hidden">Regular price&nbsp;</span>{{ block.settings.compare_at_price }}
+                      </span>
+                    {% else %}
+                      <span>{{ block.settings.price_display }}</span>
+                    {% endif %}
+                  </div>
+
+                  {% if block.settings.available == false %}
+                    <span class="spg-soldout">Sold out</span>
+                  {% elsif block.settings.url != blank %}
+                    <a href="{{ block.settings.url }}" class="spg-cta">View product</a>
+                  {% endif %}
+                </div>
+              </li>
+
+              {% if section.settings.video != blank or section.settings.video_url != blank %}
+                {% if section.settings.video_position == forloop.index %}
+                  <li class="spg-video-card">
+                    {% render 'collection-video-card', section: section %}
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </ul>
+
+          <p class="spg-empty spg-empty--filtered" data-empty-state hidden>No products match the selected filters.</p>
+
+          <div class="spg-load-more">
+            <button type="button" class="spg-load-more__btn" data-load-more hidden>Show more</button>
+          </div>
+        </div>
+      </div>
+
+    {% endif %}
+  </div>
+</product-filter-grid>
+
+{% stylesheet %}
+  .spg-root {
+    display: block;
+    padding-block: var(--spg-pad-block-start, 0) var(--spg-pad-block-end, 0);
+  }
+
+  .spg-skip-link {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+  }
+  .spg-skip-link:focus {
+    position: static;
+    display: inline-block;
+    margin: 0.5rem;
+  }
+
+  .spg-wrapper {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: var(--spg-pad-inline-start, 0) var(--spg-pad-inline-end, 0);
+  }
+  .spg-wrapper--full {
+    max-width: none;
+  }
+
+  .spg-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    opacity: 0.7;
+  }
+
+  /* ---------- layout: filters + grid ---------- */
+  .spg-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  @media (max-width: 749px) {
+    .spg-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---------- filters ---------- */
+  .spg-filters {
+    background: var(--spg-panel-bg, #ffffff);
+    border: 1px solid var(--spg-border, rgba(0, 0, 0, 0.1));
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: sticky;
+    top: 1rem;
+    color: #000;
+  }
+  @media (max-width: 749px) {
+    .spg-filters {
+      position: static;
+    }
+  }
+  .spg-filters__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid var(--spg-border, rgba(0, 0, 0, 0.1));
+  }
+  .spg-filters__count {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .spg-filters__reset {
+    font: inherit;
+    font-size: 0.8rem;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.65;
+    padding: 0;
+  }
+  .spg-filters__reset:hover {
+    opacity: 1;
+  }
+
+  .spg-group {
+    border-bottom: 1px solid var(--spg-border, rgba(0, 0, 0, 0.08));
+    padding: 0.85rem 0;
+  }
+  .spg-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .spg-group summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .spg-group summary::-webkit-details-marker {
+    display: none;
+  }
+  .spg-group summary::after {
+    content: '+';
+    font-weight: 400;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+  .spg-group[open] summary::after {
+    content: '\2212';
+  }
+  .spg-group__body {
+    margin-top: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .spg-option {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.4rem 0.3rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  .spg-option:hover {
+    background: var(--spg-hover, rgba(0, 0, 0, 0.04));
+  }
+  .spg-option input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: currentColor;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .spg-price-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .spg-price-range input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid var(--spg-border, rgba(0, 0, 0, 0.18));
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font: inherit;
+  }
+  .spg-price-range span {
+    opacity: 0.45;
+  }
+
+  /* ---------- product grid ---------- */
+  .spg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spg-gap-v, 16px) var(--spg-gap-h, 16px);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .spg-video-card {
+    grid-column: span 2;
+  }
+  @media (max-width: 599px) {
+    .spg-video-card {
+      grid-column: span 1;
+    }
+  }
+
+  .spg-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .spg-card__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--spg-media-bg, #f2f2f2);
+  }
+  .spg-card__media img,
+  .spg-card__placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .spg-card__media img {
+    transition: transform 0.35s ease;
+  }
+  .spg-card__media:hover img {
+    transform: scale(1.045);
+  }
+
+  .spg-badge {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    background: var(--spg-badge-bg, #111111);
+    color: var(--spg-badge-fg, #ffffff);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.55rem;
+    border-radius: 4px;
+  }
+
+  .spg-card__body {
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .spg-card__title-link {
+    color: inherit;
+    text-decoration: none;
+  }
+  .spg-card__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+  }
+  .spg-card__title-link:hover .spg-card__title {
+    text-decoration: underline;
+  }
+
+  .spg-price {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .spg-price__compare {
+    text-decoration: line-through;
+    opacity: 0.55;
+    font-size: 0.85rem;
+  }
+
+  .spg-soldout {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    margin-top: 0.3rem;
+  }
+
+  .spg-cta {
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease, color 0.15s ease;
+    width: fit-content;
+  }
+  .spg-cta:hover {
+    background: currentColor;
+    color: var(--spg-panel-bg, #ffffff);
+  }
+
+  .spg-empty--filtered {
+    grid-column: 1 / -1;
+  }
+
+  .spg-load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  .spg-load-more__btn {
+    font: inherit;
+    padding: 0.65rem 1.75rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    background: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: inherit;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .spg-load-more__btn:hover {
+    background: currentColor;
+    color: var(--spg-panel-bg, #ffffff);
+  }
+
+  [data-filtered-out] {
+    display: none !important;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ProductFilterGrid extends HTMLElement {
+    connectedCallback() {
+      this.grid = this.querySelector('.spg-grid');
+      // Only the grid's direct <li> children represent one product each.
+      this.items = this.grid
+        ? Array.from(this.grid.children).filter((el) => el.hasAttribute('data-product-item'))
+        : [];
+      this.emptyState = this.querySelector('[data-empty-state]');
+      this.loadMoreBtn = this.querySelector('[data-load-more]');
+      this.resultCount = this.querySelector('[data-result-count]');
+      this.batchSize = parseInt(this.getAttribute('batch-size'), 10) || this.items.length || 12;
+      this.visibleLimit = this.batchSize;
+
+      this.addEventListener('change', (event) => {
+        if (event.target.matches('input[type="checkbox"], input[type="number"]')) {
+          this.visibleLimit = this.batchSize;
+          this.applyFilters();
+        }
+      });
+
+      const resetBtn = this.querySelector('[data-reset-filters]');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          this.querySelectorAll('input[type="checkbox"]').forEach((el) => (el.checked = false));
+          this.querySelectorAll('input[data-filter-price-min]').forEach((el) => (el.value = el.min));
+          this.querySelectorAll('input[data-filter-price-max]').forEach((el) => (el.value = el.max));
+          this.visibleLimit = this.batchSize;
+          this.applyFilters();
+        });
+      }
+
+      if (this.loadMoreBtn) {
+        this.loadMoreBtn.addEventListener('click', () => {
+          this.visibleLimit += this.batchSize;
+          this.applyFilters();
+        });
+      }
+
+      this.applyFilters();
+    }
+
+    getSelectedValues(groupName) {
+      return Array.from(this.querySelectorAll(`input[data-filter-group="${groupName}"]:checked`)).map(
+        (el) => el.value
+      );
+    }
+
+    matchesItem(item) {
+      const availableOnly = this.querySelector('input[data-filter-available]');
+      if (availableOnly && availableOnly.checked && item.dataset.available !== 'true') return false;
+
+      const vendors = this.getSelectedValues('vendor');
+      if (vendors.length && !vendors.includes(item.dataset.vendor)) return false;
+
+      const types = this.getSelectedValues('type');
+      if (types.length && !types.includes(item.dataset.type)) return false;
+
+      const tags = this.getSelectedValues('tag');
+      if (tags.length) {
+        const itemTags = (item.dataset.tags || '').split('|');
+        const hasTag = tags.some((tag) => itemTags.includes(tag));
+        if (!hasTag) return false;
+      }
+
+      const minInput = this.querySelector('input[data-filter-price-min]');
+      const maxInput = this.querySelector('input[data-filter-price-max]');
+      if (minInput && maxInput && item.dataset.price) {
+        const min = parseFloat(minInput.value);
+        const max = parseFloat(maxInput.value);
+        const price = parseFloat(item.dataset.price);
+        if (!Number.isNaN(price) && (price < min || price > max)) return false;
+      }
+
+      return true;
+    }
+
+    applyFilters() {
+      const matching = this.items.filter((item) => this.matchesItem(item));
+      const visible = matching.slice(0, this.visibleLimit);
+      const visibleSet = new Set(visible);
+
+      this.items.forEach((item) => {
+        const shouldShow = visibleSet.has(item);
+        item.hidden = !shouldShow;
+        item.toggleAttribute('data-filtered-out', !shouldShow);
+      });
+
+      if (this.emptyState) this.emptyState.hidden = matching.length !== 0;
+      if (this.resultCount) {
+        this.resultCount.textContent = `${matching.length} product${matching.length === 1 ? '' : 's'}`;
+      }
+      if (this.loadMoreBtn) this.loadMoreBtn.hidden = matching.length <= this.visibleLimit;
+    }
+  }
+
+  customElements.define('product-filter-grid', ProductFilterGrid);
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Static Product Grid",
+  "enabled_on": {
+    "templates": ["collection", "index", "page"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Filters"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_availability_filter",
+      "label": "Enable availability filter",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_price_filter",
+      "label": "Enable price filter",
+      "default": true
+    },
+    {
+      "type": "number",
+      "id": "price_min",
+      "label": "Price filter — minimum",
+      "info": "Sets the lower bound of the price inputs. Same units as each product's \"Price (for filtering)\" field.",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "price_max",
+      "label": "Price filter — maximum",
+      "default": 1000
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products shown before \"Show more\"",
+      "min": 6,
+      "max": 48,
+      "step": 6,
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "product_grid_width",
+      "label": "Width",
+      "options": [
+        { "value": "centered", "label": "Page" },
+        { "value": "full-width", "label": "Full width" }
+      ],
+      "default": "centered"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_horizontal",
+      "label": "Horizontal gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_vertical",
+      "label": "Vertical gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Left padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "Right padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Section layout"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Video card"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video (uploaded)"
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL (fallback)",
+      "info": "Only used if no video is uploaded above."
+    },
+    {
+      "type": "url",
+      "id": "video_link",
+      "label": "Video link (optional)"
+    },
+    {
+      "type": "text",
+      "id": "video_chip_text",
+      "label": "Chip label (optional)"
+    },
+    {
+      "type": "select",
+      "id": "video_aspect_ratio",
+      "label": "Video shape",
+      "options": [
+        { "value": "16/9", "label": "Landscape" },
+        { "value": "1/1", "label": "Square" },
+        { "value": "4/5", "label": "Portrait" }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "range",
+      "id": "video_position",
+      "label": "Insert after product #",
+      "info": "0 = before the first product.",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "video_autoplay",
+      "label": "Autoplay (muted)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "video_loop",
+      "label": "Loop",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "limit": 48,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Product name" },
+        { "type": "url", "id": "url", "label": "Link" },
+        { "type": "text", "id": "price_display", "label": "Price (displayed)", "default": "$0.00" },
+        {
+          "type": "text",
+          "id": "compare_at_price",
+          "label": "Compare-at price (optional)",
+          "info": "Shown struck through next to the price if filled in."
+        },
+        {
+          "type": "number",
+          "id": "price_value",
+          "label": "Price (for filtering)",
+          "info": "Plain number, no currency symbol — used only by the price filter. Should match the currency units set in the section's price filter bounds.",
+          "default": 0
+        },
+        { "type": "text", "id": "vendor", "label": "Brand / vendor" },
+        { "type": "text", "id": "type", "label": "Type" },
+        { "type": "text", "id": "tags", "label": "Tags", "info": "Comma-separated, e.g. sauna, outdoor, sale" },
+        { "type": "checkbox", "id": "available", "label": "In stock", "default": true },
+        { "type": "text", "id": "badge_text", "label": "Badge text (optional)", "info": "e.g. Sale, Pre-order, New" }
+      ]
+    },
+    {
+      "type": "filter_group",
+      "name": "Filter group",
+      "limit": 6,
+      "settings": [
+        { "type": "text", "id": "label", "label": "Filter label", "default": "Brand" },
+        {
+          "type": "select",
+          "id": "key",
+          "label": "Matches against",
+          "options": [
+            { "value": "vendor", "label": "Brand / vendor" },
+            { "value": "type", "label": "Type" },
+            { "value": "tag", "label": "Tags" }
+          ],
+          "default": "vendor"
+        },
+        {
+          "type": "textarea",
+          "id": "options",
+          "label": "Options (one per line)",
+          "info": "Each line becomes a checkbox. Must exactly match the corresponding field's value on the product blocks you want it to filter."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Static Product Grid",
+      "blocks": [
+        { "type": "product" },
+        { "type": "product" },
+        { "type": "product" },
+        { "type": "product" },
+        { "type": "product" },
+        { "type": "product" }
+      ]
+    }
+  ]
+}
+{% endschema %}

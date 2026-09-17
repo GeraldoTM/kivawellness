@@ -1,0 +1,273 @@
+{% comment %}
+  Logo / badge list — Horizon-compatible rebuild.
+
+  Same concept as before (icon on top, title below, optional product video
+  above the badges) but rebuilt without any Tailwind utility classes — this
+  theme doesn't ship Tailwind, so classes like `sm:px-20` or `max-w-7xl`
+  weren't backed by any real CSS. Everything here is self-contained: its
+  own namespaced classes, its own {% stylesheet %}, and real schema
+  settings (padding, column counts) instead of hardcoded Tailwind spacing.
+{% endcomment %}
+
+<section
+  class="lb-section{% if section.settings.background_color != blank %} lb-section--custom-bg{% endif %}"
+  style="
+    --lb-pad-block-start: {{ section.settings.padding-block-start }}px;
+    --lb-pad-block-end: {{ section.settings.padding-block-end }}px;
+    --lb-pad-inline-start: {{ section.settings.padding-inline-start }}px;
+    --lb-pad-inline-end: {{ section.settings.padding-inline-end }}px;
+    --lb-columns-desktop: {{ section.settings.columns_desktop }};
+    --lb-columns-mobile: {{ section.settings.columns_mobile }};
+    --lb-gap-h: {{ section.settings.gap_horizontal }}px;
+    --lb-gap-v: {{ section.settings.gap_vertical }}px;
+    --lb-icon-size: {{ section.settings.icon_size }}px;
+    {% if section.settings.background_color != blank %}--lb-bg: {{ section.settings.background_color }};{% endif %}
+  "
+>
+  {%- if product.metafields.custom.product_video != blank -%}
+    <div class="lb-video">
+      {% comment %} {%- if product.metafields.custom.product_video_headline != blank -%}
+        <h2 class="lb-video__title">{{ product.metafields.custom.product_video_headline }}</h2>
+      {%- endif -%}
+      {% for video_url in product.metafields.custom.product_video.value %}
+        <div class="lb-video__frame">
+          <iframe
+            class="lb-video__iframe"
+            src="{{ video_url }}?rel=0"
+            title="Video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+      {% endfor %} {% endcomment %}
+    </div>
+  {%- endif -%}
+
+  <div class="lb-badges">
+    {%- assign badge_entries = product.metafields.custom.product_badges.value -%}
+    {%- for badge in badge_entries -%}
+      {%- liquid
+        # Tries the most common Shopify field-key conventions for the
+        # metaobject's Image field and Single line text field, in order,
+        # and uses whichever one actually has a value. If neither guess
+        # matches your metaobject's real field keys, the badge will just
+        # show blank — see the note below the code for how to fix that
+        # with a one-line change.
+        assign badge_icon = badge.icon | default: badge.image | default: badge.logo | default: badge.file
+        assign badge_title = badge.title | default: badge.text | default: badge.label | default: badge.name
+      -%}
+      <div class="lb-badge">
+        {%- if badge_icon != blank -%}
+          <span class="lb-badge__icon">
+            <img
+              src="{{ badge_icon | file_url }}"
+              width="{{ section.settings.icon_size }}"
+              height="{{ section.settings.icon_size }}"
+              loading="lazy"
+              alt="{{ badge_title | escape }}"
+            >
+          </span>
+        {%- endif -%}
+        <span class="lb-badge__title">{{ badge_title }}</span>
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% stylesheet %}
+  .lb-section {
+    padding-block: var(--lb-pad-block-start, 40px) var(--lb-pad-block-end, 40px);
+    padding-inline: var(--lb-pad-inline-start, 0px) var(--lb-pad-inline-end, 0px);
+  }
+  .lb-section--custom-bg {
+    background: var(--lb-bg, transparent);
+  }
+
+  .lb-video {
+    max-width: 1280px;
+    margin-inline: auto;
+    margin-bottom: 2.5rem;
+  }
+  .lb-video__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin: 0 0 1.5rem;
+  }
+  .lb-video__frame {
+    position: relative;
+    padding-top: 56.25%;
+    margin-bottom: 1.5rem;
+  }
+  .lb-video__frame:last-child {
+    margin-bottom: 0;
+  }
+  .lb-video__iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .lb-badges {
+    max-width: 1280px;
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: repeat(var(--lb-columns-desktop, 6), 1fr);
+    gap: var(--lb-gap-v, 24px) var(--lb-gap-h, 16px);
+  }
+  @media (max-width: 749px) {
+    .lb-badges {
+      grid-template-columns: repeat(var(--lb-columns-mobile, 2), 1fr);
+    }
+  }
+
+  /* icon above, title below — same order for both the <a> and <div> variant */
+  .lb-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  a.lb-badge {
+    cursor: pointer;
+  }
+  .lb-badge__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--lb-icon-size, 30px);
+    height: var(--lb-icon-size, 30px);
+    flex-shrink: 0;
+  }
+  .lb-badge__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .lb-badge__title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Logo List",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Columns (desktop)",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "columns_mobile",
+      "label": "Columns (mobile)",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 20,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "gap_horizontal",
+      "label": "Horizontal gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "gap_vertical",
+      "label": "Vertical gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Section"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Left padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "Right padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Logo List"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,920 @@
+{%- liquid
+  assign row_keys = 'best_for,category,capacity,key_spec,power_system,material,dimensions,environment,warranty' | split: ','
+  assign row_labels = 'Best For,Type / Category,Capacity,Key Spec,Power / System,Material,Dimensions,Environment,Warranty' | split: ','
+  assign row_sublabels = 'Who it is ideal for,Product type,How much it holds/fits,Primary performance figure,What powers it,What it is made from,Size (W x D x H),Where it can be used,Coverage period' | split: ','
+  assign product_blocks = section.blocks | where: 'type', 'product'
+-%}
+
+<style>
+  .pc-wrap {
+    --pc-font-body: var(--font-body--family, 'Inter', sans-serif);
+    --pc-font-heading: var(--font-heading--family, 'Inter', sans-serif);
+    --pc-color-bg: {{ section.settings.background_color | default: '#ffffff' }};
+    --pc-color-fg: var(--color-foreground, #1a1a1a);
+    --pc-color-border: var(--color-border, #e0e0e0);
+    --pc-color-muted: #888888;
+    --pc-color-accent: {{ section.settings.accent_color | default: '#c0392b' }};
+    --pc-color-accent-hover: {{ section.settings.accent_color_hover | default: '#a93226' }};
+    --pc-color-tag-bg: #f5f5f0;
+    --pc-color-tag-border: #d0cfc8;
+    --pc-color-header-bg: #f9f9f7;
+    --pc-color-drawer-bg: {{ section.settings.background_color | default: '#ffffff' }};
+    --pc-color-group-label: #555;
+    --pc-radius: 4px;
+    --pc-col-label: 200px;
+    --pc-transition: 0.2s ease;
+
+    font-family: var(--pc-font-body);
+    color: var(--pc-color-fg);
+    background: var(--pc-color-bg);
+  }
+
+  .pc-page-header { padding: 48px 0 32px; }
+  .pc-page-header h1 {
+    font-family: var(--pc-font-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    line-height: 1.1;
+  }
+  .pc-page-header p { font-size: 0.9375rem; color: var(--pc-color-muted); margin: 0; }
+
+  .pc-selection-bar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 0 24px; justify-content: flex-end;
+  }
+  .pc-selection-count { font-size: 0.875rem; color: var(--pc-color-muted); }
+  .pc-selection-count strong { color: var(--pc-color-fg); }
+  .pc-btn-compare {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--pc-color-fg); color: #fff; border: none;
+    border-radius: var(--pc-radius); padding: 10px 20px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.01em; transition: background var(--pc-transition);
+  }
+  .pc-btn-compare:hover { background: #333; }
+  .pc-btn-compare svg { width: 16px; height: 16px; }
+
+  .pc-table-outer {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--pc-color-border); border-radius: var(--pc-radius);
+    cursor: grab;
+  }
+  .pc-table-outer.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+  .pc-table {
+    display: grid;
+    grid-template-columns: var(--pc-col-label) repeat({{ product_blocks.size | default: 1 }}, minmax(180px, 1fr));
+    min-width: 700px;
+  }
+
+  .pc-product-header-row { display: contents; }
+  .pc-label-spacer {
+    background: var(--pc-color-header-bg);
+    border-bottom: 1px solid var(--pc-color-border);
+    padding: 24px 20px; display: flex; align-items: flex-end;
+  }
+  .pc-label-spacer span {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--pc-color-muted);
+  }
+
+  .pc-product-card {
+    background: var(--pc-color-header-bg);
+    border-left: 1px solid var(--pc-color-border);
+    border-bottom: 1px solid var(--pc-color-border);
+    padding: 20px 16px 24px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; position: relative; text-align: center;
+  }
+  .pc-product-tag {
+    display: inline-block; font-size: 0.625rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--pc-color-tag-bg); border: 1px solid var(--pc-color-tag-border);
+    border-radius: 100px; padding: 2px 8px; color: var(--pc-color-group-label);
+    white-space: nowrap;
+  }
+  .pc-product-img {
+    width: 120px; height: 100px; object-fit: cover;
+    border-radius: var(--pc-radius); background: #ece9e4;
+  }
+  .pc-product-img-placeholder {
+    width: 120px; height: 100px; border-radius: var(--pc-radius);
+    background: linear-gradient(135deg, #e8e4dc 0%, #d4cfc4 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pc-product-img-placeholder svg { width: 40px; height: 40px; opacity: 0.25; }
+  .pc-product-name {
+    font-family: var(--pc-font-heading); font-size: 1.125rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; margin: 0; line-height: 1.2;
+  }
+  .pc-product-tagline { font-size: 0.8125rem; color: var(--pc-color-muted); margin: 0; line-height: 1.4; }
+  .pc-product-price {
+    font-size: 0.8125rem; font-weight: 600; color: var(--pc-color-muted);
+    text-transform: uppercase; letter-spacing: 0.05em; margin: 0;
+  }
+  .pc-product-price strong { color: var(--pc-color-fg); font-size: 1rem; }
+  .pc-btn-view {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--pc-color-accent);
+    background: none; border: none; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; padding: 0; text-decoration: none; transition: color var(--pc-transition);
+  }
+  .pc-btn-view:hover { color: var(--pc-color-accent-hover); }
+  .pc-btn-view svg {
+    width: 13px !important; height: 13px !important;
+    flex-shrink: 0; display: block;
+    transition: transform var(--pc-transition);
+  }
+  .pc-btn-view:hover svg { transform: translateX(2px); }
+
+  .pc-row { display: contents; }
+  .pc-row-label {
+    display: flex; flex-direction: column; justify-content: center; gap: 2px;
+    padding: 14px 20px; border-bottom: 1px solid var(--pc-color-border);
+    background: var(--pc-color-bg);
+  }
+  .pc-row-label strong { font-size: 0.8125rem; font-weight: 600; color: var(--pc-color-fg); }
+  .pc-row-label small { font-size: 0.75rem; color: var(--pc-color-muted); display: block; }
+  .pc-row-value {
+    display: flex; align-items: center; justify-content: center; padding: 14px 16px;
+    border-left: 1px solid var(--pc-color-border); border-bottom: 1px solid var(--pc-color-border);
+    font-size: 0.875rem; text-align: center; line-height: 1.4;
+    color: var(--pc-color-fg); background: var(--pc-color-bg);
+  }
+  .pc-row:hover .pc-row-label, .pc-row:hover .pc-row-value { background: #fafaf8; }
+
+  .pc-trust-row { display: flex; gap: 32px; padding: 32px 0; flex-wrap: wrap; }
+  .pc-trust-item { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px; }
+  .pc-trust-icon { width: 40px; height: 40px; flex-shrink: 0; color: var(--pc-color-muted); }
+  .pc-trust-title { font-size: 0.875rem; font-weight: 700; color: var(--pc-color-fg); margin: 0 0 2px; }
+  .pc-trust-desc { font-size: 0.8125rem; color: var(--pc-color-muted); margin: 0; }
+
+  .pc-sticky-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #f5f5f2;
+    border-top: 1px solid var(--pc-color-border); z-index: 100; padding: 12px 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .pc-sticky-bar-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .pc-sticky-bar-left svg { width: 32px; height: 32px; color: var(--pc-color-muted); }
+  .pc-sticky-bar-label strong {
+    display: block; font-size: 0.875rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--pc-color-fg);
+  }
+  .pc-sticky-bar-label span { font-size: 0.75rem; color: var(--pc-color-muted); }
+  .pc-sticky-chips { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .pc-sticky-chip {
+    display: inline-flex; align-items: center; gap: 6px; background: #fff;
+    border: 1px solid var(--pc-color-border); border-radius: var(--pc-radius);
+    padding: 6px 12px; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em;
+  }
+  .pc-sticky-bar-right { flex-shrink: 0; }
+  .pc-btn-compare-sticky {
+    background: var(--pc-color-fg); color: #fff; border: none; border-radius: var(--pc-radius);
+    padding: 10px 20px; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.04em;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .pc-btn-compare-sticky svg { width: 16px; height: 16px; }
+
+  /* ============ DRAWER ============ */
+  .pc-drawer-overlay {
+    position: fixed; inset: 0; background: rgba(20,18,15,0.4); z-index: 200;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    backdrop-filter: blur(1px);
+  }
+  .pc-drawer-overlay.is-open { opacity: 1; pointer-events: all; }
+  .pc-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 95vw);
+    background: #ffffff !important;
+    background: var(--pc-color-drawer-bg);
+    z-index: 201; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -8px 0 32px rgba(0,0,0,0.14);
+  }
+  .pc-drawer.is-open { transform: translateX(0); }
+
+  .pc-drawer-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;
+    border-bottom: 1px solid var(--pc-color-border); flex-shrink: 0;
+  }
+  .pc-drawer-header h2 {
+    font-family: var(--pc-font-heading); font-size: 0.8125rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; margin: 0;
+  }
+  .pc-drawer-close {
+    background: none; border: none; cursor: pointer; padding: 6px; margin: -6px;
+    color: var(--pc-color-muted); display: flex; align-items: center; border-radius: 50%;
+    transition: background var(--pc-transition), color var(--pc-transition);
+  }
+  .pc-drawer-close:hover { background: var(--pc-color-header-bg); color: var(--pc-color-fg); }
+  .pc-drawer-close svg { width: 18px; height: 18px; }
+
+  .pc-drawer-tabs {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    cursor: grab;
+    border-bottom: 1px solid var(--pc-color-border); flex-shrink: 0;
+    padding: 0 8px; background: var(--pc-color-header-bg);
+  }
+  .pc-drawer-tabs.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+  .pc-drawer-tabs::-webkit-scrollbar { display: none; }
+  .pc-drawer-tab {
+    flex: 0 0 auto;
+    min-width: 96px;
+    white-space: nowrap;
+    padding: 14px 12px; background: none; border: none; border-bottom: 2px solid transparent;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; color: var(--pc-color-muted); transition: color var(--pc-transition), border-color var(--pc-transition);
+  }
+  .pc-drawer-tab:hover { color: var(--pc-color-fg); }
+  .pc-drawer-tab.active { color: var(--pc-color-fg); border-bottom-color: var(--pc-color-accent); }
+
+  .pc-drawer-body { flex: 1; overflow-y: auto; padding: 8px 20px 20px; }
+  .pc-drawer-panel { display: flex; flex-direction: column; gap: 8px; }
+  .pc-drawer-panel[hidden] { display: none; }
+
+  .pc-drawer-group {
+    border: 1px solid var(--pc-color-border); border-radius: 8px; overflow: hidden;
+    background: var(--pc-color-bg);
+  }
+  .pc-drawer-group + .pc-drawer-group { margin-top: 8px; }
+  .pc-drawer-group-header {
+    list-style: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; cursor: pointer; background: var(--pc-color-header-bg);
+    user-select: none; transition: background var(--pc-transition);
+  }
+  .pc-drawer-group-header::-webkit-details-marker { display: none; }
+  .pc-drawer-group-header::marker { content: ''; display: none; }
+  .pc-drawer-group-header:hover { background: #f2f0ec; }
+  .pc-drawer-group-title {
+    display: flex; align-items: center; gap: 10px; font-size: 0.8125rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--pc-color-fg);
+  }
+  .pc-drawer-group-icon { width: 18px !important; height: 18px !important; flex-shrink: 0; display: block; color: var(--pc-color-accent); }
+  .pc-drawer-group-chevron {
+    width: 16px !important; height: 16px !important; flex-shrink: 0; display: block; color: var(--pc-color-muted);
+    transition: transform 0.25s ease;
+  }
+  .pc-drawer-group[open] > .pc-drawer-group-header .pc-drawer-group-chevron { transform: rotate(180deg); }
+
+  .pc-drawer-group-body { padding: 4px 14px 10px; }
+  .pc-drawer-spec-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 9px 0; border-bottom: 1px solid #f0f0ee; font-size: 0.8125rem;
+  }
+  .pc-drawer-spec-row:last-child { border-bottom: none; }
+  .pc-drawer-spec-row--full { display: block; padding-top: 10px; }
+  .pc-drawer-spec-label { color: var(--pc-color-muted); flex-shrink: 0; }
+  .pc-drawer-spec-value { color: var(--pc-color-fg); font-weight: 600; text-align: right; }
+  .pc-drawer-spec-detail { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--pc-color-fg); }
+  .pc-drawer-check { width: 16px; height: 16px; color: #2e7d32; vertical-align: middle; }
+
+  .pc-drawer-cta { padding: 16px 20px 20px; border-top: 1px solid var(--pc-color-border); flex-shrink: 0; }
+  .pc-drawer-cta a {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    background: var(--pc-color-accent); color: #fff; text-decoration: none; border-radius: var(--pc-radius);
+    padding: 14px 20px; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; transition: background var(--pc-transition);
+  }
+  .pc-drawer-cta a:hover { background: var(--pc-color-accent-hover); }
+
+  @media (max-width: 749px) {
+    .pc-page-header { padding: 32px 0 20px; }
+    .pc-selection-bar { justify-content: flex-start; flex-wrap: wrap; }
+    .pc-table { grid-template-columns: 130px repeat({{ product_blocks.size | default: 1 }}, minmax(140px, 1fr)); }
+    .pc-row-label { padding: 12px 12px; }
+    .pc-row-value { padding: 12px 8px; font-size: 0.8125rem; }
+    .pc-trust-row { gap: 20px; padding: 24px 0; }
+    .pc-sticky-bar { padding: 10px 16px; gap: 12px; }
+    .pc-sticky-chips { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .pc-sticky-chips::-webkit-scrollbar { display: none; }
+    .pc-sticky-chip { flex-shrink: 0; }
+    .pc-drawer { width: 100vw; }
+  }
+
+  .pc-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; padding-bottom: 80px; }
+
+  /* ============ TABLE FLYOUT (new) ============ */
+  .pc-inline-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    border: 1px solid var(--pc-color-border, #e0e0e0); border-radius: var(--pc-radius, 4px);
+    padding: 20px 24px; background: var(--pc-color-header-bg, #f9f9f7);
+  }
+  .pc-inline-trigger-text strong {
+    display: block; font-size: 1rem; font-weight: 700; color: var(--pc-color-fg, #1a1a1a); margin-bottom: 2px;
+  }
+  .pc-inline-trigger-text span { font-size: 0.875rem; color: var(--pc-color-muted, #888888); }
+  .pc-inline-trigger-btn {
+    display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+    background: var(--pc-color-fg, #1a1a1a); color: #fff; border: none;
+    border-radius: var(--pc-radius, 4px); padding: 12px 24px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer; letter-spacing: 0.01em;
+  }
+  .pc-inline-trigger-btn svg { width: 16px; height: 16px; }
+
+  .pc-table-flyout {
+    position: fixed; inset: 0; z-index: 150;
+    background: var(--pc-color-bg, #ffffff);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column;
+  }
+  .pc-table-flyout.is-open { transform: translateX(0); }
+  .pc-table-flyout-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .pc-table-flyout-close {
+    position: sticky; top: 0; z-index: 5; margin-left: auto; margin-top: 16px; margin-right: 24px;
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--pc-color-header-bg, #f9f9f7); border: 1px solid var(--pc-color-border, #e0e0e0);
+    color: var(--pc-color-fg, #1a1a1a); cursor: pointer;
+  }
+  .pc-table-flyout-close svg { width: 18px; height: 18px; }
+
+  @media (max-width: 749px) {
+    .pc-inline-trigger { flex-direction: column; align-items: stretch; text-align: center; }
+    .pc-inline-trigger-btn { justify-content: center; }
+  }
+</style>
+
+{%- if section.settings.enable_flyout -%}
+  <div class="pc-container" id = "comparison-table-section">
+    <div class="pc-inline-trigger">
+      <div class="pc-inline-trigger-text">
+        <strong>{{ section.settings.flyout_trigger_heading | default: 'Compare Products' }}</strong>
+        {%- if section.settings.flyout_trigger_subtext != blank -%}
+          <span>{{ section.settings.flyout_trigger_subtext }}</span>
+        {%- endif -%}
+      </div>
+      <button type="button" class="pc-inline-trigger-btn" id="pc-open-table-flyout">
+        {{ section.settings.flyout_trigger_button_text | default: 'View Comparison' }}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="pc-table-flyout"
+    id="pc-table-flyout"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ section.settings.flyout_trigger_heading | default: 'Compare Products' }}"
+  >
+    <button type="button" class="pc-table-flyout-close" id="pc-close-table-flyout" aria-label="Close">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <div class="pc-table-flyout-scroll">
+{%- endif -%}
+
+<div class="pc-wrap">
+  <div class="pc-container">
+    <div class="pc-page-header">
+      <h1>{{ section.settings.heading | default: 'Compare Products' }}</h1>
+      <p>{{ section.settings.subheading | default: 'Compare our models to find the right fit for you.' }}</p>
+    </div>
+
+    <div class="pc-selection-bar">
+      <span class="pc-selection-count"
+        ><strong>{{ product_blocks.size }}</strong> product{% if product_blocks.size != 1 %}s{% endif %} shown</span
+      >
+      <button class="pc-btn-compare" type="button">
+        {{ section.settings.compare_button_text | default: 'Compare' }}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="pc-table-outer">
+      <div class="pc-table">
+        <div class="pc-product-header-row">
+          <div class="pc-label-spacer">
+            <span>{{ section.settings.column_label | default: 'Key Features' }}</span>
+          </div>
+
+          {%- for block in product_blocks -%}
+            {%- assign product = block.settings.product -%}
+            {%- assign display_name = block.settings.short_name | default: product.title -%}
+            <div class="pc-product-card" {{ block.shopify_attributes }}>
+              {%- if block.settings.tag != blank -%}
+                <span class="pc-product-tag">{{ block.settings.tag }}</span>
+              {%- endif -%}
+
+              {%- if product and product.featured_image -%}
+                <img
+                  class="pc-product-img"
+                  src="{{ product.featured_image | image_url: width: 240 }}"
+                  alt="{{ display_name | escape }}"
+                  loading="lazy"
+                >
+              {%- else -%}
+                <div class="pc-product-img-placeholder">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                  </svg>
+                </div>
+              {%- endif -%}
+
+              <p class="pc-product-name">{{ display_name | default: 'Select a product' }}</p>
+              {%- if block.settings.tagline != blank -%}
+                <p class="pc-product-tagline">{{ block.settings.tagline }}</p>
+              {%- endif -%}
+              {%- if product and product.price != blank -%}
+                <p class="pc-product-price">
+                  From <strong>{{ product.price | money }}</strong>
+                </p>
+              {%- endif -%}
+              {%- if product -%}
+                <a href="{{ product.url }}" class="pc-btn-view">
+                  View product
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              {%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%}
+          Fixed row set — see the ROW_LABELS note at the top of this file.
+          Where a row has a clear data source, it's pulled automatically:
+            best_for    -> Merchandising metaobject's best_for field
+            category    -> Merchandising metaobject's category field (falls
+                           back to product.type if that field is blank too)
+            power_system -> Heating flyout's system field
+            material    -> Build flyout's timber field
+            dimensions  -> Build flyout's width x depth x height (composed)
+            environment -> Merchandising metaobject's environment field
+            warranty    -> Warranty flyout's summary field
+            capacity    -> Build flyout's seating field (best-guess mapping —
+                           verify this is the right field for "Capacity")
+            key_spec    -> Merchandising metaobject's key_spec field
+
+          ASSUMPTION TO VERIFY: the Merchandising metaobject's field handles
+          are guessed to match the row key names exactly (best_for,
+          category, key_spec, environment) — its "Product" field (position
+          2) isn't used here, since none of these 4 rows are a product
+          reference. Confirm/correct these handles against the actual
+          metaobject definition.
+
+          Manual block.settings['row_' + key] always wins if filled in —
+          this is an override, same pattern as the drawer groups.
+        {%- endcomment -%}
+        {%- for key in row_keys -%}
+          {%- assign row_index = forloop.index0 -%}
+          {%- assign row_label = row_labels[row_index] -%}
+          {%- assign row_sublabel = row_sublabels[row_index] -%}
+          {%- assign setting_key = 'row_' | append: key -%}
+
+          <div class="pc-row">
+            <div class="pc-row-label">
+              <strong>{{ row_label }}</strong>
+              <small>{{ row_sublabel }}</small>
+            </div>
+            {%- for block in product_blocks -%}
+              {%- assign row_product = block.settings.product -%}
+              {%- assign row_value = block.settings[setting_key] -%}
+              {%- assign row_merch = row_product.metafields.custom.merchandising_table_header.value | default: block.settings.merchandising_table_header -%}
+              {%- if row_value == blank -%}
+                {%- case key -%}
+                  {%- when 'best_for' -%}
+                    {%- assign row_value = row_merch.best_for -%}
+                  {%- when 'category' -%}
+                    {%- assign row_value = row_merch.category | default: row_product.type -%}
+                  {%- when 'key_spec' -%}
+                    {%- assign row_value = row_merch.key_spec -%}
+                  {%- when 'environment' -%}
+                    {%- assign row_value = row_merch.environment -%}
+                  {%- when 'power_system' -%}
+                    {%- assign row_heating = row_product.metafields.custom.heating_flyout.value -%}
+                    {%- assign row_value = row_heating.heating_system -%}
+                  {%- when 'material' -%}
+                    {%- assign row_build = row_product.metafields.custom.build_flyout.value -%}
+                    {%- assign row_value = row_build.timber -%}
+                  {%- when 'dimensions' -%}
+                    {%- assign row_build = row_product.metafields.custom.build_flyout.value -%}
+                    {%- if row_build.width_mm != blank or row_build.depth_mm != blank or row_build.height_mm != blank -%}
+                      {%- capture row_value -%}{{ row_build.width_mm }} x {{ row_build.depth_mm }} x {{ row_build.height_mm }} mm{%- endcapture -%}
+                    {%- endif -%}
+                  {%- when 'capacity' -%}
+                    {%- assign row_build = row_product.metafields.custom.build_flyout.value -%}
+                    {%- assign row_value = row_build.seating -%}
+                  {%- when 'warranty' -%}
+                    {%- assign row_warranty = row_product.metafields.custom.warranty_flyout.value -%}
+                    {%- assign row_value = row_warranty.warranty_summary -%}
+                {%- endcase -%}
+              {%- endif -%}
+              <div class="pc-row-value">{{ row_value | default: '—' }}</div>
+            {%- endfor -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+
+    {%- if section.settings.show_trust_badges -%}
+      <div class="pc-trust-row">
+        {%- for i in (1..3) -%}
+          {%- assign title_key = 'trust_title_' | append: i -%}
+          {%- assign desc_key = 'trust_desc_' | append: i -%}
+          {%- if section.settings[title_key] != blank -%}
+            <div class="pc-trust-item">
+              <svg class="pc-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+              </svg>
+              <div>
+                <p class="pc-trust-title">{{ section.settings[title_key] }}</p>
+                <p class="pc-trust-desc">{{ section.settings[desc_key] }}</p>
+              </div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{%- if product_blocks.size > 0 -%}
+  <div class="pc-sticky-bar">
+    <div class="pc-sticky-bar-left">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/>
+      </svg>
+      <div class="pc-sticky-bar-label">
+        <strong>{{ section.settings.sticky_bar_title | default: 'Comparing' }}</strong>
+        <span>
+          {{- product_blocks.size }} product{% if product_blocks.size != 1 %}s{% endif -%}
+        </span>
+      </div>
+    </div>
+    <div class="pc-sticky-chips">
+      {%- for block in product_blocks -%}
+        <div class="pc-sticky-chip">
+          {{ block.settings.short_name | default: block.settings.product.title | default: 'Product' | upcase }}
+        </div>
+      {%- endfor -%}
+    </div>
+    <div class="pc-sticky-bar-right">
+      <button class="pc-btn-compare-sticky" id="pc-open-drawer" type="button">
+        {{ section.settings.compare_button_text | default: 'Compare' }}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {%- render 'product-comparison-drawer', product_blocks: product_blocks, section: section -%}
+{%- endif -%}
+
+{%- if section.settings.enable_flyout -%}
+  </div>
+  </div>
+{%- endif -%}
+
+<script>
+  (function () {
+    function enableDragScroll(el) {
+      if (!el) return;
+      var isDown = false;
+      var startX = 0;
+      var startScrollLeft = 0;
+
+      el.addEventListener('mousedown', function (e) {
+        isDown = true;
+        el.classList.add('is-dragging');
+        startX = e.pageX;
+        startScrollLeft = el.scrollLeft;
+      });
+
+      function stopDrag() {
+        isDown = false;
+        el.classList.remove('is-dragging');
+      }
+
+      el.addEventListener('mouseleave', stopDrag);
+      el.addEventListener('mouseup', stopDrag);
+
+      el.addEventListener('mousemove', function (e) {
+        if (!isDown) return;
+        var delta = e.pageX - startX;
+        if (Math.abs(delta) > 3) {
+          e.preventDefault();
+          el.scrollLeft = startScrollLeft - delta;
+        }
+      });
+    }
+
+    enableDragScroll(document.querySelector('.pc-table-outer'));
+    document.querySelectorAll('.pc-drawer-tabs').forEach(enableDragScroll);
+  })();
+</script>
+
+<script>
+  (function () {
+    var overlay = document.getElementById('pc-overlay');
+    var drawer = document.getElementById('pc-drawer');
+    var openBtns = document.querySelectorAll('#pc-open-drawer, .pc-btn-compare');
+    var closeBtn = document.getElementById('pc-close-drawer');
+    if (!drawer) return;
+
+    var productUrls = [
+      {%- for block in product_blocks -%}
+        {{ block.settings.product.url | default: '#' | json }}{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ];
+
+    function openDrawer() {
+      overlay.classList.add('is-open');
+      drawer.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+      overlay.classList.remove('is-open');
+      drawer.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+
+    openBtns.forEach(function (btn) { btn.addEventListener('click', openDrawer); });
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (overlay) overlay.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+
+    var tabs = drawer.querySelectorAll('.pc-drawer-tab');
+    var panels = drawer.querySelectorAll('.pc-drawer-panel');
+    var ctaLink = document.getElementById('pc-drawer-cta-link');
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var index = tab.getAttribute('data-product-index');
+
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+
+        panels.forEach(function (p) {
+          p.hidden = p.getAttribute('data-panel-index') !== index;
+        });
+
+        if (ctaLink && productUrls[index]) ctaLink.setAttribute('href', productUrls[index]);
+      });
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    var flyout = document.getElementById('pc-table-flyout');
+    var openBtn = document.getElementById('pc-open-table-flyout');
+    var closeBtn = document.getElementById('pc-close-table-flyout');
+    if (!flyout || !openBtn) return;
+
+    function openFlyout() {
+      flyout.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeFlyout() {
+      flyout.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openFlyout);
+    if (closeBtn) closeBtn.addEventListener('click', closeFlyout);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && flyout.classList.contains('is-open')) closeFlyout();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product Comparison",
+  "tag": "section",
+  "class": "product-comparison-section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Compare Products" },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Compare our models to find the right fit for you."
+    },
+    { "type": "text", "id": "column_label", "label": "Left column label", "default": "Key Features" },
+    { "type": "text", "id": "compare_button_text", "label": "Compare button text", "default": "Compare" },
+    { "type": "text", "id": "sticky_bar_title", "label": "Sticky bar title", "default": "Comparing" },
+    { "type": "text", "id": "drawer_title", "label": "Full comparison drawer title", "default": "Full Specifications" },
+    { "type": "header", "content": "Flyout trigger" },
+    {
+      "type": "checkbox",
+      "id": "enable_flyout",
+      "label": "Open comparison table as a flyout",
+      "info": "When on, the table opens in a full-screen flyout from a trigger button instead of showing inline on the page.",
+      "default": true
+    },
+    { "type": "text", "id": "flyout_trigger_heading", "label": "Trigger heading", "default": "Compare Products" },
+    {
+      "type": "text",
+      "id": "flyout_trigger_subtext",
+      "label": "Trigger subtext",
+      "default": "See full specs and pricing side-by-side"
+    },
+    {
+      "type": "text",
+      "id": "flyout_trigger_button_text",
+      "label": "Trigger button text",
+      "default": "View Comparison"
+    },
+    { "type": "color", "id": "background_color", "label": "Background color", "default": "#ffffff" },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#c0392b" },
+    { "type": "color", "id": "accent_color_hover", "label": "Accent color (hover)", "default": "#a93226" },
+    { "type": "header", "content": "Trust badges (optional, up to 3)" },
+    { "type": "checkbox", "id": "show_trust_badges", "label": "Show trust badges", "default": true },
+    { "type": "text", "id": "trust_title_1", "label": "Badge 1 title" },
+    { "type": "text", "id": "trust_desc_1", "label": "Badge 1 description" },
+    { "type": "text", "id": "trust_title_2", "label": "Badge 2 title" },
+    { "type": "text", "id": "trust_desc_2", "label": "Badge 2 description" },
+    { "type": "text", "id": "trust_title_3", "label": "Badge 3 title" },
+    { "type": "text", "id": "trust_desc_3", "label": "Badge 3 description" }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product",
+          "info": "Title, price, image, and link are pulled live from this product."
+        },
+        {
+          "type": "text",
+          "id": "short_name",
+          "label": "Product name",
+          "info": "Static display name shown on the card and drawer tab (e.g. \"RISE\"). Not pulled from the product or any metaobject."
+        },
+        { "type": "text", "id": "tag", "label": "Badge text", "info": "e.g. \"Best for Small Spaces\"" },
+        { "type": "text", "id": "tagline", "label": "Short description" },
+
+        { "type": "header", "content": "Comparison table row values" },
+        {
+          "type": "text",
+          "id": "row_best_for",
+          "label": "Best For (override)",
+          "info": "Auto-filled from the Merchandising metaobject's best_for field unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_category",
+          "label": "Type / Category (override)",
+          "info": "Auto-filled from the Merchandising metaobject's category field, falling back to the product's Type field, unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_capacity",
+          "label": "Capacity (override)",
+          "info": "Auto-filled from the Build flyout's seating field unless set here — verify this mapping fits."
+        },
+        {
+          "type": "text",
+          "id": "row_key_spec",
+          "label": "Key Spec (override)",
+          "info": "Auto-filled from the Merchandising metaobject's key_spec field unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_power_system",
+          "label": "Power / System (override)",
+          "info": "Auto-filled from the Heating flyout's system field unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_material",
+          "label": "Material (override)",
+          "info": "Auto-filled from the Build flyout's timber field unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_dimensions",
+          "label": "Dimensions (override)",
+          "info": "Auto-filled from the Build flyout's width/depth/height unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_environment",
+          "label": "Environment (override)",
+          "info": "Auto-filled from the Merchandising metaobject's environment field unless set here."
+        },
+        {
+          "type": "text",
+          "id": "row_warranty",
+          "label": "Warranty (override)",
+          "info": "Auto-filled from the Warranty flyout's summary field unless set here."
+        },
+
+        { "type": "header", "content": "Full specifications (overrides)" },
+        {
+          "type": "paragraph",
+          "content": "These are pulled automatically from the selected product's own metafields. Only set one of these manually if a product is missing that metafield, or you want to override it for this comparison specifically."
+        },
+        {
+          "type": "metaobject",
+          "id": "heating_flyout",
+          "metaobject_type": "heating_flyout",
+          "label": "Heating specs (override)"
+        },
+        {
+          "type": "metaobject",
+          "id": "build_flyout",
+          "metaobject_type": "build_flyout",
+          "label": "Build specs (override)"
+        },
+        {
+          "type": "metaobject",
+          "id": "installation_flyout",
+          "metaobject_type": "installation_flyout",
+          "label": "Installation specs (override)"
+        },
+        {
+          "type": "metaobject",
+          "id": "features_flyout",
+          "metaobject_type": "features_flyout",
+          "label": "Features specs (override)"
+        },
+        {
+          "type": "metaobject",
+          "id": "warranty_flyout",
+          "metaobject_type": "warranty_flyout",
+          "label": "Warranty specs (override)"
+        },
+        {
+          "type": "metaobject",
+          "id": "merchandising_table_header",
+          "metaobject_type": "merchandising",
+          "label": "Merchandising row values (override)",
+          "info": "Covers Best For, Type/Category, Key Spec, and Environment."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "Product Comparison",
+      "blocks": [{ "type": "product" }, { "type": "product" }]
+    }
+  ]
+}
+{% endschema %}

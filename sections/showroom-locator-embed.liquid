@@ -1,0 +1,399 @@
+{% comment %}
+  Showroom Locator — Leaflet.js + OpenStreetMap edition.
+
+  - Map tiles: OpenStreetMap's free tile servers. Fine for low/moderate
+    traffic per their usage policy; if this section ever sees heavy
+    traffic, swap the tile URL for a free-tier commercial provider
+    (MapTiler, Stadia Maps) instead — same Leaflet code, just a different
+    L.tileLayer URL.
+  - Search: Nominatim, OSM's free geocoding API. No API key, but it has a
+    strict ~1 request/second usage policy — fine for a person clicking
+    "Find" occasionally, this is NOT wired to search-as-you-type.
+  - Store pins come from "Store" blocks below (name, address, lat/lng,
+    optional phone/link/zone label) — plot them in Google Maps or any map
+    tool to get lat/lng, or use the marker on openstreetmap.org itself.
+  - I can't verify the current Leaflet version without web search — check
+    https://leafletjs.com/download.html before publishing and update the
+    version number in the two tags below if there's a newer release.
+{% endcomment %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<style>
+  #shopify-section-{{ section.id }} .showroom-locator {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__heading {
+    font-size: 22px;
+    margin: 0 0 20px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__search {
+    display: flex;
+    gap: 8px;
+    flex: 0 1 420px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__search-btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 4px;
+    background: #d9776b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__search-btn:hover {
+    background: #c4645a;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__search-status {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 16px;
+    text-align: right;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__attribution-note {
+    font-size: 11px;
+    color: #aaa;
+    text-align: right;
+    margin: 4px 0 16px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__map-wrap {
+    width: 100%;
+    height: {{ section.settings.map_height }}px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #eee;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__map {
+    width: 100%;
+    height: 100%;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__results {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__result-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #shopify-section-{{ section.id }} .showroom-locator__result-btn:hover {
+    background: #f7f3ee;
+  }
+  @media screen and (max-width: 749px) {
+    #shopify-section-{{ section.id }} .showroom-locator__search {
+      flex-basis: 100%;
+    }
+  }
+</style>
+
+{% assign stores = section.blocks | where: 'type', 'store' %}
+
+<div class="showroom-locator">
+  <div class="showroom-locator__inner">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="showroom-locator__heading">{{ section.settings.heading }}</h2>
+    {%- endif -%}
+
+    {%- if section.settings.show_search -%}
+      <div class="showroom-locator__toolbar">
+        <div class="showroom-locator__search">
+          <input
+            type="text"
+            class="showroom-locator__search-input"
+            id="ShowroomSearch-{{ section.id }}"
+            placeholder="Enter suburb or postcode"
+          >
+          <button type="button" class="showroom-locator__search-btn" id="ShowroomSearchBtn-{{ section.id }}">
+            Find
+          </button>
+        </div>
+      </div>
+      <p class="showroom-locator__search-status" id="ShowroomStatus-{{ section.id }}" role="status" aria-live="polite"></p>
+      <p class="showroom-locator__attribution-note">Search by OpenStreetMap Nominatim</p>
+    {%- endif -%}
+
+    <div class="showroom-locator__map-wrap">
+      <div class="showroom-locator__map" id="ShowroomMap-{{ section.id }}"></div>
+    </div>
+
+    <ul class="showroom-locator__results" id="ShowroomResults-{{ section.id }}" hidden></ul>
+  </div>
+</div>
+
+<script id="ShowroomStores-{{ section.id }}" type="application/json">
+[
+  {%- for block in stores -%}
+    {
+      "name": {{ block.settings.name | json }},
+      "address": {{ block.settings.address | json }},
+      "lat": {{ block.settings.lat | json }},
+      "lng": {{ block.settings.lng | json }},
+      "phone": {{ block.settings.phone | json }},
+      "url": {{ block.settings.url | json }},
+      "zone": {{ block.settings.zone | json }}
+    }{% unless forloop.last %},{% endunless %}
+  {%- endfor -%}
+]
+</script>
+
+<script>
+  (function () {
+    var sectionId = {{ section.id | json }};
+
+    function init() {
+      var mapEl = document.getElementById('ShowroomMap-' + sectionId);
+      if (!mapEl || typeof L === 'undefined' || mapEl.dataset.leafletInit) return;
+      mapEl.dataset.leafletInit = 'true';
+
+      var storesDataEl = document.getElementById('ShowroomStores-' + sectionId);
+      var stores = [];
+      try {
+        stores = JSON.parse((storesDataEl && storesDataEl.textContent) || '[]').filter(function (s) {
+          return s.lat && s.lng && !isNaN(parseFloat(s.lat)) && !isNaN(parseFloat(s.lng));
+        });
+      } catch (e) {
+        stores = [];
+      }
+
+      var defaultCenter = [{{ section.settings.center_lat | default: -25.2744 }}, {{ section.settings.center_lng | default: 133.7751 }}];
+      var defaultZoom = {{ section.settings.default_zoom | default: 5 }};
+
+      var map = L.map(mapEl).setView(defaultCenter, defaultZoom);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : String(str);
+        return div.innerHTML;
+      }
+
+      var markers = stores.map(function (store) {
+        var lat = parseFloat(store.lat);
+        var lng = parseFloat(store.lng);
+        var popupHtml = '<strong>' + escapeHtml(store.name) + '</strong>';
+        if (store.zone) popupHtml += '<br><span style="opacity:.7">' + escapeHtml(store.zone) + '</span>';
+        if (store.address) popupHtml += '<br>' + escapeHtml(store.address);
+        if (store.phone) popupHtml += '<br>' + escapeHtml(store.phone);
+        if (store.url) {
+          popupHtml += '<br><a href="' + escapeHtml(store.url) + '" target="_blank" rel="noopener">View store</a>';
+        }
+
+        var marker = L.marker([lat, lng]).addTo(map).bindPopup(popupHtml);
+        marker.storeData = store;
+        marker.storeLatLng = [lat, lng];
+        return marker;
+      });
+
+      // Haversine distance in km
+      function distanceKm(lat1, lng1, lat2, lng2) {
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLng = (lng2 - lng1) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      var searchInput = document.getElementById('ShowroomSearch-' + sectionId);
+      var searchBtn = document.getElementById('ShowroomSearchBtn-' + sectionId);
+      var statusEl = document.getElementById('ShowroomStatus-' + sectionId);
+      var resultsEl = document.getElementById('ShowroomResults-' + sectionId);
+      var searching = false;
+
+      function setStatus(msg) {
+        if (statusEl) statusEl.textContent = msg || '';
+      }
+
+      function renderResults(originLat, originLng) {
+        if (!resultsEl || !markers.length) return;
+        var withDistance = markers
+          .map(function (m) {
+            return { marker: m, distance: distanceKm(originLat, originLng, m.storeLatLng[0], m.storeLatLng[1]) };
+          })
+          .sort(function (a, b) { return a.distance - b.distance; });
+
+        resultsEl.innerHTML = '';
+        withDistance.slice(0, 5).forEach(function (item) {
+          var li = document.createElement('li');
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'showroom-locator__result-btn';
+          btn.textContent = (item.marker.storeData.name || 'Store') + ' — ' + item.distance.toFixed(1) + ' km';
+          btn.addEventListener('click', function () {
+            map.setView(item.marker.storeLatLng, 13);
+            item.marker.openPopup();
+          });
+          li.appendChild(btn);
+          resultsEl.appendChild(li);
+        });
+        resultsEl.hidden = false;
+
+        map.setView(withDistance[0].marker.storeLatLng, 11);
+        withDistance[0].marker.openPopup();
+      }
+
+      function runSearch() {
+        if (searching || !searchInput) return;
+        var query = searchInput.value.trim();
+        if (!query) return;
+
+        searching = true;
+        setStatus('Searching…');
+
+        var url = 'https://nominatim.openstreetmap.org/search'
+          + '?format=json&countrycodes=au&limit=1&q=' + encodeURIComponent(query);
+
+        fetch(url, { headers: { Accept: 'application/json' } })
+          .then(function (res) { return res.json(); })
+          .then(function (results) {
+            searching = false;
+            if (!results || !results.length) {
+              setStatus('No matching location found in Australia.');
+              return;
+            }
+            var lat = parseFloat(results[0].lat);
+            var lng = parseFloat(results[0].lon);
+            setStatus('');
+            if (markers.length) {
+              renderResults(lat, lng);
+            } else {
+              map.setView([lat, lng], 11);
+            }
+          })
+          .catch(function () {
+            searching = false;
+            setStatus('Search failed — please try again.');
+          });
+      }
+
+      if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', runSearch);
+        searchInput.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            runSearch();
+          }
+        });
+      }
+    }
+
+    init();
+    document.addEventListener('shopify:section:load', function (event) {
+      if (event.detail && event.detail.sectionId === sectionId) init();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Showroom Locator",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Find Your Local Store"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show suburb/postcode search bar",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Map"
+    },
+    {
+      "type": "range",
+      "id": "map_height",
+      "label": "Map height",
+      "min": 300,
+      "max": 800,
+      "step": 20,
+      "unit": "px",
+      "default": 480
+    },
+    {
+      "type": "range",
+      "id": "default_zoom",
+      "label": "Default zoom",
+      "min": 2,
+      "max": 18,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "center_lat",
+      "label": "Map center latitude",
+      "default": "-25.2744"
+    },
+    {
+      "type": "text",
+      "id": "center_lng",
+      "label": "Map center longitude",
+      "default": "133.7751"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "store",
+      "name": "Store",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Store name" },
+        { "type": "text", "id": "address", "label": "Address" },
+        { "type": "text", "id": "lat", "label": "Latitude", "info": "e.g. -27.9074" },
+        { "type": "text", "id": "lng", "label": "Longitude", "info": "e.g. 153.4133" },
+        { "type": "text", "id": "phone", "label": "Phone (optional)" },
+        { "type": "url", "id": "url", "label": "Link (optional)" },
+        { "type": "text", "id": "zone", "label": "Zone label (optional)", "info": "e.g. \"South East QLD\" — shown in the map popup only, purely informational." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Showroom Locator"
+    }
+  ]
+}
+{% endschema %}

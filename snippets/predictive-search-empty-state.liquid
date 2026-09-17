@@ -1,0 +1,272 @@
+{% doc %}
+  @param {number} shadow_opacity - shadow opacity for the dropdown shadow
+  @param {string} products_test_id - playwright test id
+  @param {boolean} [load_empty_state] - Load the empty state or not
+
+  @example
+  {% render 'predictive-search-empty-state', shadow_opacity: 0.1, products_test_id: 'empty-state' %}
+{% enddoc %}
+
+<style>
+  #predictive-search-results.predictive-search-dropdown {
+    overflow: hidden;
+  }
+
+  .ps-empty {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    min-height: 340px;
+  }
+
+  .ps-empty__left {
+    padding: 28px 20px 28px 24px;
+    border-right: 1px solid var(--pc-color-border, #f0f0ee);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ps-empty__section-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-foreground-muted, #aaa);
+    margin: 0;
+  }
+  .ps-recent-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ps-recent-list__item a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--color-foreground, #1a1a1a);
+    text-decoration: none;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ps-recent-list__item a:hover {
+    background: var(--color-background-secondary, #f5f5f2);
+  }
+  .ps-recent-list__icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--color-foreground-muted, #bbb);
+  }
+
+  .ps-empty__right {
+    padding: 28px 24px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ps-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .ps-cat-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--color-foreground, #1a1a1a);
+  }
+  .ps-cat-tile__img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ece9e4;
+    flex-shrink: 0;
+  }
+  .ps-cat-tile__img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .ps-cat-tile:hover .ps-cat-tile__img img {
+    transform: scale(1.05);
+  }
+  .ps-cat-tile__name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    color: var(--color-foreground, #1a1a1a);
+  }
+
+  @media (max-width: 749px) {
+    .ps-empty {
+      grid-template-columns: 1fr;
+    }
+    .ps-empty__left {
+      border-right: none;
+      border-bottom: 1px solid #f0f0ee;
+      padding: 20px 16px;
+    }
+    .ps-empty__right {
+      padding: 20px 16px;
+    }
+    .ps-cat-tile__img { border-radius: 8px; }
+    .ps-cat-tile__name { font-size: 0.6875rem; }
+  }
+</style>
+
+{%- assign ps_cat_handles = 'infrared-saunas,wifi-controlled-saunas,traditional-steam-saunas,outdoor-saunas,ice-baths,sleep-recovery,red-light-therapy,bundles'
+  | split: ','
+-%}
+
+{%- assign ps_fallback_terms = 'Infrared Sauna,Ice Bath,Red Light Therapy,Sleep Pod,Outdoor Sauna,Accessories'
+  | split: ','
+-%}
+
+<div
+  id="predictive-search-results"
+  class="predictive-search-dropdown"
+  role="listbox"
+  aria-expanded="true"
+  style="--color-shadow: rgb(var(--color-foreground-rgb) / {{ shadow_opacity }});"
+>
+  {% if load_empty_state %}
+    <div class="predictive-search-results__inner">
+      <div class="ps-empty">
+        <div class="ps-empty__left">
+          <p class="ps-empty__section-label">Recently Searched</p>
+          <ul class="ps-recent-list" id="ps-recent-list">
+            {%- for term in ps_fallback_terms -%}
+              <li class="ps-recent-list__item">
+                <a href="/search?q={{ term | url_encode }}" aria-label="Search for {{ term }}">
+                  {% comment %}
+                    <svg
+                      class="ps-recent-list__icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                  {% endcomment %}
+                  {{ term }}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+
+        <div class="ps-empty__right">
+          <p class="ps-empty__section-label">Browse Categories</p>
+          <div class="ps-cat-grid">
+            {%- for handle in ps_cat_handles -%}
+              {%- assign collection = collections[handle] -%}
+              {%- if collection and collection.id != blank -%}
+                <a href="{{ collection.url }}" class="ps-cat-tile">
+                  <div class="ps-cat-tile__img">
+                    {%- if collection.featured_image -%}
+                      <img
+                        src="{{ collection.featured_image | image_url: width: 200 }}"
+                        alt="{{ collection.title | escape }}"
+                        loading="lazy"
+                        width="200"
+                        height="200"
+                      >
+                    {%- else -%}
+                      <img
+                        src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23ece9e4%22/%3E%3C/svg%3E"
+                        alt="{{ collection.title | escape }}"
+                        loading="lazy"
+                        width="200"
+                        height="200"
+                      >
+                    {%- endif -%}
+                  </div>
+                  <span class="ps-cat-tile__name">{{ collection.title }}</span>
+                </a>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'kiva_ps_recent';
+    var MAX_TERMS = 6;
+
+    var list = document.getElementById('ps-recent-list');
+    if (!list) return;
+
+    function renderRecent() {
+      try {
+        var stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (!Array.isArray(stored) || stored.length === 0) return;
+
+        list.innerHTML = stored
+          .slice(0, MAX_TERMS)
+          .map(function (term) {
+            return (
+              '<li class="ps-recent-list__item">' +
+              '<a href="/search?q=' +
+              encodeURIComponent(term) +
+              '" aria-label="Search for ' +
+              escHtml(term) +
+              '">' +
+              '<svg class="ps-recent-list__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>' +
+              '</svg>' +
+              escHtml(term) +
+              '</a>' +
+              '</li>'
+            );
+          })
+          .join('');
+      } catch (e) {}
+    }
+
+    function bindSearchForms() {
+      document.querySelectorAll('form[action="/search"]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+          var input = form.querySelector('input[name="q"]');
+          if (!input || !input.value.trim()) return;
+          try {
+            var recent = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            var term = input.value.trim();
+            recent = recent.filter(function (t) {
+              return t.toLowerCase() !== term.toLowerCase();
+            });
+            recent.unshift(term);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(recent.slice(0, MAX_TERMS)));
+          } catch (e) {}
+        });
+      });
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    renderRecent();
+    bindSearchForms();
+  })();
+</script>

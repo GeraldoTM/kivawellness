@@ -1,0 +1,187 @@
+<style>
+  .recover-rejuvinate-section {
+    background-color: var(--balance);
+    padding-block: 32px;
+    padding-inline: 12px;
+  }
+
+  .recover-rejuvinate-inner .top-block,  .recover-rejuvinate-inner .recover-rejuvinate-gallery{
+     max-width: 70rem;
+     margin-inline: auto;
+     padding: 12px;  
+  }
+
+  .recover-rejuvinate-gallery {
+  margin-top: 32px;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .recover-rejuvinate-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+  @media (min-width: 768px){
+    .recover-rejuvinate-section{
+      padding-block: 32px;
+      padding-inline: 12px;
+      padding-block: 64px;
+    padding-inline: 24px;
+    }
+    .recover-rejuvinate-inner .top-block,  .recover-rejuvinate-inner .recover-rejuvinate-gallery{
+     padding: 24px;
+    }
+      .recover-rejuvinate-gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  }
+  @media (min-width: 1024px) {
+  .recover-rejuvinate-gallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .recover-top-block .recover-top-right .recover-top-userinfo {
+    order: 2;
+}
+  h2.recover-top-maintext {
+    text-align: center;
+}
+  .recover-top-userinfo {
+    justify-content: center;
+}
+  .recover-top-right p {
+    text-align: center;
+}
+  .recover-top-right .btn-wrapper {
+    display: flex;
+    justify-content: center;
+}
+}  
+
+</style>
+<div class="recover-rejuvinate-section">
+  <div class="recover-rejuvinate-inner">
+    <div class="top-block">
+    {%
+      render 'recover-rejuvinate-top-block' with data: section.settings
+    %}
+  </div>
+    {% if section.settings.show_influencer_banner == true %}
+      {% render 'influencer-banner', title: section.settings.ib_title, descrip: section.settings.ib_desc %}
+    {% endif %}
+  <div class="recover-rejuvinate-gallery">
+    {% for block in section.blocks %}
+      {% case block.type %}
+        {% when 'image_list' %}
+          {% render 'recover-gallery-image'  with image: section.settings, block.settings.image, caption: block.settings.caption, insta_link: block.settings.insta_link, insta_username: block.settings.insta_username %}
+      {% endcase %}
+    {% endfor %}
+  </div>
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Expert Section",
+    "settings": [
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Title"
+      },
+       {
+            "type": "richtext",
+            "id": "description",
+            "label": "Description"
+          },
+          {
+            "type": "video",
+            "id": "video",
+            "label": "Video"
+          },
+          {
+            "type": "text",
+            "id": "username",
+            "label": "User's Name"
+          },
+          {
+            "type": "image_picker",
+            "id": "user_image",
+            "label": "User's Image"
+          },
+          {
+            "type": "text",
+            "id": "user_bio",
+            "label": "User's Bio"
+          },
+          {
+            "type": "text",
+            "id": "button_text",
+            "label": "Button Text"
+          },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "Button URL"
+        },
+      {
+        "type": "checkbox",
+        "id": "button_new_tab",
+        "label": "Button New Tab"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_influencer_banner",
+        "label": "Show Influencer Banner"
+      },
+      {
+        "type": "text",
+        "id": "ib_title",
+        "label": "Influencer Banner's Title",
+        "default": "Backed by our industry leading health, fitness & wellness advocates"
+      },
+      {
+        "type": "richtext",
+        "id": "ib_desc",
+        "label": "Influencer Banner's Description",
+        "default": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>"
+      }
+    ],
+    "blocks": [
+      {
+        "type": "image_list",
+        "name": "Image",
+        "settings": [
+          {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image"
+          },
+          {
+            "type": "richtext",
+            "id": "caption",
+            "label": "Caption"
+          },
+          {
+            "type": "text",
+            "id": "insta_username",
+            "label": "Instagram Username",
+            "default": "kivawellness"
+          },
+          {
+            "type": "text",
+            "id": "insta_link",
+            "label": "Instagram Link",
+            "default": "https://www.instagram.com/kivawellness/"
+          }
+        ]
+      }
+    ],
+    "presets": [
+      {
+        "name": "Expert Section"
+      }
+    ]
+  }
+{% endschema %}

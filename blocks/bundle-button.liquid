@@ -1,0 +1,220 @@
+{%- assign has_target = false -%}
+{%- if block.settings.bundle_product != blank or block.settings.bundle_collection != blank -%}
+  {%- assign has_target = true -%}
+{%- endif -%}
+
+{%- unless has_target == false -%}
+  <style>
+    .custom-btn-{{ block.id }} {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: {{ block.settings.background_color | default: '#1a1a1a' }};
+      color: {{ block.settings.text_color | default: '#ffffff' }};
+      border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: '#1a1a1a' }};
+      border-radius: {{ block.settings.border_radius | default: 4 }}px;
+      font-size: {{ block.settings.font_size | default: 15 }}px;
+      font-weight: {{ block.settings.font_weight | default: '600' }};
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      padding: {{ block.settings.padding_vertical | default: 12 }}px {{ block.settings.padding_horizontal | default: 24 }}px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      {%- if block.settings.width == 'custom' -%}
+        width: {{ block.settings.custom_width | default: 100 }}%;
+      {%- elsif block.settings.width == 'fill' -%}
+        width: 100%;
+      {%- else -%}
+        width: fit-content;
+      {%- endif -%}
+    }
+    .custom-btn-{{ block.id }}:hover {
+      background: {{ block.settings.hover_background_color | default: block.settings.background_color | default: '#333333' }};
+      color: {{ block.settings.hover_text_color | default: block.settings.text_color | default: '#ffffff' }};
+      {%- if block.settings.hover_border_color != blank -%}
+        border-color: {{ block.settings.hover_border_color }};
+      {%- endif -%}
+    }
+    .custom-btn-{{ block.id }}__chevron {
+      flex-shrink: 0;
+      width: 0.85em;
+      height: 0.85em;
+    }
+  </style>
+  {%- liquid
+    if block.settings.bundle_product != blank
+      assign button_url = block.settings.bundle_product.url
+    else
+      assign button_url = block.settings.bundle_collection.url
+    endif
+  -%}
+  
+  <a
+    href="{{ button_url }}"
+    class="custom-btn-{{ block.id }}"
+    {% if block.settings.open_in_new_tab %}
+      target="_blank" rel="noopener"
+    {% endif %}
+    {{ block.shopify_attributes }}
+  >
+    {{ block.settings.label | default: 'Button' }}
+    {%- if block.settings.show_chevron -%}
+      <svg
+        class="custom-btn-{{ block.id }}__chevron"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    {%- endif -%}
+  </a>
+{%- endunless -%}
+
+{% schema %}
+{
+  "name": "Bundle Button",
+  "tag": null,
+  "settings": [
+    { "type": "text", "id": "label", "label": "Label", "default": "Bundle & Save" },
+    {
+      "type": "product",
+      "id": "bundle_product",
+      "label": "Bundle product",
+      "info": "Links to a specific bundle product. If both a product and a collection are set below, the product takes priority."
+    },
+    {
+      "type": "collection",
+      "id": "bundle_collection",
+      "label": "Bundle collection",
+      "info": "Links to a collection instead — useful when a product has multiple bundle options to choose from. Only used if no bundle product is selected above."
+    },
+    {
+      "type": "paragraph",
+      "content": "The button only appears when a product or a collection is selected above."
+    },
+    { "type": "checkbox", "id": "open_in_new_tab", "label": "Open in new tab", "default": false },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#1a1a1a" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#ffffff" },
+    { "type": "color", "id": "border_color", "label": "Border", "default": "#1a1a1a" },
+    {
+      "type": "color",
+      "id": "hover_background_color",
+      "label": "Background (hover)",
+      "info": "Defaults to the main background if left blank."
+    },
+    {
+      "type": "color",
+      "id": "hover_text_color",
+      "label": "Text (hover)",
+      "info": "Defaults to the main text color if left blank."
+    },
+    { "type": "color", "id": "hover_border_color", "label": "Border (hover)" },
+
+    { "type": "header", "content": "Shape" },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+
+    { "type": "header", "content": "Text" },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_chevron",
+      "label": "Show right chevron",
+      "default": false
+    },
+
+    { "type": "header", "content": "Padding" },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+
+    { "type": "header", "content": "Width" },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Width",
+      "options": [
+        { "value": "fit-content", "label": "Fit content" },
+        { "value": "fill", "label": "Full width" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom width",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    }
+  ],
+  "presets": [{ "name": "Bundle Button" }]
+}
+{% endschema %}

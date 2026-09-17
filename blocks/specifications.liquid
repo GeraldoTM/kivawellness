@@ -1,0 +1,369 @@
+{%- doc -%}
+  Renders a "Specifications" trigger button inside an accordion row. Clicking
+  it opens a slide-out drawer (from the right) containing structured spec
+  data pulled from a product_specifications metaobject.
+
+  Requires a product metafield (metaobject reference) pointing to an entry
+  of the "product_specifications" metaobject definition.
+{%- enddoc -%}
+
+{% liquid
+  assign product = closest.product
+  assign specs = product.metafields.custom.specifications_flyout.value
+  assign drawer_id = 'SpecsDrawer-' | append: block.id
+%}
+
+{% if specs %}
+  <div class="specifications-trigger" {{ block.shopify_attributes }}>
+    <button
+      type="button"
+      class="specifications-button"
+      data-specifications-trigger
+      aria-haspopup="dialog"
+      aria-controls="{{ drawer_id }}"
+    >
+      {% if block.settings.icon != blank %}
+        <span class="svg-wrapper specifications-button__icon" aria-hidden="true">
+          {{- block.settings.icon | inline_asset_content -}}
+        </span>
+      {% endif %}
+      <span class="specifications-button__label">{{ block.settings.button_label | default: 'Specifications' }}</span>
+      <span class="svg-wrapper specifications-button__chevron" aria-hidden="true">
+        {{- 'icon-caret.svg' | inline_asset_content -}}
+      </span>
+    </button>
+  </div>
+
+  <div
+    id="{{ drawer_id }}"
+    class="specifications-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="{{ drawer_id }}-title"
+    data-specifications-drawer
+  >
+    <button type="button" class="specifications-drawer__close" data-specifications-close aria-label="Close">
+      <svg
+        height="24"
+        width="24"
+        version="1.1"
+        id="Capa_1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        viewBox="0 0 185.343 185.343"
+        xml:space="preserve"
+      >
+        <g>
+        	<g>
+        		<path style="fill:#010002;" d="M51.707,185.343c-2.741,0-5.493-1.044-7.593-3.149c-4.194-4.194-4.194-10.981,0-15.175
+        			l74.352-74.347L44.114,18.32c-4.194-4.194-4.194-10.987,0-15.175c4.194-4.194,10.987-4.194,15.18,0l81.934,81.934
+        			c4.194,4.194,4.194,10.987,0,15.175l-81.934,81.939C57.201,184.293,54.454,185.343,51.707,185.343z"/>
+        	</g>
+        </g>
+      </svg>
+    </button>
+
+    <div class="specifications-drawer__content">
+      <h3 id="{{ drawer_id }}-title" class="specifications-drawer__title">
+        {{ block.settings.title | default: 'Dimensions and weights' }}
+      </h3>
+
+      {% if specs.general_details_rich != blank %}
+        <div class="specifications-drawer__rich-text">
+          {{ specs.general_details_rich | metafield_tag }}
+        </div>
+      {% else %}
+        <dl class="specifications-drawer__grid">
+          {% if specs.spec_height != blank %}
+            <dt>{{ block.settings.height_label | default: 'Height' }}</dt>
+            <dd>{{ specs.spec_height }}{{ block.settings.unit_suffix }}</dd>
+          {% endif %}
+
+          {% if specs.spec_width != blank %}
+            <dt>{{ block.settings.width_label | default: 'Width' }}</dt>
+            <dd>{{ specs.spec_width }}{{ block.settings.unit_suffix }}</dd>
+          {% endif %}
+
+          {% if specs.spec_depth_min != blank %}
+            <dt>{{ block.settings.depth_label | default: 'Depth' }}</dt>
+            <dd>
+              {{ specs.spec_depth_min }}
+              {%- if specs.spec_depth_max != blank and specs.spec_depth_max != specs.spec_depth_min -%}
+                /{{ specs.spec_depth_max }}
+              {%- endif -%}
+              {{ block.settings.unit_suffix }}
+            </dd>
+          {% endif %}
+
+          {% if specs.seating_height != blank %}
+            <dt>{{ block.settings.seating_height_label | default: 'Seating height' }}</dt>
+            <dd>{{ specs.seating_height }}{{ block.settings.unit_suffix }}</dd>
+          {% endif %}
+
+          {% if specs.spec_weight != blank %}
+            <dt>{{ block.settings.weight_label | default: 'Weight' }}</dt>
+            <dd>{{ specs.spec_weight }}{{ block.settings.weight_unit_suffix }}</dd>
+          {% endif %}
+
+          {% if specs.maximum_weight_load != blank %}
+            <dt>{{ block.settings.max_weight_label | default: 'Maximum weight load' }}</dt>
+            <dd>{{ specs.maximum_weight_load }}{{ block.settings.weight_unit_suffix }}</dd>
+          {% endif %}
+        </dl>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="specifications-drawer__overlay" data-specifications-overlay hidden></div>
+{% endif %}
+
+{% stylesheet %}
+  .specifications-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 8px 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-foreground, currentColor);
+  }
+
+  .specifications-button__icon svg,
+  .specifications-button__chevron svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .specifications-button__chevron svg {
+    transform: rotate(-90deg);
+  }
+
+  .specifications-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(calc(100vw - 40px), 420px);
+    background: var(--color-background, #fff);
+    color: var(--color-foreground, currentColor);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    z-index: 10000;
+    transform: translateX(100%);
+    transition: transform 0.35s ease-in-out;
+    overflow-y: auto;
+  }
+
+  .specifications-drawer.is-active {
+    transform: translateX(0);
+  }
+
+  .specifications-drawer__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+  }
+
+  .specifications-drawer__overlay.is-active {
+    opacity: 1;
+  }
+
+  .specifications-drawer__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: inherit;
+  }
+
+  .specifications-drawer__content {
+    padding: 48px 32px 32px;
+  }
+
+  .specifications-drawer__title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: inherit;
+  }
+
+  .specifications-drawer__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 16px;
+    margin: 0;
+  }
+
+  .specifications-drawer__grid dt {
+    font-size: 14px;
+    color: rgb(var(--color-foreground-rgb, 0 0 0) / 0.6);
+  }
+
+  .specifications-drawer__grid dd {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    text-align: right;
+    color: inherit;
+  }
+
+  .specifications-drawer__rich-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: inherit;
+  }
+  .specifications-drawer__rich-text p {
+    margin: 0 0 12px;
+  }
+  .specifications-drawer__rich-text p:last-child {
+    margin-bottom: 0;
+  }
+  .specifications-drawer__rich-text ul {
+    margin: 0;
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: disc;
+  }
+  .specifications-drawer__rich-text li {
+    line-height: 1.5;
+  }
+  .specifications-drawer__rich-text a {
+    color: inherit;
+    text-decoration: underline;
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    function initSpecificationsButtons() {
+      document.querySelectorAll('[data-specifications-trigger]').forEach(function (btn) {
+        if (btn.dataset.bound === 'true') return;
+        btn.dataset.bound = 'true';
+
+        var drawerId = btn.getAttribute('aria-controls');
+        var drawer = document.getElementById(drawerId);
+        if (!drawer) return;
+
+        var overlay = drawer.nextElementSibling;
+
+        if (overlay) document.body.appendChild(overlay);
+        document.body.appendChild(drawer);
+
+        var closeBtn = drawer.querySelector('[data-specifications-close]');
+
+        function open() {
+          drawer.classList.add('is-active');
+          if (overlay) {
+            overlay.hidden = false;
+            requestAnimationFrame(function () {
+              overlay.classList.add('is-active');
+            });
+          }
+          document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+          drawer.classList.remove('is-active');
+          if (overlay) {
+            overlay.classList.remove('is-active');
+            setTimeout(function () {
+              overlay.hidden = true;
+            }, 350);
+          }
+          document.body.style.overflow = '';
+        }
+
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          open();
+        });
+
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        if (overlay) overlay.addEventListener('click', close);
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && drawer.classList.contains('is-active')) {
+            close();
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSpecificationsButtons);
+    } else {
+      initSpecificationsButtons();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Specifications",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Specifications"
+    },
+    {
+      "type": "text",
+      "id": "icon",
+      "label": "Icon filename (optional)",
+      "info": "e.g. icon-ruler.svg — must exist in your theme's assets folder."
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Drawer title",
+      "default": "Dimensions and weights"
+    },
+    {
+      "type": "header",
+      "content": "Field labels"
+    },
+    { "type": "text", "id": "height_label", "label": "Height label", "default": "Height" },
+    { "type": "text", "id": "width_label", "label": "Width label", "default": "Width" },
+    { "type": "text", "id": "depth_label", "label": "Depth label", "default": "Depth" },
+    { "type": "text", "id": "seating_height_label", "label": "Seating height label", "default": "Seating height" },
+    { "type": "text", "id": "weight_label", "label": "Weight label", "default": "Weight" },
+    { "type": "text", "id": "max_weight_label", "label": "Max weight load label", "default": "Maximum weight load" },
+    {
+      "type": "header",
+      "content": "Units"
+    },
+    {
+      "type": "text",
+      "id": "unit_suffix",
+      "label": "Dimension unit suffix",
+      "default": " cm",
+      "info": "Appended to height, width, seating height, and depth."
+    },
+    {
+      "type": "text",
+      "id": "weight_unit_suffix",
+      "label": "Weight unit suffix",
+      "default": " kg",
+      "info": "Appended to weight and max weight load."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Specifications"
+    }
+  ]
+}
+{% endschema %}

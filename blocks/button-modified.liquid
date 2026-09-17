@@ -1,0 +1,232 @@
+<style>
+  .custom-btn-{{ block.id }} {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: {{ block.settings.background_color | default: '#1a1a1a' }};
+    color: {{ block.settings.text_color | default: '#ffffff' }};
+    border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: '#1a1a1a' }};
+    border-radius: {{ block.settings.border_radius | default: 4 }}px;
+    font-size: {{ block.settings.font_size | default: 15 }}px;
+    font-weight: {{ block.settings.font_weight | default: '600' }};
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    padding: {{ block.settings.padding_vertical | default: 12 }}px {{ block.settings.padding_horizontal | default: 24 }}px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    {%- if block.settings.width == 'custom' -%}
+      width: {{ block.settings.custom_width | default: 100 }}%;
+    {%- elsif block.settings.width == 'fill' -%}
+      width: 100%;
+    {%- else -%}
+      width: fit-content;
+    {%- endif -%}
+  }
+  .custom-btn-{{ block.id }}:hover {
+    background: {{ block.settings.hover_background_color | default: block.settings.background_color | default: '#333333' }};
+    color: {{ block.settings.hover_text_color | default: block.settings.text_color | default: '#ffffff' }};
+    {%- if block.settings.hover_border_color != blank -%}
+      border-color: {{ block.settings.hover_border_color }};
+    {%- endif -%}
+  }
+  .custom-btn-{{ block.id }} .custom-btn-chevron {
+    width: 0.85em;
+    height: 0.85em;
+    flex-shrink: 0;
+    color: currentColor;
+    transition: transform 0.15s ease;
+  }
+  .custom-btn-{{ block.id }}:hover .custom-btn-chevron {
+    transform: translateX(2px);
+  }
+</style>
+
+{%- capture chevron_icon -%}
+  <svg class="custom-btn-chevron" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+{%- endcapture -%}
+
+{%- if block.settings.action == 'open_comparison_flyout' or block.settings.action == 'open_comparison_drawer' -%}
+  <button type="button" class="custom-btn-{{ block.id }}" id="custom-btn-{{ block.id }}" {{ block.shopify_attributes }}>
+    {{ block.settings.label | default: 'Compare' }}
+    {%- if block.settings.show_chevron -%}{{ chevron_icon }}{%- endif -%}
+  </button>
+  <script>
+    (function () {
+      var btn = document.getElementById('custom-btn-{{ block.id }}');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        {%- if block.settings.action == 'open_comparison_drawer' -%}
+          var trigger = document.querySelector('[id^="pc-open-drawer-"]') || document.getElementById('pc-open-drawer');
+        {%- else -%}
+          var trigger = document.querySelector('[id^="pc-open-table-flyout-"]') || document.getElementById('pc-open-table-flyout');
+        {%- endif -%}
+        if (trigger) {
+          trigger.click();
+        } else {
+          console.warn(
+            '[Custom Button] No comparison {% if block.settings.action == "open_comparison_drawer" %}drawer{% else %}flyout{% endif %} trigger found on this page.'
+          );
+        }
+      });
+    })();
+  </script>
+{%- else -%}
+  <a
+    href="{{ block.settings.link | default: '#' }}"
+    class="custom-btn-{{ block.id }}"
+    {% if block.settings.open_in_new_tab %}
+      target="_blank" rel="noopener"
+    {% endif %}
+    {{ block.shopify_attributes }}
+  >
+    {{ block.settings.label | default: 'Button' }}
+    {%- if block.settings.show_chevron -%}{{ chevron_icon }}{%- endif -%}
+  </a>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Custom button",
+  "tag": null,
+  "settings": [
+    { "type": "text", "id": "label", "label": "Label", "default": "Button" },
+    {
+      "type": "select",
+      "id": "action",
+      "label": "Action",
+      "options": [
+        { "value": "link", "label": "Go to link" },
+        { "value": "open_comparison_flyout", "label": "Open comparison flyout" },
+        { "value": "open_comparison_drawer", "label": "Open comparison drawer" }
+      ],
+      "default": "link",
+      "info": "\"Open comparison flyout\" or \"Open comparison drawer\" finds and triggers the Product Comparison section's flyout or drawer elsewhere on the page — Link and Open in new tab are ignored in these modes."
+    },
+    { "type": "url", "id": "link", "label": "Link" },
+    { "type": "checkbox", "id": "open_in_new_tab", "label": "Open in new tab", "default": false },
+    {
+      "type": "checkbox",
+      "id": "show_chevron",
+      "label": "Show chevron",
+      "default": false,
+      "info": "Adds a chevron to the right of the label. Matches the button's text color and scales with its font size automatically."
+    },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#1a1a1a" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#ffffff" },
+    { "type": "color", "id": "border_color", "label": "Border", "default": "#1a1a1a" },
+    {
+      "type": "color",
+      "id": "hover_background_color",
+      "label": "Background (hover)",
+      "info": "Defaults to the main background if left blank."
+    },
+    {
+      "type": "color",
+      "id": "hover_text_color",
+      "label": "Text (hover)",
+      "info": "Defaults to the main text color if left blank."
+    },
+    { "type": "color", "id": "hover_border_color", "label": "Border (hover)" },
+
+    { "type": "header", "content": "Shape" },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+
+    { "type": "header", "content": "Text" },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+
+    { "type": "header", "content": "Padding" },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+
+    { "type": "header", "content": "Width" },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Width",
+      "options": [
+        { "value": "fit-content", "label": "Fit content" },
+        { "value": "fill", "label": "Full width" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom width",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    }
+  ],
+  "presets": [{ "name": "Custom button" }]
+}
+{% endschema %}

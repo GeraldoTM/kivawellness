@@ -1,0 +1,917 @@
+{%- liquid
+  assign max_products = 4
+  assign eligible_products = ''
+  assign eligible_array = eligible_products | split: ','
+  for p in products
+    if p.metafields.custom.comparison_enabled and p.metafields.custom.comparison_profile
+      assign eligible_array = eligible_array | concat: p
+    endif
+  endfor
+  assign eligible_array = eligible_array | slice: 0, max_products
+-%}
+
+<style>
+  .scd-wrap {
+    --scd-font-body: var(--font-body--family, 'Inter', sans-serif);
+    --scd-font-heading: var(--font-heading--family, 'Inter', sans-serif);
+    --scd-color-bg: var(--color-background, #ffffff);
+    --scd-color-fg: var(--color-foreground, #1a1a1a);
+    --scd-color-border: var(--color-border, #e0e0e0);
+    --scd-color-muted: #888888;
+    --scd-color-accent: {{ accent_color | default: '#c0392b' }};
+    --scd-color-accent-hover: {{ accent_color_hover | default: '#a93226' }};
+    --scd-color-tag-bg: #f5f5f0;
+    --scd-color-tag-border: #d0cfc8;
+    --scd-color-header-bg: #f9f9f7;
+    --scd-color-drawer-bg: #ffffff;
+    --scd-radius: 4px;
+    --scd-col-label: 200px;
+    --scd-transition: 0.2s ease;
+    font-family: var(--scd-font-body);
+    color: var(--scd-color-fg);
+    background: var(--scd-color-bg);
+  }
+
+  .scd-page-header { padding: 48px 0 32px; }
+  .scd-page-header h1 {
+    font-family: var(--scd-font-heading); font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; line-height: 1.1;
+  }
+  .scd-page-header p { font-size: 0.9375rem; color: var(--scd-color-muted); margin: 0; }
+
+  .scd-table-outer {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--scd-color-border); border-radius: var(--scd-radius);
+  }
+  .scd-table {
+    display: grid;
+    grid-template-columns: var(--scd-col-label) repeat({{ eligible_array.size | default: 1 }}, 1fr);
+    min-width: 700px;
+  }
+
+  .scd-product-header-row { display: contents; }
+  .scd-label-spacer {
+    background: var(--scd-color-header-bg); border-bottom: 1px solid var(--scd-color-border);
+    padding: 24px 20px; display: flex; align-items: flex-end;
+  }
+  .scd-label-spacer span {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--scd-color-muted);
+  }
+
+  .scd-product-card {
+    background: var(--scd-color-header-bg); border-left: 1px solid var(--scd-color-border);
+    border-bottom: 1px solid var(--scd-color-border); padding: 20px 16px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  }
+  .scd-product-tag {
+    display: inline-block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; background: var(--scd-color-tag-bg);
+    border: 1px solid var(--scd-color-tag-border); border-radius: 100px; padding: 3px 10px;
+    color: #555; white-space: nowrap;
+  }
+  .scd-product-img { width: 120px; height: 100px; object-fit: cover; border-radius: var(--scd-radius); background: #ece9e4; }
+  .scd-product-name {
+    font-family: var(--scd-font-heading); font-size: 1.125rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; margin: 0; line-height: 1.2;
+  }
+  .scd-product-tagline { font-size: 0.8125rem; color: var(--scd-color-muted); margin: 0; line-height: 1.4; }
+  .scd-product-highlight { font-size: 0.75rem; color: var(--scd-color-accent); margin: 0; font-weight: 600; }
+  .scd-product-price { font-size: 0.8125rem; font-weight: 600; color: var(--scd-color-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+  .scd-product-price strong { color: var(--scd-color-fg); font-size: 1rem; }
+  .scd-soldout-badge { font-size: 0.6875rem; font-weight: 700; color: #a93226; text-transform: uppercase; }
+  .scd-btn-view {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--scd-color-accent);
+    background: none; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    padding: 0; text-decoration: none; transition: color var(--scd-transition);
+  }
+  .scd-btn-view:hover { color: var(--scd-color-accent-hover); }
+  .scd-btn-view svg { width: 14px; height: 14px; }
+
+  .scd-row { display: contents; }
+  .scd-row-label {
+    display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 14px 20px;
+    border-bottom: 1px solid var(--scd-color-border); background: var(--scd-color-bg);
+  }
+  .scd-row-label strong { font-size: 0.8125rem; font-weight: 600; color: var(--scd-color-fg); }
+  .scd-row-value {
+    display: flex; align-items: center; justify-content: center; padding: 14px 16px;
+    border-left: 1px solid var(--scd-color-border); border-bottom: 1px solid var(--scd-color-border);
+    font-size: 0.875rem; text-align: center; line-height: 1.4; color: var(--scd-color-fg); background: var(--scd-color-bg);
+  }
+  .scd-row:hover .scd-row-label, .scd-row:hover .scd-row-value { background: #fafaf8; }
+  .scd-check { color: #2e7d32; font-weight: 700; }
+  .scd-dash { color: var(--scd-color-muted); }
+
+  .scd-sticky-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #f5f5f2;
+    border-top: 1px solid var(--scd-color-border); z-index: 100; padding: 12px 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .scd-sticky-bar-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .scd-sticky-bar-left svg { width: 32px; height: 32px; color: var(--scd-color-muted); }
+  .scd-sticky-bar-label strong { display: block; font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--scd-color-fg); }
+  .scd-sticky-bar-label span { font-size: 0.75rem; color: var(--scd-color-muted); }
+  .scd-sticky-chips { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .scd-sticky-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--scd-color-border); border-radius: var(--scd-radius); padding: 6px 12px; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; }
+  .scd-btn-compare-sticky {
+    background: var(--scd-color-fg); color: #fff; border: none; border-radius: var(--scd-radius);
+    padding: 10px 20px; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.04em;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  }
+
+  .scd-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+  .scd-drawer-overlay.is-open { opacity: 1; pointer-events: all; }
+  .scd-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 95vw); background: var(--scd-color-drawer-bg);
+    z-index: 201; display: flex; flex-direction: column; transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  }
+  .scd-drawer.is-open { transform: translateX(0); }
+  .scd-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--scd-color-border); flex-shrink: 0; }
+  .scd-drawer-header h2 { font-family: var(--scd-font-heading); font-size: 0.875rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; }
+  .scd-drawer-close { background: none; border: none; cursor: pointer; padding: 4px; color: var(--scd-color-fg); display: flex; align-items: center; }
+  .scd-drawer-tabs { display: flex; border-bottom: 1px solid var(--scd-color-border); flex-shrink: 0; }
+  .scd-drawer-tab {
+    flex: 1; padding: 12px 8px; background: none; border: none; border-bottom: 2px solid transparent;
+    font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; color: var(--scd-color-muted); transition: color var(--scd-transition), border-color var(--scd-transition);
+  }
+  .scd-drawer-tab.active { color: var(--scd-color-fg); border-bottom-color: var(--scd-color-accent); }
+  .scd-drawer-body { flex: 1; overflow-y: auto; padding: 0 24px 24px; }
+  .scd-drawer-panel[hidden] { display: none; }
+  .scd-drawer-group { margin-top: 24px; }
+  .scd-drawer-group h3 {
+    font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--scd-color-fg); margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid var(--scd-color-border);
+  }
+  .scd-drawer-spec-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; border-bottom: 1px solid #f0f0ee; font-size: 0.875rem; }
+  .scd-drawer-spec-row:last-child { border-bottom: none; }
+  .scd-drawer-spec-label { color: var(--scd-color-muted); flex-shrink: 0; }
+  .scd-drawer-spec-value { color: var(--scd-color-fg); font-weight: 500; text-align: right; }
+  .scd-drawer-cta { padding: 20px 24px; border-top: 1px solid var(--scd-color-border); flex-shrink: 0; }
+  .scd-drawer-cta a {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    background: var(--scd-color-accent); color: #fff; text-decoration: none; border-radius: var(--scd-radius);
+    padding: 14px 20px; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; transition: background var(--scd-transition);
+  }
+  .scd-drawer-cta a:hover { background: var(--scd-color-accent-hover); }
+
+  @media (max-width: 749px) {
+    .scd-page-header { padding: 32px 0 20px; }
+    .scd-table { grid-template-columns: 130px repeat({{ eligible_array.size | default: 1 }}, minmax(140px, 1fr)); }
+    .scd-row-label { padding: 12px 12px; }
+    .scd-row-value { padding: 12px 8px; font-size: 0.8125rem; }
+    .scd-sticky-bar { padding: 10px 16px; gap: 12px; }
+    .scd-sticky-chips { display: none; }
+  }
+
+  .scd-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; padding-bottom: 80px; }
+  .scd-empty-notice { padding: 40px 24px; text-align: center; color: var(--scd-color-muted); }
+</style>
+
+<div class="scd-wrap">
+  <div class="scd-container">
+    <div class="scd-page-header">
+      <h1>{{ heading | default: 'Compare Saunas' }}</h1>
+      <p>
+        {{
+          subheading
+          | default: 'Compare up to 4 models to find the perfect sauna for your space and wellness goals.'
+        }}
+      </p>
+    </div>
+
+    {%- if eligible_array.size == 0 -%}
+      <div class="scd-empty-notice">
+        No comparison-enabled products selected. Add products, and make sure each has
+        <code>custom.comparison_enabled</code> = true and a linked Comparison Profile.
+      </div>
+    {%- else -%}
+      <div class="scd-table-outer">
+        <div class="scd-table">
+          <div class="scd-product-header-row">
+            <div class="scd-label-spacer">
+              <span>{{ column_label | default: 'Key Features' }}</span>
+            </div>
+
+            {%- for product in eligible_array -%}
+              {%- assign profile = product.metafields.custom.comparison_profile.value -%}
+              {%- assign display_image = product.metafields.custom.comparison_image.value
+                | default: product.featured_image
+              -%}
+              <div class="scd-product-card">
+                {%- if profile.badge.value != blank -%}
+                  <span class="scd-product-tag">{{ profile.badge.value }}</span>
+                {%- endif -%}
+
+                {%- if display_image -%}
+                  <img
+                    class="scd-product-img"
+                    src="{{ display_image | image_url: width: 240 }}"
+                    alt="{{ product.title | escape }}"
+                    loading="lazy"
+                  >
+                {%- endif -%}
+
+                <p class="scd-product-name">{{ profile.short_name.value | default: product.title }}</p>
+                {%- if profile.short_description.value != blank -%}
+                  <p class="scd-product-tagline">{{ profile.short_description.value }}</p>
+                {%- endif -%}
+                {%- if profile.highlight.value != blank -%}
+                  <p class="scd-product-highlight">{{ profile.highlight.value }}</p>
+                {%- endif -%}
+
+                {%- if product.available -%}
+                  <p class="scd-product-price">
+                    From <strong>{{ product.price | money }}</strong>
+                  </p>
+                {%- else -%}
+                  <span class="scd-soldout-badge">Sold out</span>
+                {%- endif -%}
+
+                <a href="{{ product.url }}" class="scd-btn-view">
+                  View product
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              </div>
+            {%- endfor -%}
+          </div>
+
+          {%- comment -%} ══ MAIN TABLE ROWS ══ {%- endcomment -%}
+
+          {%- comment -%} Best For {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.best_for.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Best For</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.best_for.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Sauna Type {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.sauna_type.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Sauna Type</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.sauna_type.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Capacity (derived from capacity_min/capacity_max) {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.capacity_min.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Capacity</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign profile = product.metafields.custom.comparison_profile.value -%}
+                {%- assign cmin = profile.capacity_min.value -%}
+                {%- assign cmax = profile.capacity_max.value -%}
+                <div class="scd-row-value">
+                  {%- if cmin == blank -%}
+                    <span class="scd-dash">—</span>
+                  {%- elsif cmax != blank and cmax != cmin -%}
+                    {{ cmin }}–{{ cmax }} People
+                  {%- else -%}
+                    {{ cmin }} Person{% if cmin != 1 %}s{% endif %}
+                  {%- endif -%}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Maximum Temperature {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.max_temperature.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Maximum Temperature</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.max_temperature.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v }}°C
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Heating System {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.heating_system.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Heating System</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.heating_system.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Timber {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.timber.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Timber</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.timber.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Dimensions (derived from width/depth/height mm) {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.width_mm.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Dimensions</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign profile = product.metafields.custom.comparison_profile.value -%}
+                <div class="scd-row-value" style="font-size:0.8125rem;">
+                  {%- if profile.width_mm.value != blank -%}
+                    {{ profile.width_mm.value }} × {{ profile.depth_mm.value }} × {{ profile.height_mm.value }} mm
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif -%}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Indoor / Outdoor {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.location_type.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Indoor / Outdoor</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.location_type.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} Power Requirements {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.power_connection.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Power Requirements</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.power_connection.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%}
+            Controls & Features — composite row summarizing the 5 boolean
+            feature fields as a short comma list, since the main table has
+            one cell per row (the FULL per-feature breakdown lives in the
+            drawer below as individual rows).
+          {%- endcomment -%}
+          <div class="scd-row">
+            <div class="scd-row-label"><strong>Controls &amp; Features</strong></div>
+            {%- for product in eligible_array -%}
+              {%- assign profile = product.metafields.custom.comparison_profile.value -%}
+              {%- assign feature_list = '' -%}
+              {%- if profile.digital_controls.value -%}
+                {%- assign feature_list = feature_list | append: 'Digital Controls, ' -%}
+              {%- endif -%}
+              {%- if profile.wifi_control.value -%}
+                {%- assign feature_list = feature_list | append: 'WiFi, ' -%}
+              {%- endif -%}
+              {%- if profile.interior_lighting.value -%}
+                {%- assign feature_list = feature_list | append: 'Lighting, ' -%}
+              {%- endif -%}
+              {%- if profile.bluetooth.value -%}
+                {%- assign feature_list = feature_list | append: 'Bluetooth, ' -%}
+              {%- endif -%}
+              {%- if profile.chromotherapy.value -%}
+                {%- assign feature_list = feature_list | append: 'Chromotherapy, ' -%}
+              {%- endif -%}
+              {%- assign feature_list = feature_list | strip_newlines | rstrip -%}
+              {%- if feature_list.size > 1 -%}
+                {%- assign feature_list = feature_list
+                  | slice: 0, feature_list.size
+                  | remove: ', '
+                  | replace: ',', ', '
+                -%}
+              {%- endif -%}
+              <div class="scd-row-value" style="font-size:0.8125rem;">
+                {%- if feature_list == blank -%}
+                  <span class="scd-dash">—</span>
+                {%- else -%}
+                  {{ feature_list }}
+                {%- endif -%}
+              </div>
+            {%- endfor -%}
+          </div>
+
+          {%- comment -%} Warranty {%- endcomment -%}
+          {%- assign any_value = false -%}
+          {%- for product in eligible_array -%}
+            {%- if product.metafields.custom.comparison_profile.value.warranty_summary.value != blank -%}
+              {%- assign any_value = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if any_value -%}
+            <div class="scd-row">
+              <div class="scd-row-label"><strong>Warranty</strong></div>
+              {%- for product in eligible_array -%}
+                {%- assign v = product.metafields.custom.comparison_profile.value.warranty_summary.value -%}
+                <div class="scd-row-value">
+                  {% if v != blank -%}
+                    {{- v -}}
+                  {%- else -%}
+                    <span class="scd-dash">—</span>
+                  {%- endif %}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{%- comment -%} ══ Sticky bar + Full Specifications drawer ══ {%- endcomment -%}
+{%- if eligible_array.size > 0 -%}
+  <div class="scd-sticky-bar">
+    <div class="scd-sticky-bar-left">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/>
+      </svg>
+      <div class="scd-sticky-bar-label">
+        <strong>Comparing</strong>
+        <span>
+          {{- eligible_array.size }} sauna{% if eligible_array.size != 1 %}s{% endif -%}
+        </span>
+      </div>
+    </div>
+    <div class="scd-sticky-chips">
+      {%- for product in eligible_array -%}
+        <div class="scd-sticky-chip">
+          {{ product.metafields.custom.comparison_profile.value.short_name.value | default: product.title | upcase }}
+        </div>
+      {%- endfor -%}
+    </div>
+    <div>
+      <button class="scd-btn-compare-sticky" id="scd-open-drawer-{{ dom_id }}" type="button">
+        View full specifications
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="scd-drawer-overlay" id="scd-overlay-{{ dom_id }}"></div>
+  <div class="scd-drawer" id="scd-drawer-{{ dom_id }}" role="dialog" aria-modal="true" aria-label="Full Specifications">
+    <div class="scd-drawer-header">
+      <h2>Full Specifications</h2>
+      <button class="scd-drawer-close" id="scd-close-drawer-{{ dom_id }}" aria-label="Close">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="scd-drawer-tabs">
+      {%- for product in eligible_array -%}
+        <button
+          class="scd-drawer-tab{% if forloop.first %} active{% endif %}"
+          data-product-index="{{ forloop.index0 }}"
+        >
+          {{ product.metafields.custom.comparison_profile.value.short_name.value | default: product.title | upcase }}
+        </button>
+      {%- endfor -%}
+    </div>
+
+    <div class="scd-drawer-body">
+      {%- for product in eligible_array -%}
+        {%- assign profile = product.metafields.custom.comparison_profile.value -%}
+        <div
+          class="scd-drawer-panel"
+          data-panel-index="{{ forloop.index0 }}"
+          {% unless forloop.first %}
+            hidden
+          {% endunless %}
+        >
+          {%- comment -%} Heating group {%- endcomment -%}
+          <div class="scd-drawer-group">
+            <h3>Heating</h3>
+            {%- if profile.min_temperature.value != blank or profile.max_temperature.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Temperature Range</span
+                ><span class="scd-drawer-spec-value">
+                  {{- profile.min_temperature.value | default: '—' }}°C –
+                  {{ profile.max_temperature.value | default: '—' }}°C</span
+                >
+              </div>
+            {%- endif -%}
+            {%- if profile.heating_system.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Heating System</span
+                ><span class="scd-drawer-spec-value">{{ profile.heating_system.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.infrared_spectrum.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Infrared Spectrum</span
+                ><span class="scd-drawer-spec-value">{{ profile.infrared_spectrum.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.heating_elements.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Heating Elements</span
+                ><span class="scd-drawer-spec-value">{{ profile.heating_elements.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.heater_power.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Heater Power</span
+                ><span class="scd-drawer-spec-value">{{ profile.heater_power.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.warm_up_time.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Warm-Up Time</span
+                ><span class="scd-drawer-spec-value">{{ profile.warm_up_time.value }}</span>
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Build group {%- endcomment -%}
+          <div class="scd-drawer-group">
+            <h3>Build</h3>
+            {%- if profile.timber.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Timber</span
+                ><span class="scd-drawer-spec-value">{{ profile.timber.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.width_mm.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Exterior Dimensions</span
+                ><span class="scd-drawer-spec-value">
+                  {{- profile.width_mm.value }} × {{ profile.depth_mm.value }} × {{ profile.height_mm.value }} mm</span
+                >
+              </div>
+            {%- endif -%}
+            {%- if profile.interior_dimensions.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Interior Dimensions</span
+                ><span class="scd-drawer-spec-value">{{ profile.interior_dimensions.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.weight_kg.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Weight</span
+                ><span class="scd-drawer-spec-value">{{ profile.weight_kg.value }} kg</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.glass.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Glass</span
+                ><span class="scd-drawer-spec-value">{{ profile.glass.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.ventilation.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Ventilation</span
+                ><span class="scd-drawer-spec-value">{{ profile.ventilation.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.seating.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Seating</span
+                ><span class="scd-drawer-spec-value">{{ profile.seating.value }}</span>
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Installation group {%- endcomment -%}
+          <div class="scd-drawer-group">
+            <h3>Installation</h3>
+            {%- if profile.location_type.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Location</span
+                ><span class="scd-drawer-spec-value">{{ profile.location_type.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.power_connection.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Power Connection</span
+                ><span class="scd-drawer-spec-value">{{ profile.power_connection.value }}</span>
+              </div>
+            {%- endif -%}
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Electrician Required</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.electrician_required.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            {%- if profile.assembly.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Assembly</span
+                ><span class="scd-drawer-spec-value">{{ profile.assembly.value }}</span>
+              </div>
+            {%- endif -%}
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Professional Installation Available</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.installation_available.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            {%- if profile.floor_requirements.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Floor Requirements</span
+                ><span class="scd-drawer-spec-value">{{ profile.floor_requirements.value }}</span>
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Features group {%- endcomment -%}
+          <div class="scd-drawer-group">
+            <h3>Features</h3>
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Digital Controls</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.digital_controls.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">WiFi Control</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.wifi_control.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Interior Lighting</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.interior_lighting.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Bluetooth / Audio</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.bluetooth.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            <div class="scd-drawer-spec-row">
+              <span class="scd-drawer-spec-label">Chromotherapy</span
+              ><span class="scd-drawer-spec-value">
+                {%- if profile.chromotherapy.value -%}
+                  <span class="scd-check">✓</span>
+                {%- else -%}
+                  <span class="scd-dash">—</span>
+                {%- endif -%}
+              </span>
+            </div>
+            {%- if profile.airflow_system.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Airflow System</span
+                ><span class="scd-drawer-spec-value">{{ profile.airflow_system.value }}</span>
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Warranty group {%- endcomment -%}
+          <div class="scd-drawer-group">
+            <h3>Warranty</h3>
+            {%- if profile.warranty_summary.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Summary</span
+                ><span class="scd-drawer-spec-value">{{ profile.warranty_summary.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.structural_warranty.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Structural</span
+                ><span class="scd-drawer-spec-value">{{ profile.structural_warranty.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.heating_warranty.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Heating</span
+                ><span class="scd-drawer-spec-value">{{ profile.heating_warranty.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.component_warranty.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Electrical / Components</span
+                ><span class="scd-drawer-spec-value">{{ profile.component_warranty.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.commercial_warranty.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Commercial</span
+                ><span class="scd-drawer-spec-value">{{ profile.commercial_warranty.value }}</span>
+              </div>
+            {%- endif -%}
+            {%- if profile.warranty_detail.value != blank -%}
+              <div class="scd-drawer-spec-row">
+                <span class="scd-drawer-spec-label">Details</span
+                ><span class="scd-drawer-spec-value">{{ profile.warranty_detail.value }}</span>
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+
+    {% comment %}
+      <div class="scd-drawer-cta">
+        <a href="{{ eligible_array.first.url | default: '#' }}" id="scd-drawer-cta-link-{{ dom_id }}">
+          View full product page
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    {% endcomment %}
+  </div>
+
+  <script>
+    (function () {
+      var domId = {{ dom_id | json }};
+      var overlay = document.getElementById('scd-overlay-' + domId);
+      var drawer = document.getElementById('scd-drawer-' + domId);
+      var openBtn = document.getElementById('scd-open-drawer-' + domId);
+      var closeBtn = document.getElementById('scd-close-drawer-' + domId);
+      if (!drawer) return;
+
+      var productUrls = [
+        {%- for product in eligible_array -%}
+          {{ product.url | json }}{% unless forloop.last %},{% endunless %}
+        {%- endfor -%}
+      ];
+
+      function openDrawer() { overlay.classList.add('is-open'); drawer.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
+      function closeDrawer() { overlay.classList.remove('is-open'); drawer.classList.remove('is-open'); document.body.style.overflow = ''; }
+
+      if (openBtn) openBtn.addEventListener('click', openDrawer);
+      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+      if (overlay) overlay.addEventListener('click', closeDrawer);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+
+      var tabs = drawer.querySelectorAll('.scd-drawer-tab');
+      var panels = drawer.querySelectorAll('.scd-drawer-panel');
+      var ctaLink = document.getElementById('scd-drawer-cta-link-' + domId);
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var index = tab.getAttribute('data-product-index');
+          tabs.forEach(function (t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel-index') !== index; });
+          if (ctaLink && productUrls[index]) ctaLink.setAttribute('href', productUrls[index]);
+        });
+      });
+    })();
+  </script>
+{%- endif -%}

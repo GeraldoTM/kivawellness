@@ -1,0 +1,78 @@
+{%- if paginate.pages > 1 -%}
+  <style>
+    .jmp-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .jmp-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 100px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: rgba(var(--color-foreground, 26 26 26), 0.7);
+      background: rgba(var(--color-foreground, 26 26 26), 0.05);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    a.jmp-item:hover {
+      background: rgba(var(--color-foreground, 26 26 26), 0.1);
+      color: rgb(var(--color-foreground, 26 26 26));
+    }
+    .jmp-item--current {
+      background: rgb(var(--color-foreground, 26 26 26));
+      color: rgb(var(--color-background, 255 255 255));
+    }
+    .jmp-item--dots {
+      background: none;
+      color: rgba(var(--color-foreground, 26 26 26), 0.4);
+      min-width: auto;
+      padding: 0 4px;
+    }
+    .jmp-item--arrow svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    @media (max-width: 749px) {
+      .jmp-nav { gap: 6px; }
+      .jmp-item { min-width: 36px; height: 36px; padding: 0 10px; font-size: 0.8125rem; }
+    }
+  </style>
+
+  <nav class="jmp-nav" role="navigation" aria-label="Pagination">
+    {%- if paginate.previous -%}
+      <a href="{{ paginate.previous.url }}" class="jmp-item jmp-item--arrow" aria-label="Previous page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </a>
+    {%- endif -%}
+
+    {%- for part in paginate.parts -%}
+      {%- if part.is_link -%}
+        <a href="{{ part.url }}" class="jmp-item">{{ part.title }}</a>
+      {%- elsif part.title == paginate.current_page -%}
+        <span class="jmp-item jmp-item--current" aria-current="page">{{ part.title }}</span>
+      {%- else -%}
+        <span class="jmp-item jmp-item--dots">{{ part.title }}</span>
+      {%- endif -%}
+    {%- endfor -%}
+
+    {%- if paginate.next -%}
+      <a href="{{ paginate.next.url }}" class="jmp-item jmp-item--arrow" aria-label="Next page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </a>
+    {%- endif -%}
+  </nav>
+{%- endif -%}

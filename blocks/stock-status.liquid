@@ -1,0 +1,255 @@
+{%- doc -%}
+  Stock Status — theme block.
+
+  REPLACES the old metafield-driven "Preorder / Stock Status" block. That
+  version showed whatever text a merchant typed into a metafield, which is
+  how raw item counts ("Only 3 left!") ended up on the page. This version
+  computes the message from the variant's actual inventory_quantity
+  instead, so there's no free-text field for a number to leak through:
+
+    - quantity > threshold  -> "In Stock" message (green check)
+    - quantity <= threshold (and still available) -> "Low Stock" message
+      (amber check)
+    - variant not available -> block hides itself entirely
+
+  The exact wording for each state, the icon colors, and the threshold
+  are all merchant-configurable — only the raw number itself is never
+  shown.
+
+  Updates live when the shopper changes variants via the standard
+  radio-input variant picker, same mechanism as the block this replaces.
+  Scoped to block.id and re-initializes on shopify:section:load so it
+  survives theme-editor reloads.
+{%- enddoc -%}
+
+{%- liquid
+  assign product = closest.product | default: product
+  assign current_variant = product.selected_or_first_available_variant
+  assign threshold = block.settings.low_stock_threshold
+
+  assign stock_state = 'hidden'
+  if current_variant.available
+    if current_variant.inventory_quantity <= threshold
+      assign stock_state = 'low'
+    else
+      assign stock_state = 'in'
+    endif
+  endif
+-%}
+
+<style>
+  .stock-status-{{ block.id }} {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stock-status-{{ block.id }}[hidden] {
+    display: none;
+  }
+
+  .stock-status-{{ block.id }}__icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--stock-color, currentColor);
+  }
+  .stock-status-{{ block.id }}__icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .stock-status-{{ block.id }}__text {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .stock-status-{{ block.id }}__text strong {
+    font-weight: 600;
+    color: var(--stock-color, inherit);
+  }
+
+  .stock-status-{{ block.id }}.is-in {
+    --stock-color: {{ block.settings.in_stock_color | default: '#2e7d32' }};
+  }
+  .stock-status-{{ block.id }}.is-low {
+    --stock-color: {{ block.settings.low_stock_color | default: '#c0780f' }};
+  }
+</style>
+
+<div
+  class="stock-status-{{ block.id }}{% if stock_state != 'hidden' %} is-{{ stock_state }}{% endif %}"
+  id="StockStatus-{{ block.id }}"
+  data-threshold="{{ threshold }}"
+  data-in-label="{{ block.settings.in_stock_label | escape }}"
+  data-in-detail="{{ block.settings.in_stock_detail | escape }}"
+  data-low-label="{{ block.settings.low_stock_label | escape }}"
+  data-low-detail="{{ block.settings.low_stock_detail | escape }}"
+  {% if stock_state == 'hidden' %}hidden{% endif %}
+  {{ block.shopify_attributes }}
+>
+  <span class="stock-status-{{ block.id }}__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 6 9 17l-5-5"></path>
+    </svg>
+  </span>
+  <span class="stock-status-{{ block.id }}__text">
+    <strong data-stock-label>
+      {%- if stock_state == 'low' -%}
+        {{- block.settings.low_stock_label | default: 'Low Stock' -}}
+      {%- else -%}
+        {{- block.settings.in_stock_label | default: 'In Stock' -}}
+      {%- endif -%}
+    </strong>
+    -
+    <span data-stock-detail>
+      {%- if stock_state == 'low' -%}
+        {{- block.settings.low_stock_detail | default: 'Leaves QLD warehouse in 2-3 business days' -}}
+      {%- else -%}
+        {{- block.settings.in_stock_detail | default: 'Leaves QLD warehouse in 2-3 business days' -}}
+      {%- endif -%}
+    </span>
+  </span>
+</div>
+
+<script type="application/json" id="StockStatusJSON-{{ block.id }}">
+  {
+    "variants": [
+      {% for variant in product.variants %}
+        {
+          "title": {{ variant.title | json }},
+          "available": {{ variant.available | json }},
+          "quantity": {{ variant.inventory_quantity | json }}
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ]
+  }
+</script>
+
+<script>
+  (function () {
+    var blockId = {{ block.id | json }};
+
+    function initStockStatus() {
+      var root = document.getElementById('StockStatus-' + blockId);
+      if (!root) return;
+      if (root.dataset.stockInit) return;
+      root.dataset.stockInit = 'true';
+
+      var labelEl = root.querySelector('[data-stock-label]');
+      var detailEl = root.querySelector('[data-stock-detail]');
+      var threshold = parseInt(root.dataset.threshold, 10) || 0;
+      var radios = document.querySelectorAll('fieldset.product-form__input input[type="radio"]');
+
+      var jsonScriptEl = document.getElementById('StockStatusJSON-' + blockId);
+      var productData = null;
+      try {
+        productData = JSON.parse(jsonScriptEl.textContent);
+      } catch (e) {
+        console.error('[Stock Status]', 'FAILED to parse variant JSON.', e);
+      }
+
+      function getSelectedVariantTitle() {
+        var values = [];
+        document.querySelectorAll('fieldset.product-form__input').forEach(function (fieldset) {
+          var checked = fieldset.querySelector('input[type="radio"]:checked');
+          if (checked) values.push(checked.value);
+        });
+        return values.join(' / ');
+      }
+
+      function applyState(state) {
+        root.classList.remove('is-in', 'is-low');
+        if (state === 'hidden') {
+          root.hidden = true;
+          return;
+        }
+        root.hidden = false;
+        root.classList.add('is-' + state);
+        if (state === 'low') {
+          labelEl.textContent = root.dataset.lowLabel;
+          detailEl.textContent = root.dataset.lowDetail;
+        } else {
+          labelEl.textContent = root.dataset.inLabel;
+          detailEl.textContent = root.dataset.inDetail;
+        }
+      }
+
+      function updateStockDisplay() {
+        if (!productData || !Array.isArray(productData.variants)) return;
+
+        var fullTitle = getSelectedVariantTitle();
+        var selectedVariant = productData.variants.find(function (v) {
+          return v.title === fullTitle;
+        });
+        if (!selectedVariant) return;
+
+        if (!selectedVariant.available) {
+          applyState('hidden');
+        } else if (selectedVariant.quantity <= threshold) {
+          applyState('low');
+        } else {
+          applyState('in');
+        }
+      }
+
+      radios.forEach(function (radio) {
+        radio.addEventListener('change', updateStockDisplay);
+      });
+    }
+
+    initStockStatus();
+    document.addEventListener('shopify:section:load', initStockStatus);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Stock Status",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Threshold"
+    },
+    {
+      "type": "range",
+      "id": "low_stock_threshold",
+      "label": "Low stock threshold (units)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "info": "At or below this quantity, shows the Low Stock message instead of In Stock. The actual number is never displayed either way."
+    },
+    {
+      "type": "header",
+      "content": "In Stock message"
+    },
+    { "type": "text", "id": "in_stock_label", "label": "Label", "default": "In Stock" },
+    {
+      "type": "text",
+      "id": "in_stock_detail",
+      "label": "Detail text",
+      "default": "Leaves QLD warehouse in 2-3 business days"
+    },
+    { "type": "color", "id": "in_stock_color", "label": "Icon/label color", "default": "#2e7d32" },
+    {
+      "type": "header",
+      "content": "Low Stock message"
+    },
+    { "type": "text", "id": "low_stock_label", "label": "Label", "default": "Low Stock" },
+    {
+      "type": "text",
+      "id": "low_stock_detail",
+      "label": "Detail text",
+      "default": "Leaves QLD warehouse in 2-3 business days"
+    },
+    { "type": "color", "id": "low_stock_color", "label": "Icon/label color", "default": "#c0780f" }
+  ],
+  "presets": [
+    {
+      "name": "Stock Status"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,293 @@
+{%- doc -%}
+  This block is used to display the add to cart button.
+  Intended for product-form.liquid block.
+
+  @param {string} can_add_to_cart - Whether the product can be added to the cart
+  @param {string} add_to_cart_text - The text of the add to cart button
+{%- enddoc -%}
+
+{% liquid
+  assign scoped_class = block.settings.style_class | append: '--' | append: block.id
+  assign class = 'add-to-cart-button ' | append: block.settings.style_class | append: ' ' | append: scoped_class
+  assign id = 'BuyButtons-ProductSubmitButton-' | append: block.id
+
+  assign display_add_to_cart_text = block.settings.custom_label | default: add_to_cart_text
+
+  assign width_value = '100%'
+  case block.settings.width
+    when 'fit-content'
+      assign width_value = 'fit-content'
+    when 'custom'
+      assign width_value = block.settings.custom_width | append: '%'
+  endcase
+%}
+{% render 'button-custom-styles', block_settings: block.settings, block_id: block.id %}
+{% render 'add-to-cart-button-styles' %}
+{% render 'fly-to-cart-styles' %}
+
+{% liquid
+  assign pad_block_start = block.settings['padding-block-start'] | default: 0
+  assign pad_block_end = block.settings['padding-block-end'] | default: 0
+  assign pad_inline_start = block.settings['padding-inline-start'] | default: 0
+  assign pad_inline_end = block.settings['padding-inline-end'] | default: 0
+  assign border_radius = block.settings.border_radius | default: 0
+  assign button_height = block.settings.button_height | default: 0
+%}
+{% capture padding_style %}padding-block: {{ pad_block_start }}px {{ pad_block_end }}px !important; padding-inline: {{ pad_inline_start }}px {{ pad_inline_end }}px !important; border-radius: {{ border_radius }}px !important;{% if button_height > 0 %} height: {{ button_height }}px !important;{% endif %}{% endcapture %}
+
+<span
+  {{ block.shopify_attributes }}
+  style="--add-to-cart-font-case: {{ settings.button_text_case }};"
+>
+  {% render 'add-to-cart-button',
+    id: id,
+    class: class,
+    can_add_to_cart: can_add_to_cart,
+    product: closest.product,
+    add_to_cart_text: display_add_to_cart_text,
+    data_testid: 'standalone-add-to-cart',
+    visit_product_page: block.settings.visit_product_page,
+    show_icon: block.settings.show_icon,
+    content_alignment: block.settings.content_alignment,
+    padding_style: padding_style,
+    width_value: width_value
+  %}
+</span>
+
+{% stylesheet %}
+  .button-brand-white,
+  .button-brand-black {
+    background-color: #ff5619;
+    border-color: #ff5619;
+  }
+
+  .button-brand-white:hover,
+  .button-brand-black:hover {
+    background-color: #ff5619;
+    border-color: #ff5619;
+    opacity: 0.9;
+  }
+
+  .button-brand-white {
+    color: #ffffff;
+  }
+
+  .button-brand-black {
+    color: #000000;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.add_to_cart",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Behavior"
+    },
+    {
+      "type": "checkbox",
+      "id": "visit_product_page",
+      "label": "Link to product page instead of adding to cart",
+      "info": "When in stock, the button takes the shopper to the product page (with the same variant selected) instead of adding the item straight to the cart. Has no effect on the sold-out / \"Notify me\" state.",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "custom_label",
+      "label": "Custom button label",
+      "info": "Leave blank to use the default label (e.g. \"Add to cart\" / \"Sold out\")."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon",
+      "label": "Show cart icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "Content alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "right",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "center",
+      "info": "Aligns the icon and label within the button. The button itself is always full width."
+    },
+    {
+      "type": "select",
+      "id": "style_class",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "button",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "button-secondary",
+          "label": "t:options.secondary"
+        },
+        {
+          "value": "button-custom",
+          "label": "t:options.custom"
+        },
+        {
+          "value": "button-brand-white",
+          "label": "Brand color white"
+        },
+        {
+          "value": "button-brand-black",
+          "label": "Brand color black"
+        }
+      ],
+      "default": "button-secondary",
+      "info": "t:info.edit_button_style_in_theme_settings"
+    },
+    {
+      "type": "header",
+      "content": "t:content.button_colors",
+      "visible_if": "{{ block.settings.style_class == \"button-custom\" }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_background",
+      "label": "t:settings.background",
+      "default": "{{ settings.color_palette.foreground }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_text",
+      "label": "t:settings.text",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_border",
+      "label": "t:settings.borders",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Shape"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "button_height",
+      "label": "Height",
+      "info": "0 = automatic height based on padding and content.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit"
+        },
+        {
+          "value": "fill",
+          "label": "t:options.fill"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "t:settings.custom_width",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    }
+  ]
+}
+{% endschema %}

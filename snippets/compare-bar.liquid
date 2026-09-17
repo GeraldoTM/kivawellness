@@ -1,0 +1,297 @@
+{%- comment -%}
+  compare-bar.liquid — include ONCE, site-wide, e.g. in theme.liquid just
+  before </body>:
+    {% render 'compare-bar' %}
+
+  Manages the shopper's product-comparison selection in localStorage so it
+  survives navigating between collection/product pages. Exposes a small
+  global API other snippets (like compare-toggle-button.liquid) call:
+
+    window.CompareManager.add(handle, title)
+    window.CompareManager.remove(handle)
+    window.CompareManager.has(handle)      -> boolean
+    window.CompareManager.getAll()         -> [{handle, title}, ...]
+    window.CompareManager.isFull()         -> boolean (max reached)
+    window.CompareManager.MAX              -> 4
+
+  Change compare_noun and max_compare below to match your product type
+  ("sauna", "grill", etc.) and the JS MAX constant near the bottom must
+  match max_compare. Change compare_page_url to wherever the Product
+  Comparison section actually lives.
+{%- endcomment -%}
+
+{%- liquid
+  assign compare_noun = 'sauna'
+  assign max_compare = 4
+  assign compare_page_url = '/pages/compare'
+-%}
+
+<div class="cmp-bar" id="cmp-bar" hidden>
+  <div class="cmp-bar__inner">
+    <div class="cmp-bar__legend">
+      <span class="cmp-bar__legend-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </span>
+      <span class="cmp-bar__legend-text">
+        <strong>Compare up to {{ max_compare }} {{ compare_noun }}s</strong>
+        <span>Select another model to compare</span>
+      </span>
+    </div>
+
+    <div class="cmp-bar__middle">
+      <span class="cmp-bar__count" id="cmp-bar-count"></span>
+      <div class="cmp-bar__chips" id="cmp-bar-chips"></div>
+      <button type="button" class="cmp-bar__clear" id="cmp-bar-clear">Clear all</button>
+    </div>
+
+    <div class="cmp-bar__right">
+      <a href="{{ compare_page_url }}" class="cmp-bar__cta" id="cmp-bar-cta">
+        <span id="cmp-bar-cta-text">Compare</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .cmp-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 400;
+    background: #cdd6cc;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding: 12px 24px;
+  }
+  .cmp-bar[hidden] { display: none; }
+
+  .cmp-bar__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .cmp-bar__legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .cmp-bar__legend-icon {
+    width: 22px; height: 22px;
+    color: #c0392b;
+    flex-shrink: 0;
+  }
+  .cmp-bar__legend-icon svg { width: 100%; height: 100%; }
+  .cmp-bar__legend-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+  .cmp-bar__legend-text strong {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .cmp-bar__legend-text span {
+    font-size: 0.6875rem;
+    color: #555;
+  }
+
+  .cmp-bar__middle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .cmp-bar__count {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cmp-bar__chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cmp-bar__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e3e8e2;
+    border-radius: 100px;
+    padding: 4px 6px 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .cmp-bar__chip-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    padding: 0;
+  }
+  .cmp-bar__chip-remove:hover { background: rgba(0,0,0,0.08); }
+  .cmp-bar__chip-remove svg { width: 10px; height: 10px; }
+
+  .cmp-bar__clear {
+    background: none;
+    border: none;
+    text-decoration: underline;
+    font-size: 0.75rem;
+    color: #555;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .cmp-bar__clear:hover { color: #1a1a1a; }
+
+  .cmp-bar__right { flex-shrink: 0; }
+  .cmp-bar__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    padding: 12px 20px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .cmp-bar__cta svg { width: 15px; height: 15px; }
+
+  @media (max-width: 749px) {
+    .cmp-bar { padding: 10px 16px; }
+    .cmp-bar__inner { gap: 12px; }
+    .cmp-bar__legend-text span { display: none; }
+  }
+</style>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'compareProducts';
+    var MAX = 4;
+
+    function readList() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeList(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {}
+      render();
+      document.dispatchEvent(new CustomEvent('compare:change', { detail: { list: list } }));
+    }
+
+    function add(handle, title) {
+      var list = readList();
+      if (list.length >= MAX) return false;
+      if (list.some(function (p) { return p.handle === handle; })) return true;
+      list.push({ handle: handle, title: title });
+      writeList(list);
+      return true;
+    }
+
+    function remove(handle) {
+      var list = readList().filter(function (p) { return p.handle !== handle; });
+      writeList(list);
+    }
+
+    function clearAll() {
+      writeList([]);
+    }
+
+    function has(handle) {
+      return readList().some(function (p) { return p.handle === handle; });
+    }
+
+    function isFull() {
+      return readList().length >= MAX;
+    }
+
+    function render() {
+      var list = readList();
+      var bar = document.getElementById('cmp-bar');
+      var count = document.getElementById('cmp-bar-count');
+      var chips = document.getElementById('cmp-bar-chips');
+      var ctaText = document.getElementById('cmp-bar-cta-text');
+      var cta = document.getElementById('cmp-bar-cta');
+      if (!bar) return;
+
+      if (list.length === 0) {
+        bar.hidden = true;
+        return;
+      }
+      bar.hidden = false;
+
+      count.textContent = list.length + ' selected';
+      chips.innerHTML = '';
+      list.forEach(function (p) {
+        var chip = document.createElement('div');
+        chip.className = 'cmp-bar__chip';
+        var label = document.createElement('span');
+        label.textContent = p.title;
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'cmp-bar__chip-remove';
+        removeBtn.setAttribute('aria-label', 'Remove ' + p.title);
+        removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+        removeBtn.addEventListener('click', function () { remove(p.handle); });
+        chip.appendChild(label);
+        chip.appendChild(removeBtn);
+        chips.appendChild(chip);
+      });
+
+      ctaText.textContent = 'Compare ' + list.length;
+      cta.href = cta.getAttribute('href').split('?')[0] + '?products=' + list.map(function (p) { return p.handle; }).join(',');
+
+      // Re-sync any toggle buttons already on the page (e.g. after
+      // removing via the bar, a product card's button should un-check).
+      document.dispatchEvent(new CustomEvent('compare:render', { detail: { list: list } }));
+    }
+
+    var clearBtn = document.getElementById('cmp-bar-clear');
+    if (clearBtn) clearBtn.addEventListener('click', clearAll);
+
+    document.addEventListener('DOMContentLoaded', render);
+
+    window.CompareManager = {
+      add: add,
+      remove: remove,
+      clearAll: clearAll,
+      has: has,
+      isFull: isFull,
+      getAll: readList,
+      MAX: MAX
+    };
+  })();
+</script>

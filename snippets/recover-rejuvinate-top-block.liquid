@@ -1,0 +1,148 @@
+{% liquid
+  assign title = data.title
+  assign username = data.username
+  assign user_image = data.user_image
+  assign user_bio = data.user_bio
+  assign video = data.video
+  assign description = data.description
+  assign button_text = data.button_text
+  assign button_url = data.button_url
+%}
+<style>
+  .recover-top-block{
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-direction: column-reverse;
+    color: #4f4540;
+  }
+
+  .recover-top-block .recover-top-right{
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .recover-top-block .recover-top-maintext{
+    color:  var(--stone);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 130%; /* 41.6px */
+  }
+
+  .recover-top-block .recover-top-description{
+      max-width: 520px;
+  }
+    .recover-top-block .recover-top-description, .recover-top-block .recover-top-description * {
+      font-size: 18px;
+      line-height: 150%; /* 27px */
+    }
+
+  .recover-top-block .recover-top-left .recover-top-video-wrapper video{
+    height: min(423px, 50vh);
+    width: min(90vw,520px);
+    border-radius: 5px;
+    object-fit: cover;
+
+  }
+
+    .recover-top-block .recover-top-user-image-wrapper img{
+    height: 40px;
+    width: 40px;
+    object-fit: cover;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .recover-top-block .recover-top-userinfo{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .recover-top-block .recover-top-user-bio{
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 150%; /* 21px */
+  }
+
+  @media (min-width: 768px){
+    .recover-top-block{
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+    }
+    .recover-top-block .recover-top-right{
+      gap: 12px;
+      padding: 24px;
+    }
+      .recover-top-block .recover-top-maintext{
+        font-size: 32px;
+      }
+    .recover-top-block .recover-top-left .recover-top-video-wrapper video{
+      min-width: 380px;
+    }
+    .recover-top-block .recover-top-user-image-wrapper img{
+        height: 60px;
+        width: 60px;
+      }
+  }
+</style>
+<div class="recover-top-block">
+  <div class="recover-top-left">
+    {% if video != blank %}
+      <div class="recover-top-video-wrapper">
+        {{ video | video_tag: image_size: '600x', autoplay: true, muted: true, loop: true }}
+      </div>
+    {% endif %}
+  </div>
+  <div class="recover-top-right">
+    {% if title != blank %}
+      <h2 class="recover-top-maintext">
+        {{ title }}
+      </h2>
+    {% endif %}
+    <div class="recover-top-userinfo">
+      {% if user_image != blank %}
+        <div class="recover-top-user-image-wrapper">
+          {{
+            user_image
+            | image_url: width: 1500
+            | image_tag:
+              loading: 'lazy',
+              width: 'auto',
+              height: 60,
+              widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+              alt: username
+            | escape
+          }}
+        </div>
+      {% endif %}
+      <div class="recover-top-user-details">
+        {% if username != blank %}
+          <h3 class="recover-top-user-name">{{ username }}</h3>
+        {% endif %}
+        {% if user_bio != blank %}
+          <p class="recover-top-user-bio">{{ user_bio }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <p class="recover-top-description">
+      {{ description }}
+    </p>
+    <div class="btn-wrapper">
+      {% if button_text != '' %}
+        <a
+          href="{{ button_url }}"
+          class="btn btn-primary"
+          {% if section.settings.button_new_tab == true %}
+            target="_blank"
+          {% endif %}
+        >
+          {{- button_text -}}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>

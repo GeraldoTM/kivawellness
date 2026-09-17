@@ -1,0 +1,213 @@
+<style>
+    .specifications {
+      /* padding-bottom: 32px; */
+      /* padding-block: 32px; */
+      margin-top: 25px;
+      margin-bottom: 25px;
+    }
+    .specifications > div{
+      max-width: 75rem;
+      padding: 24px 32px;
+      background-color: var(--balance);
+      border-radius: 5px;
+    }
+
+    .specifications h2.heading{
+      color:  var(--stone);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 130%; /* 41.6px */
+    }
+
+    .specifications .top-bar{
+      padding: 12px 12px 0 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-specifications > ul {
+    -webkit-column-gap: 1.5rem;
+    -moz-column-gap: 1.5rem;
+    column-gap: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    row-gap: 2.5rem;
+  }
+
+    .product-specifications > ul > li{
+      padding: 24px;
+    }
+
+  .product-specifications .specification-heading{
+    color: var(--stone);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 150%; /* 27px */
+    margin-bottom: 0px;
+  }
+
+    .specification-header-wrapper{
+        padding-block: 16px;
+       display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 2px solid var(--stone);
+      margin-bottom:12px;
+    }
+  .product-specifications ul li p {
+   color: #4F4540;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%; /* 22.4px */
+  }
+
+    .product-specifications > ul ul {
+    list-style: none; /* Remove default bullets */
+  }
+
+    .product-specifications > ul ul li:first-child{
+      padding-top: 12px;
+    }
+     .product-specifications > ul ul li{
+       padding-bottom: 12px;
+     }
+
+    .product-specifications a{
+      text-decoration: underline;
+    }
+
+  .product-specifications > ul ul li::before {
+    content: "\2022";  /* Add content: \2022 is the CSS Code/unicode for a bullet */
+    color: var(--stone); /* Change the color */
+    font-weight: bold; /* If you want it to be bold */
+    display: inline-block; /* Needed to add space between the bullet and the text */
+    width: 1em; /* Also needed for space (tweak if needed) */
+    margin-left: -1em; /* Also needed for space (tweak if needed) */
+  }
+
+    @media (min-width: 640px) {
+    .product-specifications ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 1rem;
+    }
+  }
+     @media (min-width: 768px){
+         .specifications {
+      /* padding-bottom: 64px; */
+           /* padding-block: 64px; */
+    }
+       .specifications > div{
+         padding: 48px 64px;
+       }
+
+      .specifications h2.heading{
+      font-size: 32px;
+    }
+
+      .specifications .top-bar{
+      padding: 24px 24px 0 24px;
+      gap: 24px;
+    }
+    }
+
+  @media (min-width: 1024px) {
+    .product-specifications ul {
+      -webkit-column-gap: 2rem;
+      -moz-column-gap: 2rem;
+      column-gap: 2rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: none;
+    }
+  }
+</style>
+{% if section.blocks.size > 0 %}
+  <section class="specifications">
+    <div class="m-auto">
+      <div class="relative mx-auto">
+        <div class="top-bar">
+          {% assign heading = section.settings.specifications_heading %}
+          <h2 class="heading">
+            {% if heading != blank %} {{ heading }} {% else %} Technical Specifications {% endif %}
+          </h2>
+          <div class="description">
+            {{ section.settings.specifications_description }}
+          </div>
+        </div>
+        <div class="product-specifications">
+          <ul>
+            {%- for block in section.blocks -%}
+              <li>
+                <div class="specification-header-wrapper">
+                  {% if block.settings.icon != blank %}
+                    {{
+                      block.settings.icon
+                      | image_url: width: 800
+                      | image_tag:
+                        loading: 'lazy',
+                        width: 'auto',
+                        height: 30,
+                        width: 30,
+                        widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                        alt: block.settings.title
+                      | escape
+                    }}
+                  {% endif %}
+                  <p class="specification-heading">{{ block.settings.title }}</p>
+                </div>
+                <div>
+                  {{ block.settings.content }}
+                </div>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endif %}
+{% schema %}
+{
+  "name": "Specifications",
+  "settings": [
+    {
+      "type": "text",
+      "id": "specifications_heading",
+      "label": "Specifications Heading",
+      "default": "Technical Specifications"
+    },
+    {
+      "type": "richtext",
+      "id": "specifications_description",
+      "label": "Specifications description",
+      "default": "<p></p>"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Table row",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Content",
+          "default": "<p></p>"
+        }
+      ]
+    }
+  ],
+
+  "presets": [{ "name": "Specifications" }]
+}
+{% endschema %}

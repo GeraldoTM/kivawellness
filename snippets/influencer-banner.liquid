@@ -1,0 +1,106 @@
+<style>
+  .influencer-banner.image-container {
+    width: 800vw;
+    display: grid;
+    gap: 32px;
+    padding-block: 32px;
+    background: var(--balance);
+  }
+
+  .influencer-banner .image-grid {
+    width: 800vw;
+    display: grid;
+    gap: 12px;
+    overflow: auto;
+    scrollbar-width: none;
+    animation: marquee 120s linear infinite;
+  }
+
+  influencer-banner__name{color: var(--white);}
+
+  .influencer-banner__title{
+     font-size: 24px;
+      font-weight: 700;
+      line-height: 120%;
+      padding-bottom: 24px;
+      max-width: 750px;
+      margin-inline: auto;
+      padding-inline: 16px;
+      text-align: center;
+    color: var(--stone);
+  }
+
+  .influencer-banner__title-wrapper{
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .gap-4{
+    gap: 16px;
+  }
+
+  .influencer-banner__card-overlay{
+   background: linear-gradient(to top,#00000080, transparent);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+     cursor: pointer;
+  }
+
+  @media (min-width: 768px) {
+    .influencer-banner__title{
+     font-size: 32px;
+    }
+    .influencer-banner__name{
+     font-size: 24px;
+  }
+
+  }
+
+    @media (min-width: 1024px){
+     .influencer-banner.image-container {
+      padding-block: 64px;
+      gap: 64px;
+      width: 600vw;
+    }
+    .influencer-banner  .image-grid{
+      gap: 24px;
+      width: 600vw;
+    }
+  }
+
+  .influencer-banner .image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-83%); }
+  }
+</style>
+<script src="{{ 'influencer-modal.js' | asset_url }}" defer></script>
+<div id="influencer-banner" class="influencer-banner image-container">
+  <div class="influencer-banner__title-wrapper">
+    <h2 class="influencer-banner__title">{{ title }}</h2>
+    {% if template.name == 'index' %}
+      <div class="influencer-banner__desc">{{ descrip }}</div>
+    {% endif %}
+    <div class="flex justify-center" style="width: 100vw;">
+      {% comment %} <a
+        class="btn btn-secondary"
+        href="/pages/our-experts"
+        {% if section.settings.button_new_tab == true %}
+          target="_blank"
+        {% endif %}
+      >
+        Meet Our Brand Ambassadors
+      </a> {% endcomment %}
+    </div>
+  </div>
+  <div class="image-grid"></div>
+</div>

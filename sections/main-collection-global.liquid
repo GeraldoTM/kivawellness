@@ -1,0 +1,364 @@
+<script
+  src="{{ 'results-list.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
+
+<script
+  src="{{ 'results-list.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
+
+{% javascript %}
+  const url = new URL(window.location.href);
+  if (url.hash) {
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        const card = document.getElementById(url.hash.slice(1));
+        if (card) {
+          card.scrollIntoView({ behavior: 'instant' });
+        }
+      },
+      { once: true }
+    );
+  }
+{% endjavascript %}
+
+{% comment %} We always render this full-width, as the child blocks have width: page/full settings {% endcomment %}
+{% liquid
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+
+  # Use the collection picked in section settings when there is one; otherwise
+  # fall back to the implicit `collection` object (only present when this
+  # section sits on an actual collection template). This is what lets the
+  # exact same section run on the collection template itself AND on other
+  # pages — an Outlet page, the home page, etc. — by just picking a
+  # collection explicitly there.
+  assign display_collection = section.settings.collection | default: collection
+%}
+
+{% render 'collection-wrapper-styles' %}
+
+<div
+  class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+></div>
+
+{% if display_collection == blank %}
+  <p class="collection-grid-empty">
+    No collection to show. If this section is on a collection page, leave "Collection" blank in the section
+    settings to use the page's own collection automatically. On any other page (like an Outlet page), pick a
+    collection in the section settings.
+  </p>
+{% else %}
+  {% # theme-check-disable-next-line UnknownFilter %}
+  <collection-component view-event-payload="{{ display_collection | standard_event_data: 'view' | escape }}">
+    <results-list
+      class="section product-grid-container{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+      style="--padding-block-start: {{ section.settings.padding-block-start }}px; --padding-block-end: {{ section.settings.padding-block-end }}px;"
+      section-id="{{ section.id }}"
+      infinite-scroll="{{ section.settings.enable_infinite_scroll }}"
+    >
+      {% render 'skip-to-content-link', href: '#ResultsList', text: 'accessibility.skip_to_results_list' %}
+
+      <div
+        class="collection-wrapper grid gap-style{% if section.settings.product_grid_width == 'full-width' %} collection-wrapper--grid-full-width{% endif %}"
+      >
+        {% content_for 'block',
+          type: 'filters',
+          id: 'filters',
+          results: display_collection,
+          results_size: display_collection.products_count
+        %}
+
+        {% assign products_per_page = 24 %}
+
+        {% if section.settings.enable_infinite_scroll == false %}
+          {% assign products_per_page = section.settings.products_per_page %}
+        {% endif %}
+
+        {% paginate display_collection.products by products_per_page %}
+          {% capture children %}
+            {% if section.settings.video != blank or section.settings.video_url != blank %}
+              {% if section.settings.video_position == 0 %}
+                <li class="product-grid__item collection-video-card">
+                  {% render 'collection-video-card', section: section %}
+                </li>
+              {% endif %}
+            {% endif %}
+
+            {% for product in display_collection.products %}
+              <li
+                id="{{ section.id }}-{{ product.id }}"
+                class="product-grid__item product-grid__item--{{ forloop.index0 }}"
+                data-page="{{ paginate.current_page }}"
+                data-product-id="{{ product.id }}"
+                ref="cards[]"
+              >
+                {% content_for 'block',
+                  type: '_product-card',
+                  id: 'product-card',
+                  closest.product: product,
+                  product_view_context: 'collection'
+                %}
+              </li>
+
+              {% if section.settings.video != blank or section.settings.video_url != blank %}
+                {% if section.settings.video_position == forloop.index %}
+                  <li class="product-grid__item collection-video-card collection-video-card--span-2">
+                    {% render 'collection-video-card', section: section %}
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% endcapture %}
+
+          {% render 'product-grid',
+            section: section,
+            children: children,
+            products: display_collection.products,
+            paginate: paginate,
+            enable_infinite_scroll: section.settings.enable_infinite_scroll
+          %}
+        {% endpaginate %}
+      </div>
+    </results-list>
+  </collection-component>
+{% endif %}
+
+{% stylesheet %}
+  .collection-grid-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    opacity: 0.7;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Collection Grid Global",
+  "enabled_on": {
+    "templates": ["collection", "index", "page", "list-collections", "search"]
+  },
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Leave blank on a collection page to automatically use that page's own collection. On any other page (home, an Outlet page, etc.), pick a collection here — filters, pagination, and everything else will work exactly the same way as on a collection page."
+    },
+    {
+      "type": "select",
+      "id": "layout_type",
+      "label": "t:settings.type",
+      "options": [
+        { "value": "grid", "label": "t:options.grid" },
+        { "value": "organic", "label": "t:options.editorial" }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "select",
+      "id": "product_card_size",
+      "label": "t:settings.card_size",
+      "options": [
+        { "value": "small", "label": "t:options.small" },
+        { "value": "medium", "label": "t:options.medium" },
+        { "value": "large", "label": "t:options.large" },
+        { "value": "extra-large", "label": "t:options.extra_large" }
+      ],
+      "default": "medium",
+      "visible_if": "{{ section.settings.layout_type == 'grid' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_product_card_size",
+      "label": "t:settings.mobile_card_size",
+      "options": [
+        { "value": "small", "label": "t:options.small" },
+        { "value": "large", "label": "t:options.large" }
+      ],
+      "default": "small"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_infinite_scroll",
+      "label": "t:settings.auto_load_products",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "t:settings.products_per_page",
+      "min": 8,
+      "max": 36,
+      "step": 4,
+      "default": 24,
+      "visible_if": "{{ section.settings.enable_infinite_scroll == false }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "product_grid_width",
+      "label": "t:settings.width",
+      "options": [
+        { "value": "centered", "label": "t:options.page" },
+        { "value": "full-width", "label": "t:options.full" }
+      ],
+      "default": "centered"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width_on_mobile",
+      "label": "t:settings.full_width_on_mobile",
+      "default": true,
+      "visible_if": "{{ section.settings.product_grid_width != 'full-width' }}"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_horizontal",
+      "label": "t:settings.horizontal_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_vertical",
+      "label": "t:settings.vertical_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left_padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right_padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.section_layout"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top_padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom_padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Video card"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video (uploaded)"
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL (fallback)",
+      "info": "Only used if no video is uploaded above."
+    },
+    {
+      "type": "url",
+      "id": "video_link",
+      "label": "Video link (optional)"
+    },
+    {
+      "type": "text",
+      "id": "video_chip_text",
+      "label": "Chip label (optional)"
+    },
+    {
+      "type": "select",
+      "id": "video_aspect_ratio",
+      "label": "Video shape",
+      "options": [
+        { "value": "16/9", "label": "Landscape" },
+        { "value": "1/1", "label": "Square" },
+        { "value": "4/5", "label": "Portrait" }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "range",
+      "id": "video_position",
+      "label": "Insert after product #",
+      "info": "0 = before the first product.",
+      "min": 0,
+      "max": 36,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "video_autoplay",
+      "label": "Autoplay (muted)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "video_loop",
+      "label": "Loop",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Grid Global",
+      "settings": {
+        "layout_type": "grid",
+        "product_card_size": "medium",
+        "enable_infinite_scroll": true,
+        "product_grid_width": "centered"
+      }
+    }
+  ]
+}
+{% endschema %}

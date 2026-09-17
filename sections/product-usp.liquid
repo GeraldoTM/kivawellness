@@ -1,0 +1,298 @@
+<style>
+    .product-usp-section{
+      margin-block: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .product-usp{
+      max-width: 90rem;
+      margin-inline: auto;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .product-usp .main-image-wrapper, .product-usp .main-video-wrapper{
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+    }
+
+    .product-usp .main-image-wrapper img, .product-usp .main-video-wrapper video{
+      max-width: 100%;
+      max-height: 100%;
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+    }
+
+    .product-usp h2{
+      color:  var(--stone);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 130%; /* 41.6px */;
+      margin-bottom: 12px;
+    }
+
+    .order-normal, .order-reverse{
+      flex-direction: column;
+    }
+
+     .product-usp .main-info{
+       padding: 32px;
+       display: flex;
+      flex-direction: column;
+      justify-content: center;
+     }
+
+    .product-usp ul{
+      list-style: disc;
+      margin: auto;
+      padding-left: 30px;
+    }
+
+    .product-usp .description{
+        font-size: 12px;
+      }
+
+     .product-usp .description p{
+       margin-bottom: 12px;
+     }
+
+     .product-usp .description ul li{
+       margin-bottom: 12px;
+     }
+    .template-product-sauna.product-page.product-8275893944495 .product-usp .main-video-wrapper video {
+      object-fit: contain;
+  }
+    .template-product-sauna.product-page.product-8275893944495 .product-usp .main-video-wrapper {
+      background: #fcfffc;
+  }
+
+
+    @media (min-width: 768px){
+
+       .product-usp h2{
+      font-size: 12px;
+         margin-bottom: 24px;
+    }
+
+      .product-usp .description{
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 150%; /* 27px */
+      }
+
+       .product-usp .description p{
+       margin-bottom: 24px;
+     }
+
+
+    }
+
+    @media (min-width: 1024px){
+           .order-normal{
+      flex-direction: row;
+    }
+
+    .order-reverse{
+      flex-direction: row-reverse;
+    }
+          .product-usp .main-image-wrapper, .product-usp .main-video-wrapper{
+        width: 50%;
+        max-width: 720px;
+      }
+          .product-usp .main-info{
+       padding: 64px;
+      width: 50%;
+     }
+          .product-usp-section{
+      margin-block: 0px;
+        gap: 0px;
+    }
+
+    }
+</style>
+{% if section.blocks.size > 0 %}
+  <section class="product-usp-section">
+    {% for usp in section.blocks %}
+      {% assign position = forloop.index0 %}
+      {% assign rem = position | modulo: 2 %}
+      <div class="product-usp {% if rem == 0 %} order-normal {% else %} order-reverse {% endif %}">
+        {% if usp.settings.video != blank %}
+          {%- comment -%}
+            Lazy-video facade — avoids downloading 10-20 MB of MP4 on page load
+          {%- endcomment -%}
+          {%- liquid
+            assign video_obj = usp.settings.video
+            assign poster_url = video_obj.preview_image | image_url: width: 1000
+            assign src_720 = video_obj.sources | where: 'height', 720 | map: 'url' | first
+            assign src_480 = video_obj.sources | where: 'height', 480 | map: 'url' | first
+            assign src_fallback = video_obj.sources | map: 'url' | first
+            assign video_src = src_720 | default: src_480 | default: src_fallback
+          -%}
+          {% if forloop.first %}
+            <div class="main-video-wrapper">
+              <video
+                src="{{ video_src }}"
+                poster="{{ poster_url }}"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                width="720"
+                style="width:100%;height:100%;object-fit:cover;"
+              ></video>
+            </div>
+          {% else %}
+            <div
+              class="main-video-wrapper usp-lazy-video"
+              data-video-src="{{ video_src }}"
+              data-poster="{{ poster_url }}"
+            >
+              <img
+                src="{{ poster_url }}"
+                alt="{{ usp.settings.title | escape }}"
+                loading="lazy"
+                width="720"
+                style="width:100%;height:100%;object-fit:cover;"
+              >
+            </div>
+          {% endif %}
+        {% elsif usp.settings.image != blank %}
+          <div class="main-image-wrapper">
+            {{
+              usp.settings.image
+              | image_url: width: 1500
+              | image_tag:
+                loading: 'lazy',
+                width: 'auto',
+                height: 390,
+                widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                alt: usp.settings.title
+              | escape
+            }}
+          </div>
+        {% endif %}
+
+        <div class="main-info">
+          <h2 class="heading">{{ usp.settings.title }}</h2>
+          <div class="description">
+            {{ usp.settings.description }}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+<script>
+  (function () {
+    'use strict';
+
+    function initLazyVideos() {
+      var wrappers = document.querySelectorAll('.usp-lazy-video');
+      if (!wrappers.length) return;
+
+      if (typeof IntersectionObserver === 'undefined') {
+        wrappers.forEach(function (el) {
+          swapVideo(el);
+        });
+        return;
+      }
+
+      var io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            swapVideo(entry.target);
+            io.unobserve(entry.target);
+          });
+        },
+        {
+          rootMargin: '300px',
+        }
+      );
+
+      wrappers.forEach(function (el) {
+        io.observe(el);
+      });
+    }
+
+    function swapVideo(el) {
+      var src = el.dataset.videoSrc;
+      var poster = el.dataset.poster;
+      if (!src) return;
+
+      var video = document.createElement('video');
+      video.src = src;
+      video.poster = poster || '';
+      video.muted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      video.setAttribute('playsinline', '');
+      video.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+
+      el.replaceChildren(video);
+
+      var playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(function () {});
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLazyVideos);
+    } else {
+      initLazyVideos();
+    }
+
+    if (window.Shopify && Shopify.designMode) {
+      document.addEventListener('shopify:section:load', initLazyVideos);
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product USPs",
+  "blocks": [
+    {
+      "type": "USP",
+      "name": "Product USP",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product USPs"
+    }
+  ]
+}
+{% endschema %}

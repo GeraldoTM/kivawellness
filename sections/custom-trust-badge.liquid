@@ -1,0 +1,364 @@
+<style>
+  .kiva-difference-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+  .feature-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 24px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    margin-top: 24px;
+  }
+  .trust-badge img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+
+  @media(max-width: 768px) {
+    .kiva-difference-grid { 
+      grid-template-columns: 1fr; 
+      gap: 3px;
+      padding: 5px;
+    }
+    .kiva-difference-image img {
+      height: {{ section.settings.mobile_image_height }}px !important;
+      object-fit: cover;
+    }
+    .kiva-difference-image.has-two-images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .kiva-difference-image.has-one-image {
+      display: block;
+    }
+    .kiva-difference-content {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .kiva-difference-content h2 {
+      font-size: 22px !important;
+    }
+    .kiva-difference-content p {
+      font-size: 14px !important;
+    }
+    .feature-card {
+      padding: 16px;
+    }
+  }
+</style>
+
+<div class="kiva-difference" style="background: {{ section.settings.bg_color }}; padding:40px; border-radius:16px; max-width:1200px; margin:0 auto; margin-top: 30px;">
+  <div class="kiva-difference-grid">
+    <!-- Left Column (Images) -->
+    <div class="kiva-difference-image" 
+      style="margin: {{ section.settings.image_margin_top }}px {{ section.settings.image_margin_right }}px {{ section.settings.image_margin_bottom }}px {{ section.settings.image_margin_left }}px;">
+      
+      {% if section.settings.top_image != blank %}
+        <img 
+          src="{{ section.settings.top_image | image_url: width: 600 }}" 
+          alt="Top Image" 
+          style="
+            width:100%; 
+            height:{{ section.settings.image_height }}px; 
+            object-fit:cover; 
+            object-position:{{ section.settings.image_position }}; 
+            border-radius:12px; 
+            margin-bottom:16px;
+          ">
+      {% endif %}
+      
+      {% if section.settings.image != blank %}
+        <img 
+          src="{{ section.settings.image | image_url: width: 600 }}" 
+          alt="Kiva Difference" 
+          style="
+            width:100%; 
+            height:{{ section.settings.image_height }}px; 
+            object-fit:cover; 
+            object-position:{{ section.settings.image_position }}; 
+            border-radius:12px;
+          ">
+      {% comment %} {% else %}
+        <div style="width:100%; height:{{ section.settings.image_height }}px; background:#e5e5e5; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+          Image Placeholder
+        </div> {% endcomment %}
+      {% endif %}
+    </div>
+
+    <!-- Right Column (Content) -->
+    <div class="kiva-difference-content">
+      {% if section.settings.heading != blank %}
+        <div 
+          class="kiva-heading-box"
+          style="
+            background: {{ section.settings.heading_bg_color }};
+            color: {{ section.settings.heading_color }};
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            {% if section.settings.heading_bg_color == 'transparent' %}
+              background: none;
+            {% endif %}
+          "
+        >
+          <h2 
+            style="
+              font-size: 28px;
+              font-weight: 700;
+              margin-bottom: 8px;
+              color: {{ section.settings.heading_color }};
+            "
+          >
+            {{ section.settings.heading }}
+          </h2>
+
+          {% if section.settings.subheading != blank %}
+            <p 
+              style="
+                font-size: 16px;
+                margin: 0;
+                color: {{ section.settings.subheading_color }};
+              "
+            >
+              {{ section.settings.subheading }}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <!-- Features -->
+      <div class="kiva-difference-features">
+        {% for block in section.blocks %}
+          {% if block.type == 'feature' %}
+            <div class="feature-card">
+              <div class="feature-icon">
+                {% if block.settings.icon != blank %}
+                  <img src="{{ block.settings.icon | image_url: width: 48 }}" alt="Feature Icon" style="width:48px; height:48px;">
+                {% else %}
+                  <div style="width:48px; height:48px; background:#ddd; border-radius:8px;"></div>
+                {% endif %}
+              </div>
+              <div class="feature-text">
+                <h4 style="margin:0; font-size:18px; font-weight:600;">{{ block.settings.title }}</h4>
+                <p style="margin:4px 0 0; font-size:14px; color:#555;">{{ block.settings.text }}</p>
+              </div>
+            </div>
+          {% elsif block.type == 'trust_badge' %}
+            <div class="trust-badge">
+              {% if block.settings.badge_icon != blank %}
+                <img src="{{ block.settings.badge_icon | image_url: width: 48 }}" alt="Trust Badge">
+              {% else %}
+                <div style="width:40px; height:40px; background:#ddd; border-radius:6px;"></div>
+              {% endif %}
+              <div>
+                <p style="margin:0; font-size:16px; font-weight:600; color:#111;">{{ block.settings.badge_heading }}</p>
+                <p style="margin:2px 0 0; font-size:14px; color:#555;">{{ block.settings.badge_subheading }}</p>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "The Kiva Difference",
+  "settings": [
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "The Kiva Difference"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "heading_bg_color",
+      "label": "Heading background color",
+      "default": "transparent"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Why choose Kiva saunas over others? We focus on quality, sustainability, and wellness."
+    },
+    {
+      "type": "color",
+      "id": "subheading_color",
+      "label": "Subheading color",
+      "default": "#555555"
+    },
+    {
+      "type": "image_picker",
+      "id": "top_image",
+      "label": "Top image (above main image)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Main image (bottom)"
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "label": "Image height (px)",
+      "min": 200,
+      "max": 800,
+      "step": 10,
+      "default": 350
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Image position",
+      "default": "center center",
+      "options": [
+        { "value": "top left", "label": "Top Left" },
+        { "value": "top center", "label": "Top Center" },
+        { "value": "top right", "label": "Top Right" },
+        { "value": "center left", "label": "Center Left" },
+        { "value": "center center", "label": "Center Center" },
+        { "value": "center right", "label": "Center Right" },
+        { "value": "bottom left", "label": "Bottom Left" },
+        { "value": "bottom center", "label": "Bottom Center" },
+        { "value": "bottom right", "label": "Bottom Right" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "image_margin_top",
+      "label": "Image margin top (px)",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "image_margin_right",
+      "label": "Image margin right (px)",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "image_margin_bottom",
+      "label": "Image margin bottom (px)",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "image_margin_left",
+      "label": "Image margin left (px)",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_height",
+      "label": "Mobile image height (px)",
+      "min": 150,
+      "max": 600,
+      "step": 10,
+      "default": 220
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Feature icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Feature title",
+          "default": "Premium Quality"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Feature text",
+          "default": "Crafted with sustainably sourced wood and advanced heating technology."
+        }
+      ]
+    },
+    {
+      "type": "trust_badge",
+      "name": "Trust Badge",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "badge_icon",
+          "label": "Badge icon"
+        },
+        {
+          "type": "text",
+          "id": "badge_heading",
+          "label": "Badge heading",
+          "default": "Trusted by 60,000+ Australians"
+        },
+        {
+          "type": "textarea",
+          "id": "badge_subheading",
+          "label": "Badge subheading",
+          "default": "Our customers trust Kiva because of quality and wellness focus."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "The Kiva Difference",
+      "blocks": [
+        { "type": "feature" },
+        { "type": "feature" },
+        { "type": "trust_badge" }
+      ]
+    }
+  ]
+}
+{% endschema %}

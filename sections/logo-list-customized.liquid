@@ -1,0 +1,264 @@
+{% liquid
+  assign icon_size = section.settings.icon_size | default: 40
+  assign columns = section.settings.columns | default: 3
+  assign rows = section.settings.rows | default: 1
+  assign max_items = columns | times: rows
+%}
+
+<section class="logo-list-custom-{{ section.id }}">
+  {%- if product.metafields.custom.product_video != blank -%}
+    <div class="hb-grid__outer" style="padding-top: 40px;padding-bottom: 40px;margin-bottom: 40px;">
+      <div class="logo-list-custom-{{ section.id }}__inner">
+        <div class="logo-list-custom-{{ section.id }}__inner-padded">
+          {%- if product.metafields.custom.product_video_headline != blank -%}
+            <h2 class="hb-grid__title">{{ product.metafields.custom.product_video_headline }}</h2>
+          {%- endif -%}
+          {% for video_url in product.metafields.custom.product_video.value %}
+            <div class="pb-video">
+              <iframe
+                class="logo-list-custom-{{ section.id }}__video"
+                src="{{ video_url }}?rel=0"
+                title="Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  <div class="logo-list-custom-{{ section.id }}__inner">
+    <div class="logo-list-custom-{{ section.id }}__inner-padded">
+      <div class="logo-list-custom-{{ section.id }}__grid">
+        {%- for block in section.blocks -%}
+          {%- if forloop.index <= max_items -%}
+            <div class="logo-list-custom-{{ section.id }}__item" {{ block.shopify_attributes }}>
+              {%- if block.settings['lc-link'] != blank -%}<a data-gorgias-trigger class="logo-list-custom-{{ section.id }}__item-link">{%- endif -%}
+              {{
+                block.settings.logo_svg
+                | image_url: width: 500
+                | image_tag:
+                  loading: 'lazy',
+                  class: 'product-badge',
+                  height: icon_size,
+                  width: icon_size,
+                  widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                  alt: block.settings.logo_text
+                | escape
+              }}
+
+              <div class="logo-list-custom-{{ section.id }}__item-title">
+                {{ block.settings.logo_text }}
+              </div>
+              {%- if block.settings['lc-link'] != blank -%}</a>{%- endif -%}
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+
+      {%- if section.settings.bottom_headline != blank -%}
+        <h2 class="logo-list-custom-{{ section.id }}__headline">{{ section.settings.bottom_headline }}</h2>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+<style>
+  .logo-list-custom-{{ section.id }} {
+    padding: 48px 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .logo-list-custom-{{ section.id }} {
+      padding: 80px 80px;
+    }
+  }
+
+  .logo-list-custom-{{ section.id }}__inner {
+    max-width: 80rem;
+    margin-inline: auto;
+  }
+
+  .logo-list-custom-{{ section.id }}__inner-padded {
+    position: relative;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+
+  @media screen and (min-width: 640px) {
+    .logo-list-custom-{{ section.id }}__inner-padded {
+      padding-inline: 24px;
+    }
+  }
+
+  @media screen and (min-width: 1024px) {
+    .logo-list-custom-{{ section.id }}__inner-padded {
+      padding-inline: 32px;
+    }
+  }
+
+  .logo-list-custom-{{ section.id }}__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border: 0;
+  }
+
+  /* Real CSS Grid now, columns from the merchant setting. "Rows" caps
+     the total number of logos shown at once (columns x rows) — beyond
+     that, extra logo blocks just aren't rendered — rather than trying
+     to force a strict row count on an auto-wrapping grid, which isn't
+     meaningfully controllable in CSS once you have more items than
+     columns x rows would allow anyway. */
+  .logo-list-custom-{{ section.id }}__grid {
+    display: grid;
+    grid-template-columns: repeat({{ columns }}, 1fr);
+    gap: 32px 24px;
+    justify-items: center;
+    align-items: start;
+  }
+
+  .logo-list-custom-{{ section.id }}__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .logo-list-custom-{{ section.id }}__item-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+  }
+
+  /* Scoped to this section so "product-badge" (a fairly generic class
+     name) can't pick up sizing meant for a different section elsewhere
+     on the page. !important is needed because the img's width/height
+     HTML attributes are just aspect-ratio hints, not real constraints —
+     any broader theme CSS touching <img> at all would otherwise win. */
+  .logo-list-custom-{{ section.id }} .product-badge {
+    width: {{ icon_size }}px !important;
+    height: {{ icon_size }}px !important;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .logo-list-custom-{{ section.id }}__item-title {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-foreground, #1a1a1a);
+    text-align: center;
+    margin: 0;
+  }
+
+  .logo-list-custom-{{ section.id }}__headline {
+    margin-top: 32px;
+    text-align: center;
+    font-size: {{ section.settings.headline_size | default: 24 }}px;
+    font-weight: 600;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Logo List Custom",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Grid layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "rows",
+      "label": "Rows",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 1,
+      "info": "Caps how many logos show at once (columns × rows). Extra logo blocks beyond that are simply not shown."
+    },
+    {
+      "type": "header",
+      "content": "Icon size"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Logo icon size",
+      "min": 16,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Bottom headline"
+    },
+    {
+      "type": "text",
+      "id": "bottom_headline",
+      "label": "Headline",
+      "info": "Optional — shown centered below the row of logos. Leave blank to hide."
+    },
+    {
+      "type": "range",
+      "id": "headline_size",
+      "label": "Headline size",
+      "min": 14,
+      "max": 48,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "Logo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "logo_svg",
+          "label": "Logo SVG"
+        },
+        {
+          "type": "text",
+          "id": "logo_text",
+          "label": "Text",
+          "default": "Logo"
+        },
+        {
+          "type": "checkbox",
+          "id": "lc-link",
+          "default": false,
+          "label": "Live Chat Link"
+        }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Logo List Custom" }]
+}
+{% endschema %}

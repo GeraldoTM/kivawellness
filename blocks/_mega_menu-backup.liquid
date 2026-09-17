@@ -1,0 +1,1149 @@
+{%- comment -%}
+  ============================================================
+  CUSTOM BLOCK: Mega Menu — horizontal tabs + dropdown variant
+  ------------------------------------------------------------
+  .megamenu__dropdown panels are always display:flex, stacked in
+  the same grid cell (grid-column:1; grid-row:1). Only
+  visibility/opacity toggle between tabs — NOT display, so
+  Horizon's one-time submenu height measurement stays valid
+  across every tab.
+
+  TAB THUMBNAILS: small image above each tab label. Looked up via
+  block_settings['category_image_' + tab position], falling back
+  to the category's linked collection/product image.
+
+  OLD DROPDOWN IMAGE+TITLE: disabled via `show_legacy_dropdown_media`
+  flag below (set to true to restore). Was a single large image +
+  category title shown above the sub-link list inside each panel.
+
+  NEW FEATURED COLUMNS: each tab can show up to 3 merchant-set
+  image+title cards on the right side of its dropdown (fully
+  manual — no auto-detection). Settings are named
+  feat_{tab position}_{slot 1-3}_image / _title. A tab's featured
+  area is hidden entirely if none of its 3 slots have BOTH an
+  image and a title set.
+
+  LAYOUT: dropdown is a grid — [links column] [blank spacer]
+  [image 1] [image 2] [image 3]. If a tab has no featured images
+  at all, the spacer + image columns collapse and links take the
+  full width.
+
+  KNOWN LIMITATION: sub-links render as a single flat list. The
+  "Shop by Type" / "Shop by Size" heading split in the reference
+  mockup requires grouping data Shopify's menu structure does not
+  provide — it's a flat list of child links, not sub-grouped.
+  ============================================================
+{%- endcomment -%}
+
+{% liquid
+  assign block_settings = block.settings
+  assign effective_submenu_color = block_settings.background_color | default: settings.page_background_color
+  assign show_legacy_dropdown_media = false
+%}
+
+{% case variant %}
+  {% when 'mobile' %}
+    <div
+      class="header__drawer"
+      ref="headerDrawerContainer"
+      data-hydration-key="header-drawer-mobile"
+      {{ block.shopify_attributes }}
+    >
+      {% render 'header-drawer',
+        linklist: block_settings.menu,
+        data_header_drawer_type: 'mobile-drawer',
+        block: block,
+        section: section
+      %}
+    </div>
+
+  {% when 'navigation_bar' %}
+    {% if block_settings.navigation_bar == true %}
+      {% render 'contrast-override',
+        background_color: block_settings.background_color_navigation_bar,
+        text_color: block_settings.text_color_navigation_bar,
+        section_id: block.id
+      %}
+      <div
+        class="menu-list menu-list--mobile{% if transparent == blank %} color-custom-{{ block.id }}{% endif %}"
+        style="--menu-horizontal-gap: 15px; --mobile-nav-margin: auto;"
+        data-hydration-key="header-menu-mobile-navigation-bar"
+      >
+        <div class="menu-list__scroll-container">
+          <ul class="menu-list__list list-unstyled" role="list">
+            {% for link in block_settings.menu.links %}
+              <li>
+                <a
+                  href="{{ link.url }}"
+                  id="MenuItem-{{ link.handle }}"
+                  class="menu-list__item"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- link.title -}}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    {% liquid
+      assign block_settings = block.settings
+      assign megamenu_active_color = block_settings.megamenu_active_color | default: '#000000'
+      assign megamenu_inactive_color = block_settings.megamenu_inactive_color | default: '#4a5d43'
+      assign show_category_images = block_settings.show_category_images
+
+      render 'contrast-override', background_color: block_settings.background_color, text_color: block_settings.text_color, section_id: block.id
+
+      assign background_color_classes = ''
+      assign background_color_setting_id = 'background_color_' | append: section.settings.menu_row
+      assign current_background_color = block_settings.background_color | default: settings.page_background_color
+      assign parent_background_color = section.settings[background_color_setting_id] | default: settings.page_background_color
+
+      if parent_background_color != current_background_color or block_settings.text_color != blank
+        assign background_color_classes = ' color-custom-' | append: block.id
+      endif
+
+      if parent_background_color.rgb == current_background_color.rgb
+        assign background_color_classes = background_color_classes | append: ' background-matches-parent'
+      endif
+    %}
+
+    {% capture children %}
+      {% for link in block_settings.menu.links %}
+        <li
+          role="presentation"
+          class="menu-list__list-item"
+          on:focus="/activate"
+          on:blur="/deactivate"
+          on:pointerenter="/activate"
+          on:pointerleave="/deactivate"
+        >
+          <a
+            href="{{ link.url }}"
+            data-skip-node-update="true"
+            class="menu-list__link{% if link.active %} menu-list__link--active{% endif %}"
+            {%- if link.links != blank -%}
+              aria-controls="submenu-{{ forloop.index }}"
+              aria-haspopup="true"
+              aria-expanded="false"
+            {%- endif -%}
+            {% if link.current %}
+              aria-current="page"
+            {% endif %}
+            ref="menuitem"
+          >
+            <span class="menu-list__link-title">{{- link.title -}}</span>
+          </a>
+          {%- if link.links != blank -%}
+            <div class="menu-list__submenu{{ background_color_classes }}" ref="submenu[]">
+              <div
+                id="submenu-{{ forloop.index }}"
+                class="menu-list__submenu-inner"
+                style="{% render 'submenu-font-styles', settings: block_settings %}"
+              >
+                {% liquid
+                  assign tabs_html = ''
+                  assign dropdowns_html = ''
+
+                  for category in link.links
+                    assign tab_pos = forloop.index
+                    assign is_first = forloop.first
+                    assign panel_id = 'megamenu-panel-' | append: block.id | append: '-' | append: tab_pos
+
+                    # --- Tab thumbnail image (kept) ---
+                    assign category_image = blank
+                    if show_category_images
+                      assign img_key = 'category_image_' | append: tab_pos
+                      assign category_image = block_settings[img_key]
+
+                      if category_image == blank
+                        case category.type
+                          when 'collection_link'
+                            assign category_image = category.object.image
+                          when 'product_link'
+                            assign category_image = category.object.featured_image
+                        endcase
+                      endif
+
+                      if category_image == blank and category.links.size > 0
+                        assign fallback_link = category.links.first
+                        case fallback_link.type
+                          when 'collection_link'
+                            assign category_image = fallback_link.object.image
+                          when 'product_link'
+                            assign category_image = fallback_link.object.featured_image
+                        endcase
+                      endif
+                    endif
+
+                    capture single_tab
+                      echo '<button type="button" class="megamenu__tab'
+                      if is_first
+                        echo ' megamenu__tab--active'
+                      endif
+                      echo '" data-megamenu-trigger data-megamenu-target="'
+                      echo panel_id
+                      echo '" aria-expanded="'
+                      echo is_first
+                      echo '">'
+                      if category_image != blank
+                        echo '<span class="megamenu__tab-image"><img src="'
+                        echo category_image | image_url: width: 200
+                        echo '" alt="" loading="lazy" width="'
+                        echo category_image.width
+                        echo '" height="'
+                        echo category_image.height
+                        echo '"></span>'
+                      endif
+                      echo '<span class="megamenu__tab-label">'
+                      echo category.title
+                      echo '</span></button>'
+                    endcapture
+                    assign tabs_html = tabs_html | append: single_tab
+
+                    # --- Featured columns (up to 3 per tab, fully manual) ---
+                    assign featured_html = ''
+                    assign featured_count = 0
+
+                    for slot in (1..3)
+                      assign f_img_key = 'feat_' | append: tab_pos | append: '_' | append: slot | append: '_image'
+                      assign f_title_key = 'feat_' | append: tab_pos | append: '_' | append: slot | append: '_title'
+                      assign f_image = block_settings[f_img_key]
+                      assign f_title = block_settings[f_title_key]
+
+                      if f_image != blank and f_title != blank
+                        assign featured_count = featured_count | plus: 1
+                        capture single_featured
+                          echo '<div class="megamenu__featured-card"><div class="megamenu__featured-image"><img src="'
+                          echo f_image | image_url: width: 400
+                          echo '" alt="'
+                          echo f_title | escape
+                          echo '" loading="lazy" width="'
+                          echo f_image.width
+                          echo '" height="'
+                          echo f_image.height
+                          echo '"></div><p class="megamenu__featured-title">'
+                          echo f_title
+                          echo '</p></div>'
+                        endcapture
+                        assign featured_html = featured_html | append: single_featured
+                      endif
+                    endfor
+
+                    capture single_dropdown
+                      echo '<div id="'
+                      echo panel_id
+                      echo '" class="megamenu__dropdown'
+                      if is_first
+                        echo ' megamenu__dropdown--active'
+                      endif
+                      if featured_count == 0
+                        echo ' megamenu__dropdown--no-featured'
+                      endif
+                      echo '">'
+
+                      if show_legacy_dropdown_media
+                        if category_image != blank
+                          echo '<div class="megamenu__dropdown-image"><img src="'
+                          echo category_image | image_url: width: 600
+                          echo '" alt="'
+                          echo category.title | escape
+                          echo '" loading="lazy" width="'
+                          echo category_image.width
+                          echo '" height="'
+                          echo category_image.height
+                          echo '"></div>'
+                        endif
+                        echo '<p class="megamenu__dropdown-title">'
+                        echo category.title
+                        echo '</p>'
+                      endif
+
+                      echo '<div class="megamenu__dropdown-links">'
+                      for sub_link in category.links
+                        echo '<a href="'
+                        echo sub_link.url
+                        echo '" class="megamenu__dropdown-link">'
+                        echo sub_link.title
+                        echo '</a>'
+                      endfor
+                      echo '</div>'
+
+                      if featured_count > 0
+                        echo '<div class="megamenu__dropdown-spacer"></div>'
+                        echo '<div class="megamenu__featured-row">'
+                        echo featured_html
+                        echo '</div>'
+                      endif
+
+                      echo '</div>'
+                    endcapture
+                    assign dropdowns_html = dropdowns_html | append: single_dropdown
+                  endfor
+                %}
+                <mega-menu-panel
+                  class="megamenu"
+                  style="--megamenu-active-color: {{ megamenu_active_color }}; --megamenu-inactive-color: {{ megamenu_inactive_color }};"
+                >
+                  <div class="megamenu__tabs">{{ tabs_html }}</div>
+                  <div class="megamenu__dropdowns">{{ dropdowns_html }}</div>
+                </mega-menu-panel>
+              </div>
+            </div>
+          {%- endif -%}
+        </li>
+      {% endfor %}
+      <li
+        class="menu-list__list-item"
+        role="presentation"
+        slot="more"
+        on:focus="/activate"
+        on:blur="/deactivate"
+        on:pointerenter="/activate"
+        on:pointerleave="/deactivate"
+      >
+        <button
+          role="listitem"
+          class="menu-list__link button-unstyled"
+          aria-haspopup="true"
+          aria-expanded="false"
+          ref="menuitem"
+        >
+          <span class="menu-list__link-title">{{ 'actions.more' | t }}</span>
+        </button>
+      </li>
+    {% endcapture %}
+
+    <header-menu
+      ref="headerMenu"
+      class="header-menu"
+      {{ block.shopify_attributes }}
+      data-hydration-key="header-menu"
+    >
+      <div class="header-menu__inner">
+        <nav
+          class="menu-list"
+          aria-label="{{ 'accessibility.header_navigation_label' | t }}"
+          style="{% render 'menu-font-styles', settings: block_settings, menu_type: 'mega_menu' %}"
+        >
+          {% assign class = 'overflow-menu' | append: background_color_classes %}
+          {% render 'overflow-list',
+            class: class,
+            ref: 'overflowMenu',
+            children: children,
+            minimum-items: 2,
+            data-testid: 'header-menu-overflow-list',
+            attributes: 'data-skip-node-update'
+          %}
+        </nav>
+      </div>
+
+      <script src="{{ 'header-menu.js' | asset_url }}" type="module" fetchpriority="low"></script>
+      <script src="{{ 'mega-menu-panel.js' | asset_url }}" type="module" fetchpriority="low"></script>
+    </header-menu>
+{% endcase %}
+
+{% style %}
+  .header__underlay {
+    --color-submenu: rgb({{ effective_submenu_color.rgb }});
+  }
+{% endstyle %}
+
+{% stylesheet %}
+   /* ============================================================
+      BASE MENU STYLES
+      ============================================================ */
+
+   .header__drawer {
+     --header-drawer-min-height: 60px;
+     display: flex;
+     min-height: var(--header-drawer-min-height);
+     align-items: center;
+   }
+
+   #header-component[data-menu-style='drawer'] .header__drawer {
+     display: flex;
+     min-height: var(--header-drawer-min-height);
+   }
+
+   @media screen and (min-width: 750px) {
+     #header-component[data-menu-style='menu'] .header__drawer {
+       display: none;
+       min-height: 0;
+     }
+   }
+
+   .header--compact .header__drawer {
+     min-height: var(--minimum-touch-target);
+   }
+
+   .menu-list--mobile {
+     &.menu-list {
+       display: grid;
+     }
+
+     & .menu-list__list {
+       width: max-content;
+       margin-inline: auto;
+       gap: var(--menu-horizontal-gap);
+     }
+
+     & li {
+       width: max-content;
+       padding-block: var(--padding-sm);
+     }
+
+     & li:first-of-type {
+       padding-inline-start: var(--menu-horizontal-gap);
+     }
+
+     & li:last-of-type {
+       padding-inline-end: var(--menu-horizontal-gap);
+     }
+
+     & a {
+       color: var(--color-foreground);
+     }
+   }
+
+   .menu-list__scroll-container {
+     position: relative;
+     overflow-x: auto;
+     mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+     padding-block: var(--padding-2xs);
+   }
+
+   .menu-list {
+     --menu-horizontal-gap: var(--gap-xl);
+     --menu-vertical-gap: var(--gap-xl);
+
+     display: flex;
+     height: 100%;
+   }
+
+   .menu-list__list {
+     display: flex;
+     justify-content: var(--grid-area-alignment);
+   }
+
+   .menu-list__list-item {
+     flex-shrink: 0;
+     white-space: nowrap;
+     display: flex;
+     align-items: center;
+     height: 100%;
+   }
+
+   .menu-list__list-item[aria-hidden='true'] {
+     visibility: hidden;
+   }
+
+   .menu-list__link {
+     font-family: var(--menu-top-level-font-family);
+     font-style: var(--menu-top-level-font-style);
+     font-weight: var(--menu-top-level-font-weight);
+     font-size: var(--menu-top-level-font-size);
+     line-height: var(--menu-top-level-font-line-height);
+     text-transform: var(--menu-top-level-font-case);
+     color: var(--menu-top-level-font-color);
+     text-decoration: none;
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     cursor: pointer;
+     height: 100%;
+     margin-block: 0;
+
+     &::after {
+       content: '';
+       position: absolute;
+       display: none;
+       top: var(--header-padding);
+       height: var(--box-height);
+       left: 0;
+       right: 0;
+     }
+
+     &[data-safety-box='true']::after {
+       display: block;
+     }
+
+     &:hover,
+     &:focus {
+       color: var(--menu-top-level-font-color);
+     }
+
+     @media screen and (min-width: 750px) {
+       font-size: var(--menu-top-level-font-size-desktop);
+     }
+   }
+
+   .menu-list__link-title {
+     padding-inline: calc(var(--gap-xl) / 2);
+   }
+   [slot='overflow'] .menu-list__link-title {
+     padding-inline: 0;
+   }
+
+   .menu-list__list-item:not([slot='overflow']) {
+     flex-direction: column;
+   }
+   .menu-list__list-item[slot='more']:has(.menu-list__link[aria-expanded='true'])::after {
+     content: '';
+     width: 100%;
+     height: var(--header-padding);
+     margin-bottom: calc(-1 * var(--header-padding));
+   }
+
+   [slot='overflow'] > .menu-list__link::after {
+     content: none;
+   }
+
+   .menu-list:where(:has(.menu-list__list-item:hover)),
+   .menu-list:where(:has(.menu-list__list-item:focus-within)),
+   .menu-list:where(:has(.menu-list__list-item:not([aria-hidden='true']) .menu-list__link--active)) {
+     .menu-list__link {
+       color: rgb(var(--menu-top-level-font-color-rgb) / var(--opacity-subdued-text));
+     }
+   }
+
+   .menu-list:not(:has(.menu-list__list-item:hover)) .menu-list__link--active,
+   .menu-list .menu-list__list-item:where(:hover, :focus-within) .menu-list__link,
+   .menu-list .menu-list__list-item:is([slot='more'], [slot='overflow']) .menu-list__link[aria-expanded='true'] {
+     color: var(--menu-top-level-font-color);
+   }
+
+   .overflow-menu::part(list) {
+     --focus-outline-size: calc(var(--focus-outline-offset) + var(--focus-outline-width));
+
+     gap: 0;
+     margin-inline: calc(-1 * var(--menu-horizontal-gap) / 2);
+   }
+
+   .overflow-menu {
+     background-color: transparent !important;
+     padding: var(--focus-outline-size);
+     margin: calc(-1 * var(--focus-outline-size));
+   }
+
+   .menu-list__submenu,
+   .overflow-menu::part(overflow) {
+     --submenu-padding-block-start: var(--padding-3xl);
+     --submenu-padding-block-end: var(--padding-3xl);
+
+     background-color: transparent;
+   }
+
+   .header__row[style*='--border-bottom-width: 0px'] {
+     .menu-list__submenu.background-matches-parent,
+     .overflow-menu.background-matches-parent::part(overflow) {
+       --submenu-padding-block-start: 0px;
+     }
+   }
+
+   .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu,
+   .overflow-menu::part(overflow) {
+     --submenu-content-opacity: 0;
+     --submenu-content-animation: opacity calc(var(--submenu-animation-speed) * 0.75) var(--animation-easing);
+
+     visibility: hidden;
+     position: absolute;
+     width: 100%;
+     left: 0;
+     top: calc(100% - 1px + var(--border-bottom-width) - (var(--full-open-header-height) - var(--submenu-height)));
+     z-index: var(--layer-header-menu);
+     padding-inline: var(--padding-inline);
+     clip-path: rect(var(--header-height) 100% var(--full-open-header-height) 0);
+     transition: clip-path var(--submenu-animation-speed) var(--ease-out-cubic);
+   }
+
+   [data-submenu-overlap-bottom-row] {
+     .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu,
+     .overflow-menu::part(overflow) {
+       clip-path: rect(var(--top-row-height) 100% var(--full-open-header-height) 0);
+     }
+   }
+
+   .menu-list__list-item:has([aria-expanded='true']) > .menu-list__submenu,
+   .overflow-menu:has([slot="overflow"] [aria-expanded='true'])::part(overflow-list),
+   .menu-list__submenu:is(:hover),
+   .overflow-menu::part(overflow):hover {
+     --submenu-content-opacity: 1;
+
+     visibility: visible;
+   }
+
+   .overflow-menu::part(overflow) {
+     --menu-top-level-font-size: var(--font-size--xlarge);
+
+     display: grid;
+     grid-template-columns: var(--full-page-grid-with-margins);
+   }
+
+   .overflow-menu::part(overflow-list) {
+     position: relative;
+     display: grid;
+     grid-template-columns: minmax(auto, 200px) 1fr;
+     grid-template-areas: 'left right';
+     grid-template-rows: max-content;
+     grid-gap: 0;
+     grid-column: 2;
+   }
+
+   .menu-list__list-item:is([slot='overflow']) {
+     --menu-top-level-font-color: var(--color-foreground);
+     --menu-top-level-font-color-rgb: var(--color-foreground-rgb);
+
+     display: contents;
+     white-space: normal;
+
+     .menu-list__link {
+       grid-area: left;
+       grid-row: auto;
+       height: min-content;
+       font-size: var(--font-size--xl);
+       transition: var(--submenu-content-animation);
+     }
+
+     .menu-list__submenu {
+       visibility: hidden;
+       grid-row: 1;
+       grid-area: right;
+       grid-row-end: span calc(var(--overflow-count) + 1);
+       padding-inline-start: var(--menu-horizontal-gap);
+     }
+
+     .menu-list__submenu-inner {
+       transform: none;
+       grid-column: unset;
+       padding-block: 0;
+     }
+
+     .menu-list__link[aria-expanded='true'] + .menu-list__submenu {
+       visibility: visible;
+     }
+   }
+
+   .header-menu {
+     height: 100%;
+   }
+
+   .menu-list__submenu-inner {
+     position: relative;
+     display: flex;
+     justify-content: space-between;
+     flex-wrap: wrap;
+   }
+
+   .menu-list__submenu-inner,
+   .overflow-menu::part(overflow-list) {
+     padding-block-start: var(--submenu-padding-block-start);
+     padding-block-end: var(--submenu-padding-block-end);
+     padding-inline: var(--section-padding-inline);
+     opacity: var(--submenu-content-opacity);
+     transition: var(--submenu-content-animation);
+     transform: translateY(calc(var(--full-open-header-height) - var(--submenu-height)));
+
+     max-height: calc(80vh - var(--header-height));
+     overflow-y: auto;
+     overflow-x: hidden;
+     scrollbar-width: thin;
+     scrollbar-color: rgb(var(--color-foreground-rgb) / var(--opacity-40)) transparent;
+   }
+
+   .menu-list__list-item:not(:has([aria-expanded='true'])) > .menu-list__submenu product-component {
+     display: none;
+   }
+
+   /* ============================================================
+      MEGA MENU STYLES — horizontal tabs + dropdown
+      ============================================================ */
+
+   .megamenu {
+     display: block;
+     width: 100%;
+     padding-inline: 8px;
+     background: #fdf8ee;
+   }
+
+   .megamenu__tabs {
+     display: flex;
+     flex-wrap: wrap;
+     padding-block: 12px;
+     padding-inline-start: 20px;
+     justify-content: space-between;
+   }
+
+   .megamenu__dropdowns {
+     position: relative;
+     display: grid;
+     grid-template-columns: 1fr;
+   }
+
+   .megamenu__tab {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 8px;
+     background: transparent;
+     border: none;
+     padding: 4px 0;
+     font-size: var(--font-size--base);
+     font-family: var(--menu-parent-font-family);
+     font-weight: 700;
+     cursor: pointer;
+     color: var(--megamenu-inactive-color, #4a5d43);
+     transition: color 0.2s ease;
+     white-space: nowrap;
+     text-transform: uppercase;
+   }
+
+   .megamenu__tab--active {
+     color: var(--megamenu-active-color, #000000);
+     font-weight: 600;
+   }
+
+   .megamenu__tab-image {
+     display: block;
+     width: 64px;
+     height: 64px;
+     border-radius: 6px;
+     overflow: hidden;
+   }
+
+   .megamenu__tab-image img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+     display: block;
+   }
+
+   /* All dropdown panels stack in the same grid cell. Only one is
+      visible at a time via visibility/opacity — never display —
+      so the container's rendered height never changes on tab
+      switch. This keeps Horizon's one-time submenu height
+      measurement valid for every tab, not just the first. */
+   .megamenu__dropdowns {
+     position: relative;
+     display: grid;
+   }
+
+  /* NEW */
+   .megamenu__dropdown {
+     grid-column: 1;
+     grid-row: 1;
+     display: flex;
+     justify-content: space-between;
+     align-items: flex-start;
+     gap: 24px;
+     width: 100%;
+     box-sizing: border-box;
+     padding: 20px 24px 28px;
+     visibility: hidden;
+     opacity: 0;
+     pointer-events: none;
+     transition: opacity 0.15s ease;
+   }
+
+   .megamenu__dropdown--active {
+     visibility: visible;
+     opacity: 1;
+     pointer-events: auto;
+   }
+
+   .megamenu__dropdown-image {
+     height: 180px;
+     overflow: hidden;
+     border-radius: 6px;
+     grid-column: 1 / -1;
+   }
+
+   .megamenu__dropdown-image img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+     display: block;
+   }
+
+   .megamenu__dropdown-title {
+     font-size: var(--font-size--lg);
+     font-weight: 600;
+     margin: 0;
+     color: var(--megamenu-active-color, #000000);
+     grid-column: 1 / -1;
+   }
+
+   /* NEW */
+   .megamenu__dropdown-links {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+     flex-shrink: 0;
+   }
+
+     .megamenu__featured-row {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: flex-end;
+     gap: 16px;
+   }
+
+   .megamenu__dropdown-link {
+     display: block;
+     text-decoration: none;
+     color: inherit;
+     font-size: var(--font-size--base);
+     padding: 6px 0;
+     transition: opacity 0.15s ease;
+   }
+
+   .megamenu__dropdown-link:hover {
+     opacity: 0.65;
+   }
+
+   .megamenu__dropdown-spacer {
+     grid-column: 2;
+   }
+
+   .megamenu__featured-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 0 0 160px;
+    width: 160px;
+  }
+
+   .megamenu__featured-image {
+     aspect-ratio: 1;
+     overflow: hidden;
+     border-radius: 6px;
+   }
+
+   .megamenu__featured-image img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+     display: block;
+   }
+
+   .megamenu__featured-title {
+     margin: 0;
+     font-size: var(--font-size--base);
+     font-weight: 600;
+     text-align: center;
+     text-transform: uppercase;
+   }
+
+   @media screen and (max-width: 989px) {
+     .megamenu__dropdown {
+      flex-direction: column;
+    }
+
+     .megamenu__dropdown-links {
+       grid-column: 1;
+     }
+
+     .megamenu__dropdown-spacer {
+       display: none;
+     }
+
+     .megamenu__featured-row {
+        justify-content: flex-start;
+      }
+   }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Mega Menu",
+  "tag": null,
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "t:settings.menu"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "default": "{{ settings.color_palette.background }}"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:settings.text_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_font_primary_size",
+      "label": "t:settings.top_level_size",
+      "options": [
+        { "value": "0.625rem", "label": "10px" },
+        { "value": "0.75rem", "label": "12px" },
+        { "value": "0.875rem", "label": "14px" },
+        { "value": "1rem", "label": "16px" },
+        { "value": "1.125rem", "label": "18px" }
+      ],
+      "default": "1rem"
+    },
+    {
+      "type": "select",
+      "id": "menu_font_style",
+      "label": "t:settings.submenu_size",
+      "options": [
+        { "value": "regular", "label": "t:options.small" },
+        { "value": "inverse", "label": "t:options.medium" },
+        { "value": "inverse_large", "label": "t:options.large" }
+      ],
+      "default": "inverse"
+    },
+    {
+      "type": "select",
+      "id": "type_font_primary_link",
+      "label": "t:settings.font",
+      "options": [
+        { "value": "body", "label": "t:options.body" },
+        { "value": "subheading", "label": "t:options.subheading" },
+        { "value": "heading", "label": "t:options.heading" },
+        { "value": "accent", "label": "t:options.accent" }
+      ],
+      "default": "heading"
+    },
+    {
+      "type": "select",
+      "id": "type_case_primary_link",
+      "label": "t:settings.text_case",
+      "options": [
+        { "value": "none", "label": "t:options.default" },
+        { "value": "uppercase", "label": "t:options.uppercase" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "header",
+      "content": "Category tab colors"
+    },
+    {
+      "type": "color",
+      "id": "megamenu_active_color",
+      "label": "Active tab color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "megamenu_inactive_color",
+      "label": "Inactive tab color (Kiva green)",
+      "default": "#4a5d43",
+      "info": "Replace with exact Kiva green hex code."
+    },
+    {
+      "type": "header",
+      "content": "Tab thumbnail images"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category_images",
+      "label": "Show small image above each tab",
+      "default": true
+    },
+    {
+      "type": "paragraph",
+      "content": "Each slot matches a tab by POSITION (1st tab, 2nd tab, etc.). Blank slots auto-detect an image from that category's linked collection/product.",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_1",
+      "label": "Tab 1 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_2",
+      "label": "Tab 2 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_3",
+      "label": "Tab 3 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_4",
+      "label": "Tab 4 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_5",
+      "label": "Tab 5 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_6",
+      "label": "Tab 6 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_7",
+      "label": "Tab 7 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "category_image_8",
+      "label": "Tab 8 image",
+      "visible_if": "{{ block.settings.show_category_images }}"
+    },
+    {
+      "type": "header",
+      "content": "Tab 1 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_1_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_1_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_1_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_1_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_1_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_1_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 2 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_2_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_2_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_2_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_2_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_2_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_2_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 3 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_3_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_3_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_3_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_3_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_3_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_3_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 4 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_4_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_4_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_4_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_4_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_4_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_4_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 5 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_5_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_5_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_5_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_5_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_5_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_5_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 6 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_6_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_6_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_6_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_6_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_6_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_6_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 7 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_7_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_7_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_7_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_7_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_7_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_7_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "Tab 8 — featured columns"
+    },
+    { "type": "image_picker", "id": "feat_8_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_8_1_title", "label": "Title 1" },
+    { "type": "image_picker", "id": "feat_8_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_8_2_title", "label": "Title 2" },
+    { "type": "image_picker", "id": "feat_8_3_image", "label": "Image 3" },
+    { "type": "text", "id": "feat_8_3_title", "label": "Title 3" },
+
+    {
+      "type": "header",
+      "content": "t:content.mobile_layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation_bar",
+      "label": "t:settings.navigation_bar"
+    },
+    {
+      "type": "color",
+      "id": "background_color_navigation_bar",
+      "label": "t:settings.navigation_bar_background_color",
+      "default": "{{ settings.color_palette.background }}",
+      "visible_if": "{{ block.settings.navigation_bar }}"
+    },
+    {
+      "type": "color",
+      "id": "text_color_navigation_bar",
+      "label": "t:settings.navigation_bar_text_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.navigation_bar }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_accordion",
+      "label": "t:settings.accordion",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_accordion_expand_first",
+      "label": "t:settings.expand_first_group",
+      "default": false,
+      "visible_if": "{{ block.settings.drawer_accordion == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_dividers",
+      "label": "t:settings.dividers",
+      "default": false
+    }
+  ],
+  "presets": [{ "name": "Mega Menu" }]
+}
+{% endschema %}

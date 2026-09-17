@@ -1,0 +1,319 @@
+{%- liquid
+  assign bgap = section.settings['block-gap']
+-%}
+
+<style>
+  .custom-blocks-wrapper {
+    display: flex;
+    gap: {{ bgap }};
+    vertical-align: middle;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .heading-main{ font-size:28px !important; font-weight:700; text-transform: uppercase; line-height: normal; }
+  .subheading{ font-size:18px !important; font-weight:600 !important; text-transform: capitalize !important; margin-top: 8px; line-height: normal !important; margin-bottom: 10px; }
+  p.sub-text { font-size: 16px; font-weight: 500; line-height: normal; }
+
+  .custom-block {
+    box-sizing: border-box;
+    padding: 15px 5px;
+  }
+    section.custom-blocks-section {
+        display: flex;
+        color: var(--stone);
+        /* padding-bottom: 64px; */
+    }
+
+    p.rated-tit {
+      font-size: 30px;
+      text-transform: uppercase;
+      line-height: 1.4em;
+      font-weight: 500;
+      margin-bottom: 10px;
+  }
+    p.rated-subt {
+      font-size: 20px;
+      line-height: 1.2em;
+      font-weight: 500;
+  }
+    .stamped-fa-star:before {
+      color: #e2a800 !important;
+  }
+  .template-page-landing-page .custom-block, .template-collection-ice-bath .custom-block {
+      padding: 0;
+  }
+  .template-page-landing-page .custom-blocks-wrapper, .template-collection-ice-bath custom-blocks-wrapper{
+      padding: 80px 25px 50px;
+  }
+  .template-page-landing-page .custom-block img.cc-img, .template-collection-ice-bath .custom-block img.cc-img {
+      border-radius: 20px;
+      margin-bottom: 30px;
+  }
+  .template-page-landing-page .custom-block .custom-cont, .template-collection-ice-bath .custom-block .custom-cont {
+      color: #fff;
+  }
+  .template-page-landing-page .custom-block .custom-cont h3.cc-tit, .template-collection-ice-bath .custom-block .custom-cont h3.cc-tit {
+      font-size: 32px;
+      margin-bottom: 15px;
+  }
+  .template-page-landing-page .custom-block .custom-cont p.cc-desc, .template-collection-ice-bath .custom-block .custom-cont p.cc-desc {
+      font-size: 22px;
+      max-width: 85%;
+  }
+  .template-page-landing-page .custom-block .custom-cont a.cc-link, .template-collection-ice-bath .custom-block .custom-cont a.cc-link {
+      font-size: 26px;
+      border: 2px solid #fff;
+      border-radius: 100px;
+      padding: 8px 50px;
+      display: inline-flex;
+      line-height: 1em;
+      margin-top: 15px;
+  }
+  .template-collection-ice-bath .custom-blocks-wrapper {
+      justify-content: space-between;
+  }
+  .template-collection-ice-bath section.custom-blocks-section {
+      padding-bottom: 0;
+  }
+
+
+    @media only screen and (max-width:767px) {
+      .custom-blocks-wrapper {
+          flex-wrap: wrap;
+          gap: 0px;
+          padding: 0.5rem;
+      }
+
+        .heading-main span { display: block; }
+      .custom-block { width: 100% !important; }
+      .custom-blocks-wrapper h2 {
+      margin-bottom: 12px;
+  }
+      p.sub-text {font-size: 12px;}
+      .subheading {font-size: 12px !important; font-weight: 600 !important;}
+      .heading-main {font-size: 20px !important; line-height: normal;}
+
+      p.rated-tit {
+      font-size: 24px;
+  }
+      p.rated-subt {
+      font-size: 18px;
+      margin-top: 5px;
+  }
+      section.custom-blocks-section {
+        padding-bottom: 0;
+        text-align: center;
+      }
+  .template-page-landing-page .custom-blocks-wrapper, .template-collection-ice-bath .custom-blocks-wrapper {
+      padding: 40px 15px 35px;
+  }
+  .template-page-landing-page .custom-block .custom-cont h3.cc-tit, .template-collection-ice-bath .custom-block .custom-cont h3.cc-tit {
+      font-size: 24px;
+      margin-bottom: 10px;
+  }
+  .template-page-landing-page .custom-block img.cc-img, .template-collection-ice-bath .custom-block img.cc-img {
+      border-radius: 20px;
+      margin-bottom: 20px;
+  }
+  .template-page-landing-page .custom-block .custom-cont p.cc-desc, .template-collection-ice-bath .custom-block .custom-cont p.cc-desc {
+      font-size: 18px;
+      max-width: 100%;
+  }
+  .template-page-landing-page .custom-blocks-wrapper, .template-collection-ice-bath .custom-blocks-wrapper {
+      gap: 20px;
+  }
+    }
+</style>
+
+<section style="background: {{ section.settings.bg_color }} !important;" class="custom-blocks-section">
+  <div class="collection-product-grid-inner">
+    <div class="custom-blocks-wrapper">
+      {% for block in section.blocks %}
+        <div class="custom-block" style="width: {{ block.settings.width }};">
+          {% case block.type %}
+            {% when 'content' %}
+              <div class="custom-cont">
+                <img class="cc-img" src="{{ block.settings.image | image_url }}" alt="Block image" loading="lazy">
+                <h3 class="cc-tit">{{ block.settings.title }}</h3>
+                <p class="cc-desc">{{ block.settings.content }}</p>
+                <a class="cc-link" href="{{ block.settings.button_link }}">{{ block.settings.button_text }}</a>
+              </div>
+            {% when 'text' %}
+              <div>{{ block.settings.text_content }}</div>
+
+            {% when 'image' %}
+              {% if block.settings.image %}
+                <img src="{{ block.settings.image | image_url }}" alt="Block image" loading="lazy">
+              {% endif %}
+
+            {% when 'html' %}
+              <div>{{ block.settings.custom_html }}</div>
+
+            {% when 'liquid_block' %}
+              <div>{{ block.settings.custom_liquid }}</div>
+          {% endcase %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.innerWidth > 767) return;
+
+    document.querySelectorAll('.heading-main').forEach(function (heading) {
+      if (heading.dataset.split === 'true') return;
+
+      const text = heading.textContent;
+      const splitIndex = text.indexOf(' - ');
+
+      if (splitIndex === -1) return;
+
+      const firstLine = text.slice(0, splitIndex + 2);
+      const secondLine = text.slice(splitIndex + 3);
+
+      heading.innerHTML = `
+      <span>${firstLine}</span>
+      <span>${secondLine}</span>
+    `;
+
+      heading.dataset.split = 'true';
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Custom Blocks",
+  "settings": [
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#dfd7eb"
+    },
+    {
+      "type": "text",
+      "id": "block-gap",
+      "label": "Block Gap",
+      "default": "20px"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "content",
+      "name": "Image + Content + button",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "id": "content",
+          "label": "content"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "Button Text"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button Link"
+        },
+        {
+          "type": "text",
+          "id": "width",
+          "label": "Custom Width (e.g. 50%, 200px, 33vw)",
+          "default": "100%"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text Block",
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "text_content",
+          "label": "Text"
+        },
+        {
+          "type": "text",
+          "id": "width",
+          "label": "Custom Width (e.g. 50%, 200px, 33vw)",
+          "default": "100%"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image Block",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "width",
+          "label": "Custom Width (e.g. 50%, 200px, 33vw)",
+          "default": "100%"
+        }
+      ]
+    },
+    {
+      "type": "html",
+      "name": "Custom HTML Block",
+      "settings": [
+        {
+          "type": "html",
+          "id": "custom_html",
+          "label": "HTML Code"
+        },
+        {
+          "type": "text",
+          "id": "width",
+          "label": "Custom Width (e.g. 50%, 200px, 33vw)",
+          "default": "100%"
+        }
+      ]
+    },
+    {
+      "type": "liquid_block",
+      "name": "Liquid Block",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "custom_liquid",
+          "label": "Liquid Code"
+        },
+        {
+          "type": "text",
+          "id": "width",
+          "label": "Custom Width (e.g. 50%, 200px, 33vw)",
+          "default": "100%"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Custom Blocks Section",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}

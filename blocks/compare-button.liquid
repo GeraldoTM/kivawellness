@@ -1,0 +1,179 @@
+{%- liquid
+  assign show_button = false
+
+  case block.settings.visibility_mode
+    when 'metafield'
+      if product.metafields.custom.comparison_enabled
+        assign show_button = true
+      endif
+    when 'collection'
+      assign eligible_collections = block.settings.collection_handles | split: ','
+      for collection in product.collections
+        assign handle_trimmed = collection.handle | strip
+        if eligible_collections contains handle_trimmed
+          assign show_button = true
+        endif
+      endfor
+    when 'tag'
+      assign eligible_tags = block.settings.tag_keywords | downcase | split: ','
+      for tag in product.tags
+        assign tag_trimmed = tag | downcase | strip
+        if eligible_tags contains tag_trimmed
+          assign show_button = true
+        endif
+      endfor
+  endcase
+-%}
+
+{%- if show_button -%}
+  <style>
+    .cmp-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: {{ block.settings.button_color | default: '#1a1a1a' }};
+      color: {{ block.settings.text_color | default: '#ffffff' }};
+      padding: 10px 18px; border-radius: 4px; text-decoration: none;
+      font-size: 0.875rem; font-weight: 600; letter-spacing: 0.02em;
+      margin-bottom: 16px; transition: opacity 0.15s ease;
+      border: none; cursor: pointer;
+    }
+    .cmp-btn:hover { opacity: 0.85; }
+    .cmp-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Full-screen flyout — covers the entire viewport, so there is no
+       page content (including the header) left visible to overlap. */
+    .cmp-fly-panel {
+      position: fixed; inset: 0; z-index: 99999;
+      background: #ffffff; display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cmp-fly-panel.is-open { transform: translateX(0); }
+    .cmp-fly-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .cmp-fly-close {
+      position: sticky; top: 16px; margin-left: auto; margin-right: 24px;
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 50%; z-index: 5;
+      background: #f9f9f7; border: 1px solid #e0e0e0; color: #1a1a1a; cursor: pointer;
+    }
+    .cmp-fly-close svg { width: 18px; height: 18px; }
+  </style>
+
+  <button type="button" class="cmp-btn" id="cmp-open-{{ block.id }}">
+    {{ block.settings.button_text | default: 'Compare Models' }}
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M9 6l6 6-6 6"/>
+    </svg>
+  </button>
+
+  <div
+    class="cmp-fly-panel"
+    id="cmp-fly-panel-{{ block.id }}"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ block.settings.button_text | default: 'Compare Models' }}"
+  >
+    <button type="button" class="cmp-fly-close" id="cmp-fly-close-{{ block.id }}" aria-label="Close">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <div class="cmp-fly-scroll">
+      {%- render 'comparison-table-content',
+        products: block.settings.compare_products,
+        dom_id: block.id,
+        heading: block.settings.table_heading,
+        subheading: block.settings.table_subheading,
+        accent_color: block.settings.button_color
+      -%}
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var blockId = {{ block.id | json }};
+      var openBtn = document.getElementById('cmp-open-' + blockId);
+      var panel = document.getElementById('cmp-fly-panel-' + blockId);
+      var closeBtn = document.getElementById('cmp-fly-close-' + blockId);
+      if (!openBtn || !panel) return;
+
+      function openFlyout() {
+        panel.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeFlyout() {
+        panel.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+
+      openBtn.addEventListener('click', openFlyout);
+      if (closeBtn) closeBtn.addEventListener('click', closeFlyout);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && panel.classList.contains('is-open')) closeFlyout();
+      });
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Compare button",
+  "settings": [
+    { "type": "header", "content": "Button" },
+    { "type": "text", "id": "button_text", "label": "Button text", "default": "Compare Models" },
+    { "type": "color", "id": "button_color", "label": "Button color", "default": "#1a1a1a" },
+    { "type": "color", "id": "text_color", "label": "Text/icon color", "default": "#ffffff" },
+
+    { "type": "header", "content": "Visibility" },
+    {
+      "type": "select",
+      "id": "visibility_mode",
+      "label": "Show button based on",
+      "options": [
+        { "value": "metafield", "label": "Comparison metafield (recommended)" },
+        { "value": "collection", "label": "Collection membership" },
+        { "value": "tag", "label": "Product tag" }
+      ],
+      "default": "metafield",
+      "info": "\"Comparison metafield\" reuses product.metafields.custom.comparison_enabled — the same flag that already controls which products appear in the comparison table."
+    },
+    {
+      "type": "text",
+      "id": "collection_handles",
+      "label": "Collection handles (comma-separated)",
+      "info": "Only used when \"Show button based on\" is Collection membership."
+    },
+    {
+      "type": "text",
+      "id": "tag_keywords",
+      "label": "Tags (comma-separated)",
+      "info": "Only used when \"Show button based on\" is Product tag. Matching is case-insensitive."
+    },
+
+    { "type": "header", "content": "Comparison table (inside the flyout)" },
+    { "type": "text", "id": "table_heading", "label": "Table heading", "default": "Compare Saunas" },
+    { "type": "text", "id": "table_subheading", "label": "Table subheading" },
+    {
+      "type": "product_list",
+      "id": "compare_products",
+      "label": "Products to compare",
+      "info": "Up to 4. Each product needs custom.comparison_enabled = true and a linked Comparison Profile to appear.",
+      "limit": 4
+    }
+  ],
+  "presets": [{ "name": "Compare button" }]
+}
+{% endschema %}

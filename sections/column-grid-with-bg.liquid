@@ -1,0 +1,321 @@
+<style>
+  #shopify-section-{{ section.id }} .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    #shopify-section-{{ section.id }} .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  #shopify-section-{{ section.id }} .column-grid-section {
+    background-color: var(--color-background);
+    color: rgb(var(--color-foreground-rgb));
+  }
+
+  #shopify-section-{{ section.id }} .column-grid {
+    display: grid;
+    gap: {{ section.settings.gap }}px;
+  }
+
+  /* Row: all blocks side by side in a single line (e.g. 4 location
+     cards in a row). */
+  #shopify-section-{{ section.id }} .column-grid--row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Grid: 2 x 2, filling left-to-right then top-to-bottom in the
+     order blocks are added (matches the reference layout: region,
+     region / region, image). */
+  #shopify-section-{{ section.id }} .column-grid--grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__cell {
+    position: relative;
+    display: flex;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__text-inner {
+    width: 100%;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__heading {
+    margin: 0 0 12px;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__text {
+    font-size: var(--font-size--base, 1rem);
+    line-height: 150%;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__text p {
+    margin: 0 0 12px;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__text p:last-child {
+    margin-bottom: 0;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__image-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__image--placeholder {
+    background: rgb(var(--color-foreground-rgb) / 0.06);
+  }
+
+  #shopify-section-{{ section.id }} .column-grid__image--placeholder .column-grid__placeholder-svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Below 750px, both layouts collapse to a single column so text
+     blocks and image blocks stack in the same order they were
+     added, rather than squeezing 2-4 across a narrow screen. */
+  @media screen and (max-width: 749px) {
+    #shopify-section-{{ section.id }} .column-grid--row,
+    #shopify-section-{{ section.id }} .column-grid--grid {
+      grid-template-columns: 1fr;
+    }
+
+    #shopify-section-{{ section.id }} .column-grid__text-inner {
+      padding: 24px 20px;
+    }
+
+    #shopify-section-{{ section.id }} .column-grid__image-wrap {
+      min-height: 260px;
+    }
+  }
+</style>
+
+<div class="color-{{ section.settings.color_scheme }} column-grid-section section-{{ section.id }}-padding">
+  <div class="column-grid-section__wrapper{% unless section.settings.full_width %} page-width{% endunless %}">
+    <div class="column-grid column-grid--{{ section.settings.layout }}">
+      {%- for block in section.blocks -%}
+        <div
+          class="column-grid__cell"
+          style="background-color: {{ block.settings.background_color | default: 'transparent' }};"
+          {{ block.shopify_attributes }}
+        >
+          {%- case block.type -%}
+            {%- when 'text' -%}
+              <div class="column-grid__text-inner" style="text-align: {{ block.settings.text_alignment }};">
+                {%- if block.settings.heading != blank -%}
+                  <h3
+                    class="column-grid__heading"
+                    {% if block.settings.heading_color != blank %}
+                      style="color: {{ block.settings.heading_color }};"
+                    {% endif %}
+                  >
+                    {{ block.settings.heading }}
+                  </h3>
+                {%- endif -%}
+
+                {%- if block.settings.text != blank -%}
+                  <div
+                    class="column-grid__text rte"
+                    {% if block.settings.text_color != blank %}
+                      style="color: {{ block.settings.text_color }};"
+                    {% endif %}
+                  >
+                    {{ block.settings.text }}
+                  </div>
+                {%- endif -%}
+              </div>
+
+            {%- when 'image' -%}
+              <div class="column-grid__image-wrap">
+                {%- if block.settings.image != blank -%}
+                  <img
+                    src="{{ block.settings.image | image_url: width: 1500 }}"
+                    srcset="
+                      {{ block.settings.image | image_url: width: 375 }} 375w,
+                      {{ block.settings.image | image_url: width: 750 }} 750w,
+                      {{ block.settings.image | image_url: width: 1100 }} 1100w,
+                      {{ block.settings.image | image_url: width: 1500 }} 1500w
+                    "
+                    sizes="(max-width: 749px) 100vw, 25vw"
+                    alt="{{ block.settings.image.alt | escape }}"
+                    class="column-grid__image"
+                    loading="lazy"
+                    width="{{ block.settings.image.width }}"
+                    height="{{ block.settings.image.height }}"
+                  >
+                {%- else -%}
+                  <div class="column-grid__image column-grid__image--placeholder">
+                    {{ 'image' | placeholder_svg_tag: 'column-grid__placeholder-svg' }}
+                  </div>
+                {%- endif -%}
+              </div>
+          {%- endcase -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Column grid",
+  "class": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        { "value": "row", "label": "Row (4 across)" },
+        { "value": "grid", "label": "Grid (2 x 2)" }
+      ],
+      "default": "grid",
+      "info": "Row works best with exactly 4 blocks. Grid works best with exactly 4 blocks arranged 2 x 2."
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap between blocks",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "Make section full width",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "Text block",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "color",
+          "id": "background_color",
+          "label": "Background color",
+          "info": "Leave blank for no background (transparent)."
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Headline",
+          "default": "Headline"
+        },
+        {
+          "type": "color",
+          "id": "heading_color",
+          "label": "Headline color",
+          "info": "Leave blank to use the color scheme's default text color."
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Describe this location, region, or topic.</p>"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "Text color",
+          "info": "Leave blank to use the color scheme's default text color."
+        },
+        {
+          "type": "select",
+          "id": "text_alignment",
+          "label": "Text alignment",
+          "options": [
+            { "value": "left", "label": "Left" },
+            { "value": "center", "label": "Center" },
+            { "value": "right", "label": "Right" }
+          ],
+          "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image block",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "color",
+          "id": "background_color",
+          "label": "Background color",
+          "info": "Shows behind the image while it loads, and around it if the column is wider than the image's aspect ratio."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Column grid",
+      "blocks": [
+        { "type": "text" },
+        { "type": "text" },
+        { "type": "text" },
+        { "type": "image" }
+      ]
+    }
+  ]
+}
+{% endschema %}

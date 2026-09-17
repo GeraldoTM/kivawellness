@@ -1,0 +1,402 @@
+{% doc %}
+  @prompt
+    Create a custom collection page section that displays a flexible grid of product cards and product videos side by side. The section should allow the merchant to manually add blocks in any order — either a product card block (showing product image, title, price) or a product video block (pulling the video attached to a selected product). Both block types should be the same size and aspect ratio so they sit flush next to each other in the grid. On desktop, blocks should display in a configurable number of columns (e.g. 2, 3, or 4 per row). On mobile, blocks should also display side by side (2 per row). The merchant should be able to freely arrange the order of product and video blocks in the theme editor, choosing how many of each appear and where., Can it be the same size as product card
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-video-item-{{ ai_gen_id }} {
+    display: block;
+    position: relative;
+    width: 100%;
+    aspect-ratio: {{ block.settings.aspect_ratio }};
+    overflow: hidden;
+    border-radius: {{ block.settings.border_radius }}px;
+    background-color: #f5f5f5;
+  }
+
+  .ai-product-card__link-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ai-product-card__image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-product-card__image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-product-card__placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+  }
+
+  .ai-product-card__placeholder-{{ ai_gen_id }} svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.3;
+  }
+
+  .ai-product-card__info-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: #ffffff;
+  }
+
+  .ai-product-card__title-{{ ai_gen_id }} {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+
+  .ai-product-card__price-{{ ai_gen_id }} {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .ai-video-card__wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-video-card__video-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-video-card__placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    gap: 12px;
+  }
+
+  .ai-video-card__placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+  }
+
+  .ai-video-card__placeholder-text-{{ ai_gen_id }} {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .ai-video-card__play-button-{{ ai_gen_id }} {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    pointer-events: auto;
+  }
+
+  .ai-video-card__play-button-{{ ai_gen_id }}:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    background-color: rgba(255, 255, 255, 1);
+  }
+
+  .ai-video-card__play-button-{{ ai_gen_id }} svg {
+    width: 24px;
+    height: 24px;
+    fill: #000000;
+    margin-left: 3px;
+  }
+
+  .ai-video-card__video-{{ ai_gen_id }}[data-playing="true"] + .ai-video-card__play-button-{{ ai_gen_id }} {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-product-card__info-{{ ai_gen_id }} {
+      padding: 12px;
+    }
+
+    .ai-product-card__title-{{ ai_gen_id }} {
+      font-size: 14px;
+    }
+
+    .ai-product-card__price-{{ ai_gen_id }} {
+      font-size: 12px;
+    }
+
+    .ai-video-card__play-button-{{ ai_gen_id }} {
+      width: 50px;
+      height: 50px;
+    }
+
+    .ai-video-card__play-button-{{ ai_gen_id }} svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+{% endstyle %}
+
+<product-video-item-{{ ai_gen_id }} class="ai-product-video-item-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% if block.settings.item_type == 'product' %}
+    {% if block.settings.product != blank %}
+      <a href="{{ block.settings.product.url }}" class="ai-product-card__link-{{ ai_gen_id }}">
+        <div class="ai-product-card__image-wrapper-{{ ai_gen_id }}">
+          {% if block.settings.product.featured_image %}
+            <img
+              src="{{ block.settings.product.featured_image | image_url: width: 800 }}"
+              alt="{{ block.settings.product.featured_image.alt | escape }}"
+              class="ai-product-card__image-{{ ai_gen_id }}"
+              loading="lazy"
+              width="{{ block.settings.product.featured_image.width }}"
+              height="{{ block.settings.product.featured_image.height }}"
+            >
+          {% else %}
+            <div class="ai-product-card__placeholder-{{ ai_gen_id }}">
+              {{ 'product-1' | placeholder_svg_tag }}
+            </div>
+          {% endif %}
+          <div class="ai-product-card__info-{{ ai_gen_id }}">
+            <h3 class="ai-product-card__title-{{ ai_gen_id }}">{{ block.settings.product.title }}</h3>
+            <p class="ai-product-card__price-{{ ai_gen_id }}">{{ block.settings.product.price | money }}</p>
+          </div>
+        </div>
+      </a>
+    {% else %}
+      <div class="ai-product-card__placeholder-{{ ai_gen_id }}">
+        {{ 'product-1' | placeholder_svg_tag }}
+      </div>
+    {% endif %}
+  {% elsif block.settings.item_type == 'video' %}
+    {% if block.settings.video_product != blank and block.settings.video_product.media.size > 0 %}
+      {% assign video_found = false %}
+      {% for media in block.settings.video_product.media %}
+        {% if media.media_type == 'video' or media.media_type == 'external_video' %}
+          {% assign video_found = true %}
+          <div class="ai-video-card__wrapper-{{ ai_gen_id }}">
+            {% if media.media_type == 'video' %}
+              <video
+                class="ai-video-card__video-{{ ai_gen_id }}"
+                data-video-id="{{ media.id }}"
+                loop
+                muted
+                playsinline
+                preload="metadata"
+              >
+                {% for source in media.sources %}
+                  <source src="{{ source.url }}" type="{{ source.mime_type }}">
+                {% endfor %}
+              </video>
+            {% elsif media.media_type == 'external_video' %}
+              {% if media.host == 'youtube' %}
+                <iframe
+                  class="ai-video-card__video-{{ ai_gen_id }}"
+                  src="https://www.youtube.com/embed/{{ media.external_id }}?enablejsapi=1&controls=1&modestbranding=1&rel=0"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              {% elsif media.host == 'vimeo' %}
+                <iframe
+                  class="ai-video-card__video-{{ ai_gen_id }}"
+                  src="https://player.vimeo.com/video/{{ media.external_id }}?title=0&byline=0&portrait=0"
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              {% endif %}
+            {% endif %}
+            <button class="ai-video-card__play-button-{{ ai_gen_id }}" aria-label="Play video">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          </div>
+          {% break %}
+        {% endif %}
+      {% endfor %}
+      {% unless video_found %}
+        <div class="ai-video-card__placeholder-{{ ai_gen_id }}">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 10l-4 4m0-4l4 4m5-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="ai-video-card__placeholder-text-{{ ai_gen_id }}">No video found for this product</p>
+        </div>
+      {% endunless %}
+    {% else %}
+      <div class="ai-video-card__placeholder-{{ ai_gen_id }}">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="ai-video-card__placeholder-text-{{ ai_gen_id }}">Select a product with a video</p>
+      </div>
+    {% endif %}
+  {% endif %}
+</product-video-item-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class ProductVideoItem{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.setupVideoControls();
+      }
+
+      setupVideoControls() {
+        const playButton = this.querySelector('.ai-video-card__play-button-{{ ai_gen_id }}');
+        
+        if (!playButton) return;
+
+        const wrapper = playButton.closest('.ai-video-card__wrapper-{{ ai_gen_id }}');
+        const video = wrapper.querySelector('.ai-video-card__video-{{ ai_gen_id }}');
+        
+        if (!video) return;
+
+        if (video.tagName === 'VIDEO') {
+          playButton.addEventListener('click', () => {
+            if (video.paused) {
+              video.play();
+              video.setAttribute('data-playing', 'true');
+            } else {
+              video.pause();
+              video.removeAttribute('data-playing');
+            }
+          });
+
+          video.addEventListener('click', () => {
+            if (!video.paused) {
+              video.pause();
+              video.removeAttribute('data-playing');
+            }
+          });
+
+          video.addEventListener('ended', () => {
+            video.removeAttribute('data-playing');
+          });
+        } else if (video.tagName === 'IFRAME') {
+          playButton.addEventListener('click', () => {
+            playButton.style.opacity = '0';
+            playButton.style.pointerEvents = 'none';
+          });
+        }
+      }
+    }
+
+    customElements.define('product-video-item-{{ ai_gen_id }}', ProductVideoItem{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product or video card",
+  "settings": [
+    {
+      "type": "select",
+      "id": "item_type",
+      "label": "Card type",
+      "options": [
+        {
+          "value": "product",
+          "label": "Product card"
+        },
+        {
+          "value": "video",
+          "label": "Product video"
+        }
+      ],
+      "default": "product"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "For product card display"
+    },
+    {
+      "type": "product",
+      "id": "video_product",
+      "label": "Product with video",
+      "info": "The first video from this product will be displayed"
+    },
+    {
+      "type": "header",
+      "content": "Card style"
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1 / 1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4 / 5",
+          "label": "Portrait (4:5)"
+        },
+        {
+          "value": "3 / 4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "16 / 9",
+          "label": "Landscape (16:9)"
+        }
+      ],
+      "default": "1 / 1",
+      "info": "Ensure all cards use the same aspect ratio"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product or video card"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,131 @@
+{%- liquid
+  assign raw_value = closest.product.metafields.custom[block.settings.metafield_key]
+  assign items = raw_value | split: '|'
+-%}
+
+{%- if raw_value != blank -%}
+  <style>
+    .benefits-bar-{{ block.id }} {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      background: {{ block.settings.background_color | default: '#c3cdc5' }};
+      color: {{ block.settings.text_color | default: '#120d07' }};
+      font-size: {{ block.settings.text_size | default: 14 }}px;
+      border-radius: {{ block.settings.border_radius | default: 6 }}px;
+      border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: '#120d07' }};
+      padding: 10px;
+      {%- if block.settings.width == 'custom' -%}
+        width: {{ block.settings.custom_width | default: 100 }}%;
+      {%- elsif block.settings.width == 'fit-content' -%}
+        width: fit-content;
+      {%- else -%}
+        width: 100%;
+      {%- endif -%}
+      box-sizing: border-box;
+    }
+    .benefits-bar-{{ block.id }}::-webkit-scrollbar { display: none; }
+    .benefits-bar-{{ block.id }} .benefits-bar__item {
+      padding: 0 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .benefits-bar-{{ block.id }} .benefits-bar__divider {
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div class="benefits-bar-{{ block.id }}" {{ block.shopify_attributes }}>
+    {%- for item in items -%}
+      <span class="benefits-bar__item">{{ item | strip }}</span>
+      {%- unless forloop.last -%}
+        <span class="benefits-bar__divider">|</span>
+      {%- endunless -%}
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Benefits bar",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield key",
+      "default": "benefits_upper",
+      "info": "The part after custom. — e.g. \"benefits_upper\" reads product.metafields.custom.benefits_upper. Use \"benefits_lower\" for the second bar. Values in the metafield must be separated by | (pipe)."
+    },
+    { "type": "header", "content": "Appearance" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#120d07" },
+    { "type": "color", "id": "background_color", "label": "Background color", "default": "#c3cdc5" },
+    {
+      "type": "range",
+      "id": "text_size",
+      "label": "Text size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    { "type": "header", "content": "Border" },
+    { "type": "color", "id": "border_color", "label": "Border color", "default": "#120d07" },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 6
+    },
+    { "type": "header", "content": "Width" },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Width",
+      "options": [
+        { "value": "fit-content", "label": "Fit content" },
+        { "value": "fill", "label": "Full width" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom width",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Benefits bar"
+    }
+  ]
+}
+{% endschema %}

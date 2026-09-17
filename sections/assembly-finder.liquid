@@ -1,0 +1,876 @@
+<style>
+  .if-installer-finder {
+    max-width: calc(1280px - 50px);
+    margin-inline: auto;
+    margin-block: 3rem;
+    border: 1px solid #DED5C9;
+    background: var(--balance);
+    border-radius: .8rem;
+    overflow: hidden;
+  }
+
+  .if-installer-finder > div {
+    padding-inline: 3rem;
+  }
+
+  .if-header {
+    background-color: {{ section.settings.header_bg_color }};
+    padding-block: 2rem;
+  }
+
+  .if-header-content {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .if-description {
+    margin-top: 1rem;
+  }
+
+  .if-caption {
+    position: relative;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: rgb(0, 0, 0, .75);
+    padding-left: 30px;
+  }
+
+  .if-caption:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1px;
+    width: 20px;
+    background: rgb(0,0,0, .75);
+  }
+
+  .if-title {
+    font-size: 40px;
+  }
+
+  .if-subtitle {
+    margin: 0;
+  }
+
+  .if-badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #DED5C9;
+    height: fit-content;
+    padding: .5rem 1rem .5rem 2rem;
+    border-radius: 5rem;
+    margin-top: 1.5rem;
+    background-color: #fff;
+  }
+
+  .if-badge:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    height: 8px;
+    width: 7px;
+    background: #A070C8;
+    border-radius: 50%;
+  }
+
+  .if-search-wrapper {
+    padding-block: 2rem;
+  }
+
+  .if-location-tool {
+    position: relative;
+  }
+
+  .if-input-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    width: calc(100% - 214px);
+    margin-right: 10px;
+  }
+
+  /* SVG fix: constrain the icon to a fixed box instead of letting the raw
+     inline SVG render at its native (often much larger) intrinsic size. */
+  .if-input-icon {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+  }
+
+  .if-input-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .if-search-wrapper label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .if-search-wrapper input {
+    background-color: #fff;
+    width: 100%;
+    padding: .5rem 3rem .5rem 4rem;
+    border: 1px solid #DED5C9;
+  }
+
+  .if-search-wrapper input,
+  .if-search-btn {
+    min-height: 3.2rem;
+    border-radius: 2rem;
+  }
+
+  .if-search-btn {
+    display: inline-block;
+    width: 200px;
+    max-width: 200px;
+    border: 1px solid {{ section.settings.button_color }};
+    background: {{ section.settings.button_color }};
+    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: .5rem 1.2rem;
+    cursor: pointer;
+  }
+
+  .if-results-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-block: 2.5rem;
+    min-height: 15rem;
+    background: #fff;
+    text-align: center;
+    border-top: 1px solid #DED5C9;
+    border-bottom: 1px solid #DED5C9;
+  }
+
+  .if-results-panel > * {
+    width: 100%;
+  }
+
+  .if-results-panel .if-pin-icon {
+    display: block;
+    height: 2.5rem;
+    width: auto;
+    margin: 0 auto 2rem;
+  }
+
+  .if-installer-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .if-installer-card {
+    border: 1px solid #DED5C9;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 6px;
+    text-align: left;
+    min-width: 250px;
+  }
+
+  .if-disclaimer {
+    padding-block: 1rem;
+  }
+
+  .if-disclaimer > * {
+    display: inline;
+  }
+
+  .if-disclaimer .if-caution-icon {
+    height: 1.4rem;
+    width: auto;
+  }
+
+  .if-autocomplete-list:empty {
+    display: none;
+  }
+
+  .if-autocomplete-list {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #DED5C9;
+    border-radius: 2rem;
+    width: calc(100% - 214px);
+    margin-top: .1rem;
+    max-width: 100%;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: .5rem 2rem;
+  }
+
+  .if-autocomplete-item {
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .if-autocomplete-item + .if-autocomplete-item {
+    border-top: 1px solid #DED5C9;
+  }
+
+  .if-autocomplete-item:hover {
+    background: #f5f5f5;
+  }
+
+  .if-quick-select {
+    margin-top: 15px;
+  }
+
+  .if-quick-label {
+    display: block;
+    margin-top: 2.5em;
+    margin-bottom: 1rem;
+  }
+
+  .if-quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .if-quick-buttons button {
+    border: 1px solid #DED5C9;
+    background: #ffffff;
+    padding: .4rem 1.5rem;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .if-quick-buttons button:hover {
+    background: #eaeaea;
+  }
+
+  .if-quick-buttons button.if-active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+
+  .if-hidden {
+    display: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .if-installer-finder > div {
+      padding-inline: 1.5rem;
+    }
+
+    .if-header-content {
+      flex-direction: column;
+    }
+
+    .if-title {
+      font-size: 28px;
+    }
+
+    .if-badge {
+      width: fit-content;
+      margin-top: 1rem;
+    }
+
+    .if-input-icon-wrapper {
+      width: 100%;
+      margin-right: 0;
+      margin-bottom: .5rem;
+    }
+
+    .if-search-btn {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .if-quick-buttons {
+      gap: 5px;
+    }
+
+    .if-quick-buttons button {
+      padding: .4rem .7rem;
+    }
+
+    .if-installer-cards {
+      gap: 0;
+    }
+
+    .if-installer-card {
+      width: 100%;
+    }
+
+    .if-disclaimer {
+      font-size: 14px;
+    }
+
+    .if-autocomplete-list {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="if-installer-finder">
+  <div class="if-header">
+    <div class="if-header-content">
+      <div class="if-header-text">
+        <span class="if-caption">{{ section.settings.caption }}</span>
+        <h1 class="if-title">{{ section.settings.heading }}</h1>
+        <p class="if-subtitle">{{ section.settings.subheading }}</p>
+      </div>
+      {%- if section.settings.badge_label != blank -%}
+        <button class="if-badge">{{ section.settings.badge_label }}</button>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.description != blank -%}
+      <div class="if-description">
+        {{ section.settings.description }}
+      </div>
+    {%- endif -%}
+  </div>
+
+  <div class="if-search-wrapper">
+    <div class="if-location-tool">
+      <label for="if-postcode-input">{{ section.settings.input_label }}</label>
+      <div class="if-input-icon-wrapper">
+        <span class="if-input-icon">{{- 'icon-search.svg' | inline_asset_content -}}</span>
+        <input type="text" id="if-postcode-input" placeholder="{{ section.settings.input_placeholder }}">
+      </div>
+      <button id="if-search-btn" class="if-search-btn">{{ section.settings.button_label }}</button>
+      <div id="if-autocomplete-list" class="if-autocomplete-list"></div>
+    </div>
+
+    <div class="if-quick-select">
+      <span class="if-quick-label">{{ section.settings.quick_select_label }}</span>
+      <div class="if-quick-buttons">
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'quick_region' -%}
+            <button data-region="{{ block.settings.region_key }}" {{ block.shopify_attributes }}>
+              {{ block.settings.label }}
+            </button>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+
+  <div id="if-results-panel" class="if-results-panel">
+    {%- if section.settings.pin_image != blank -%}
+      <img class="if-pin-icon" src="{{ section.settings.pin_image | image_url: width: 100 }}" width="100" loading="lazy" alt="Pin Icon">
+    {%- else -%}
+      <img class="if-pin-icon" src="{{ 'pin-image.png' | asset_url }}" width="100" loading="lazy" alt="Pin Icon">
+    {%- endif -%}
+    <p>{{ section.settings.empty_state_text }}</p>
+    <div id="if-installer-cards" class="if-installer-cards"></div>
+    <div id="if-no-results" class="if-no-results if-hidden">
+      <p>{{ section.settings.no_results_text }}</p>
+    </div>
+  </div>
+
+  <div class="if-disclaimer">
+    {%- if section.settings.caution_image != blank -%}
+      <img
+        class="if-caution-icon"
+        src="{{ section.settings.caution_image | image_url: width: 100 }}"
+        width="100"
+        loading="lazy"
+        alt="Caution Icon"
+      >
+    {%- else -%}
+      <img class="if-caution-icon" src="{{ 'caution-image.png' | asset_url }}" width="100" loading="lazy" alt="Caution Icon">
+    {%- endif -%}
+    <p>{{ section.settings.disclaimer_text }}</p>
+  </div>
+</div>
+
+<script>
+  let selectedRegion = '';
+
+  const INSTALLERS = [
+    {
+      name: 'Billy Cannone',
+      phone: '0428 808 828',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['gold_coast', 'brisbane', 'tweed_heads', 'byron_bay'],
+    },
+    {
+      name: 'Tom Cannone',
+      phone: '0402 906 178',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['coffs_harbour'],
+    },
+    {
+      name: 'Kitset Assembly',
+      phone: null,
+      website: 'https://obp.kitsetassemblyservices.com/s/customer-kiva/assembly-details/',
+      types: 'Indoor & Outdoor Saunas',
+      regions: [
+        'sydney',
+        'wollongong',
+        'sunshine_coast',
+        'vic_surrounds',
+        'adelaide',
+        'brisbane',
+        'gold_coast',
+        'tweed_heads',
+        'byron_bay',
+        'perth',
+      ],
+    },
+    {
+      name: 'Laurence Wilson',
+      phone: '0414 503 814',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['sydney'],
+    },
+    {
+      name: 'Ian Jimenez',
+      phone: '0410 413 315',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['sydney', 'nsw_other'],
+    },
+    {
+      name: 'Andrew Thompson',
+      phone: '0497 806 218',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['melbourne', 'vic_surrounds'],
+    },
+    {
+      name: 'Michael Hastings',
+      phone: '0433 527 772',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['cairns'],
+    },
+    {
+      name: 'Adam Hamzel',
+      phone: '0427 660 077',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['darwin'],
+    },
+    {
+      name: 'Hobart Handyman & Painting',
+      phone: '0498 731 393',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['hobart'],
+    },
+    {
+      name: 'Braydon Retchless / King Tide Construction',
+      phone: '0401 443 943',
+      website: null,
+      types: 'Indoor & Outdoor Saunas',
+      regions: ['bundaberg_hervey_bay'],
+    },
+  ];
+
+  function getRegionFromPostcode(pc) {
+    pc = parseInt(pc);
+    if (pc >= 4209 && pc <= 4230) return ['gold_coast'];
+    if ((pc >= 4000 && pc <= 4208) || (pc >= 4300 && pc <= 4305) || (pc >= 4500 && pc <= 4521)) return ['brisbane'];
+    if (pc >= 2485 && pc <= 2490) return ['tweed_heads'];
+    if (pc >= 2480 && pc <= 2484) return ['byron_bay'];
+    if (pc >= 2450 && pc <= 2456) return ['coffs_harbour'];
+    if (pc >= 4550 && pc <= 4580) return ['sunshine_coast'];
+    if ((pc >= 1000 && pc <= 2249) || (pc >= 2555 && pc <= 2574)) return ['sydney'];
+    if (pc >= 2500 && pc <= 2530) return ['wollongong'];
+    if ((pc >= 2250 && pc <= 2454) || (pc >= 2575 && pc <= 2999)) return ['nsw_other'];
+    if ((pc >= 3000 && pc <= 3999) || (pc >= 8000 && pc <= 8999)) return ['vic_surrounds', 'melbourne'];
+    if (pc >= 5000 && pc <= 5999) return ['adelaide'];
+    if (pc >= 6000 && pc <= 6999) return ['perth'];
+    if (pc >= 4870 && pc <= 4879) return ['cairns'];
+    if (pc >= 800 && pc <= 999) return ['darwin'];
+    if (pc >= 7000 && pc <= 7799) return ['hobart'];
+    if (pc >= 4655 && pc <= 4670) return ['bundaberg_hervey_bay'];
+    return [];
+  }
+
+  const SUBURB_MAP = {
+    'gold coast': 'gold_coast',
+    'surfers paradise': 'gold_coast',
+    broadbeach: 'gold_coast',
+    robina: 'gold_coast',
+    coomera: 'gold_coast',
+    'hope island': 'gold_coast',
+    coolangatta: 'gold_coast',
+    nerang: 'gold_coast',
+    southport: 'gold_coast',
+    brisbane: 'brisbane',
+    ipswich: 'brisbane',
+    redcliffe: 'brisbane',
+    'north brisbane': 'brisbane',
+    logan: 'brisbane',
+    redlands: 'brisbane',
+    'tweed heads': 'tweed_heads',
+    'tweed heads south': 'tweed_heads',
+    'banora point': 'tweed_heads',
+    'byron bay': 'byron_bay',
+    ballina: 'byron_bay',
+    lismore: 'byron_bay',
+    mullumbimby: 'byron_bay',
+    'brunswick heads': 'byron_bay',
+    'coffs harbour': 'coffs_harbour',
+    sawtell: 'coffs_harbour',
+    toormina: 'coffs_harbour',
+    woolgoolga: 'coffs_harbour',
+    'sunshine coast': 'sunshine_coast',
+    noosa: 'sunshine_coast',
+    maroochydore: 'sunshine_coast',
+    caloundra: 'sunshine_coast',
+    nambour: 'sunshine_coast',
+    coolum: 'sunshine_coast',
+    peregian: 'sunshine_coast',
+    sydney: 'sydney',
+    parramatta: 'sydney',
+    liverpool: 'sydney',
+    penrith: 'sydney',
+    wollongong: 'wollongong',
+    shellharbour: 'wollongong',
+    kiama: 'wollongong',
+    dapto: 'wollongong',
+    'port kembla': 'wollongong',
+    hunter: 'nsw_other',
+    'central coast': 'nsw_other',
+    'south coast': 'nsw_other',
+    riverina: 'nsw_other',
+    'new england': 'nsw_other',
+    melbourne: 'melbourne',
+    footscray: 'melbourne',
+    'st kilda': 'melbourne',
+    docklands: 'melbourne',
+    'south yarra': 'melbourne',
+    fitzroy: 'melbourne',
+    perth: 'perth',
+    adelaide: 'adelaide',
+    cairns: 'cairns',
+    'cairns north': 'cairns',
+    'edge hill': 'cairns',
+    manunda: 'cairns',
+    bungalow: 'cairns',
+    darwin: 'darwin',
+    'alice springs': 'darwin',
+    hobart: 'hobart',
+    launceston: 'hobart',
+    devonport: 'hobart',
+    burnie: 'hobart',
+    'hervey bay': 'bundaberg_hervey_bay',
+    torquay: 'bundaberg_hervey_bay',
+    pialba: 'bundaberg_hervey_bay',
+    maryborough: 'bundaberg_hervey_bay',
+    bundaberg: 'bundaberg_hervey_bay',
+    bargara: 'bundaberg_hervey_bay',
+  };
+
+  const AUTOCOMPLETE_ITEMS = Object.keys(SUBURB_MAP);
+
+  function ifShowAutocomplete(value) {
+    const list = document.getElementById('if-autocomplete-list');
+    list.innerHTML = '';
+    if (value.length < 2) return;
+    AUTOCOMPLETE_ITEMS.filter((i) => i.includes(value))
+      .slice(0, 6)
+      .forEach((match) => {
+        const div = document.createElement('div');
+        div.className = 'if-autocomplete-item';
+        div.textContent = match;
+        div.onclick = () => {
+          document.getElementById('if-postcode-input').value = match;
+          list.innerHTML = '';
+          selectedRegion = '';
+          ifRunSearch();
+        };
+        list.appendChild(div);
+      });
+  }
+
+  function ifSetActiveButton(region) {
+    document.querySelectorAll('.if-quick-buttons button').forEach((btn) => {
+      btn.classList.toggle('if-active', btn.dataset.region === region);
+    });
+  }
+
+  function ifRunSearch() {
+    const input = document.getElementById('if-postcode-input').value.trim().toLowerCase();
+    let matchedRegions = [];
+
+    if (/^\d{4}$/.test(input)) {
+      matchedRegions = getRegionFromPostcode(input);
+    } else if (SUBURB_MAP[input]) {
+      matchedRegions = [SUBURB_MAP[input]];
+    } else if (selectedRegion) {
+      matchedRegions = [selectedRegion];
+    }
+
+    if (matchedRegions.length) {
+      selectedRegion = matchedRegions[0];
+      ifSetActiveButton(selectedRegion);
+    }
+
+    const resultsPanelText = document.querySelector('#if-results-panel p');
+    const noResults = document.getElementById('if-no-results');
+    const cards = document.getElementById('if-installer-cards');
+    const pinImg = document.querySelector('#if-results-panel .if-pin-icon');
+
+    if (matchedRegions.length === 0) {
+      resultsPanelText.classList.add('if-hidden');
+      noResults.classList.remove('if-hidden');
+      cards.innerHTML = '';
+      return;
+    }
+
+    const matched = INSTALLERS.filter((i) => i.regions.some((r) => matchedRegions.includes(r)));
+
+    if (matched.length === 0) {
+      resultsPanelText.classList.add('if-hidden');
+      noResults.classList.remove('if-hidden');
+      cards.innerHTML = '';
+      return;
+    }
+
+    noResults.classList.add('if-hidden');
+    resultsPanelText.classList.add('if-hidden');
+    if (pinImg) pinImg.style.display = 'none';
+
+    cards.innerHTML = matched
+      .map(
+        (inst) => `
+    <div class="if-installer-card">
+      <h3>${inst.name}</h3>
+      <p><strong>Services:</strong> ${inst.types}</p>
+      ${
+        inst.phone
+          ? `<p><strong>Phone:</strong> <a href="tel:${inst.phone.replace(/\s/g, '')}">${inst.phone}</a></p>`
+          : ''
+      }
+      ${
+        inst.website
+          ? `<p><strong>Website:</strong> <a href="${inst.website}" target="_blank">Visit Website</a></p>`
+          : ''
+      }
+    </div>
+  `
+      )
+      .join('');
+  }
+
+  document.getElementById('if-search-btn').onclick = ifRunSearch;
+
+  document.getElementById('if-postcode-input').addEventListener('input', function () {
+    const value = this.value.trim();
+    selectedRegion = '';
+    ifSetActiveButton('');
+    const cards = document.getElementById('if-installer-cards');
+    const resultsPanelText = document.querySelector('#if-results-panel p');
+    const pinImg = document.querySelector('#if-results-panel .if-pin-icon');
+
+    if (!value) {
+      document.getElementById('if-no-results').classList.add('if-hidden');
+      document.getElementById('if-autocomplete-list').innerHTML = '';
+      cards.innerHTML = '';
+      resultsPanelText.classList.remove('if-hidden');
+      if (pinImg) pinImg.style.display = '';
+      return;
+    }
+
+    ifShowAutocomplete(value.toLowerCase());
+    if (value.length >= 3) ifRunSearch();
+  });
+
+  document.getElementById('if-postcode-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') ifRunSearch();
+  });
+
+  document.querySelectorAll('.if-quick-buttons button').forEach((btn) => {
+    btn.onclick = function () {
+      selectedRegion = this.dataset.region;
+      ifSetActiveButton(selectedRegion);
+      document.getElementById('if-postcode-input').value = '';
+      ifRunSearch();
+    };
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.if-location-tool')) {
+      document.getElementById('if-autocomplete-list').innerHTML = '';
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Installer Finder",
+  "tag": "section",
+  "class": "installer-finder-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "color",
+      "id": "header_bg_color",
+      "label": "Header background colour",
+      "default": "#e0d8eb"
+    },
+    {
+      "type": "text",
+      "id": "caption",
+      "label": "Caption (above heading)",
+      "default": "PROFESSIONAL ASSEMBLY"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Find an Installer Near You"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Enter your postcode or suburb to see available installers in your area."
+    },
+    {
+      "type": "text",
+      "id": "badge_label",
+      "label": "Badge label (top right pill)",
+      "default": "Independent Installers"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description body",
+      "default": "<p>Many of our customers choose to assemble their sauna themselves, however professional installation is also an option for those who would prefer assistance.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Search"
+    },
+    {
+      "type": "text",
+      "id": "input_label",
+      "label": "Input label",
+      "default": "YOUR LOCATION"
+    },
+    {
+      "type": "text",
+      "id": "input_placeholder",
+      "label": "Input placeholder",
+      "default": "e.g. 4217 or Gold Coast or Surfers Paradise."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Search button label",
+      "default": "Find Installers"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Search button colour",
+      "default": "#ff5619"
+    },
+    {
+      "type": "text",
+      "id": "quick_select_label",
+      "label": "Quick select label",
+      "default": "Quick select:"
+    },
+    {
+      "type": "header",
+      "content": "Results panel"
+    },
+    {
+      "type": "image_picker",
+      "id": "pin_image",
+      "label": "Pin icon image"
+    },
+    {
+      "type": "text",
+      "id": "empty_state_text",
+      "label": "Empty state text",
+      "default": "Enter your postcode or suburb above to see which installers service your area."
+    },
+    {
+      "type": "text",
+      "id": "no_results_text",
+      "label": "No results text",
+      "default": "No installers found for your area."
+    },
+    {
+      "type": "header",
+      "content": "Disclaimer"
+    },
+    {
+      "type": "image_picker",
+      "id": "caution_image",
+      "label": "Caution icon image"
+    },
+    {
+      "type": "text",
+      "id": "disclaimer_text",
+      "label": "Disclaimer text",
+      "default": "The installers listed are independent third-party providers. Kiva Wellness does not manage, schedule, or guarantee their services. All arrangements and pricing must be organised directly with the installer."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "quick_region",
+      "name": "Quick select region",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Button label",
+          "default": "Gold Coast"
+        },
+        {
+          "type": "text",
+          "id": "region_key",
+          "label": "Region key (must match installer data)",
+          "default": "gold_coast",
+          "info": "Use the exact key from the INSTALLERS array e.g. gold_coast, brisbane, sydney, vic_surrounds, sunshine_coast, perth, hobart, darwin, cairns"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Installer Finder",
+      "blocks": [
+        { "type": "quick_region", "settings": { "label": "Gold Coast", "region_key": "gold_coast" } },
+        { "type": "quick_region", "settings": { "label": "Brisbane", "region_key": "brisbane" } },
+        { "type": "quick_region", "settings": { "label": "Sydney", "region_key": "sydney" } },
+        { "type": "quick_region", "settings": { "label": "Melbourne", "region_key": "vic_surrounds" } },
+        { "type": "quick_region", "settings": { "label": "Sunshine Coast", "region_key": "sunshine_coast" } },
+        { "type": "quick_region", "settings": { "label": "Perth", "region_key": "perth" } },
+        { "type": "quick_region", "settings": { "label": "Hobart", "region_key": "hobart" } },
+        { "type": "quick_region", "settings": { "label": "Darwin", "region_key": "darwin" } },
+        { "type": "quick_region", "settings": { "label": "Cairns", "region_key": "cairns" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

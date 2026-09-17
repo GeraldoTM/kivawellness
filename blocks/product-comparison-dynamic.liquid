@@ -1,0 +1,113 @@
+{%- comment -%}
+  product-comparison-card.liquid — fetchable data fragment, NOT meant to be
+  added as a visible section by a merchant.
+
+  Fetched client-side per selected product via Shopify's Section Rendering
+  API, e.g.:
+    fetch('/products/' + handle + '?section_id=product-comparison-card')
+
+  On a product page request, Shopify automatically scopes `product` to
+  that page's product — so this renders correctly for whatever handle is
+  in the URL, no extra params needed.
+
+  Outputs a single JSON blob (not visible HTML) with everything the main
+  comparison table + drawer need for one product: header info, all 9 row
+  values (same auto-mapping as product-comparison.liquid), and all 5
+  drawer groups. The main section's JS parses this and builds the table.
+{%- endcomment -%}
+
+{%- liquid
+  assign heating = product.metafields.custom.heating_flyout.value
+  assign build = product.metafields.custom.build_flyout.value
+  assign installation = product.metafields.custom.installation_flyout.value
+  assign features = product.metafields.custom.features_flyout.value
+  assign warranty = product.metafields.custom.warranty_flyout.value
+  assign merch = product.metafields.custom.merchandising_table_header.value
+
+  assign row_category = merch.category | default: product.type
+  assign row_dimensions = ''
+  if build.width_mm != blank or build.depth_mm != blank or build.height_mm != blank
+    assign row_dimensions = build.width_mm | append: ' x ' | append: build.depth_mm | append: ' x ' | append: build.height_mm | append: ' mm'
+  endif
+
+  assign exterior_dimensions = ''
+  if build.width_mm != blank or build.depth_mm != blank or build.height_mm != blank
+    assign exterior_dimensions = build.width_mm | append: ' x ' | append: build.depth_mm | append: ' x ' | append: build.height_mm | append: ' mm'
+  endif
+
+  assign temperature_range = ''
+  if heating.min_temperature != blank or heating.max_temperature != blank
+    assign temperature_range = heating.min_temperature | append: '°C - ' | append: heating.max_temperature | append: '°C'
+  endif
+-%}
+
+<script type="application/json" id="pc-card-data" data-handle="{{ product.handle }}">
+{
+  "handle": {{ product.handle | json }},
+  "title": {{ product.title | json }},
+  "url": {{ product.url | json }},
+  "image": {{ product.featured_image | image_url: width: 240 | json }},
+  "price": {{ product.price | money | json }},
+  "tagline": {{ product.metafields.custom.product_slogan | json }},
+  "rows": {
+    "best_for": {{ merch.best_for | json }},
+    "category": {{ row_category | json }},
+    "capacity": {{ build.seating | json }},
+    "key_spec": {{ merch.key_spec | json }},
+    "power_system": {{ heating.heating_system | json }},
+    "material": {{ build.timber | json }},
+    "dimensions": {{ row_dimensions | json }},
+    "environment": {{ merch.environment | json }},
+    "warranty": {{ warranty.warranty_summary | json }}
+  },
+  "drawer": {
+    "heating": {
+      "temperature_range": {{ temperature_range | json }},
+      "heating_system": {{ heating.heating_system | json }},
+      "infrared_spectrum": {{ heating.infrared_spectrum | json }},
+      "heating_elements": {{ heating.heating_elements | json }},
+      "warm_up_time": {{ heating.warm_up_time | json }},
+      "heater_power": {{ heating.heater_power | json }}
+    },
+    "build": {
+      "timber": {{ build.timber | json }},
+      "exterior_dimensions": {{ exterior_dimensions | json }},
+      "interior_dimensions": {{ build.interior_dimensions | json }},
+      "weight_kg": {{ build.weight_kg | json }},
+      "glass": {{ build.glass | json }},
+      "ventilation": {{ build.ventilation | json }},
+      "seating": {{ build.seating | json }}
+    },
+    "installation": {
+      "power_connection": {{ installation.power_connection | json }},
+      "electrician_required": {{ installation.electrician_required | json }},
+      "assembly": {{ installation.assembly | json }},
+      "installation_available": {{ installation.installation_available | json }},
+      "floor_requirements": {{ installation.floor_requirements | json }}
+    },
+    "features": {
+      "digital_controls": {{ features.digital_controls | json }},
+      "wifi_control": {{ features.wifi_control | json }},
+      "interior_lighting": {{ features.interior_lighting | json }},
+      "bluetooth": {{ features.bluetooth | json }},
+      "chromotherapy": {{ features.chromotherapy | json }},
+      "airflow_system": {{ features.airflow_system | json }}
+    },
+    "warranty": {
+      "warranty_summary": {{ warranty.warranty_summary | json }},
+      "structural_warranty": {{ warranty.structural_warranty | json }},
+      "heating_warranty": {{ warranty.heating_warranty | json }},
+      "component_warranty": {{ warranty.component_warranty | json }},
+      "commercial_warranty": {{ warranty.commercial_warranty | json }},
+      "warranty_detail": {{ warranty.warranty_detail | json }}
+    }
+  }
+}
+</script>
+
+{% schema %}
+{
+  "name": "Comparison data (hidden)",
+  "settings": []
+}
+{% endschema %}

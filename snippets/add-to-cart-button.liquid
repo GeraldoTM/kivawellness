@@ -1,0 +1,114 @@
+{%- doc -%}
+  Renders an "Add to cart" button with dynamic text and state. It shows different text based on whether the product can be added to the cart and provides visual feedback when an item is added.
+
+  @param {boolean} can_add_to_cart - Whether the product can be added to the cart.
+  @param {string} add_to_cart_text - The text to display on the button.
+  @param {object} product - The product object to be added to the cart.
+  @param {string} [class] - Additional CSS classes to apply to the button.
+  @param {string} [id] - The ID attribute for the button.
+  @param {string} [data_testid] - The data-testid attribute for testing.
+  @param {boolean} [visit_product_page] - When true and the product can be added to the cart, renders a link to the product page instead of adding the item straight to the cart drawer. Has no effect on the sold-out ("Notify me") state, which keeps its normal behavior either way.
+  @param {boolean} [show_icon] - Whether to show the cart icon. Defaults to true, including when this param isn't passed at all (for backward compatibility with any other existing caller of this snippet).
+  @param {string} [content_alignment] - 'left', 'center', or 'right'. Defaults to 'left'.
+  @param {string} [padding_style] - Raw CSS padding declarations (e.g. from the spacing-style snippet) applied to the button/link.
+  @param {string} [width_value] - CSS width value (e.g. '100%', 'fit-content', '60%'). Defaults to '100%' for backward compatibility with any other existing caller of this snippet.
+{%- enddoc -%}
+
+{%- liquid
+  assign default_add_to_cart_text = 'actions.add_to_cart' | t
+  assign sold_out_display_text = 'Notify Me'
+
+  assign button_text = add_to_cart_text | default: default_add_to_cart_text
+  unless can_add_to_cart
+    assign button_text = sold_out_display_text
+  endunless
+
+  assign product_variant_media = product.selected_or_first_available_variant.featured_media.preview_image | image_url: width: 100
+  if product.selected_or_first_available_variant.featured_media.preview_image == blank
+    assign product_variant_media = product.featured_media.preview_image | image_url: width: 100
+  endif
+
+  assign selected_variant_id = product.selected_or_first_available_variant.id
+
+  # `default: true` would wrongly turn an explicit false back into true,
+  # since Liquid's default filter treats false as "empty" too — so check
+  # for false explicitly instead.
+  assign display_icon = true
+  if show_icon == false
+    assign display_icon = false
+  endif
+
+  assign justify_value = 'flex-start'
+  case content_alignment
+    when 'center'
+      assign justify_value = 'center'
+    when 'right'
+      assign justify_value = 'flex-end'
+  endcase
+
+  assign width_value = width_value | default: '100%'
+-%}
+
+{% if visit_product_page and can_add_to_cart %}
+  <a
+    {% if id != blank %}
+      id="{{ id }}"
+    {% endif %}
+    href="{{ product.url }}{% if selected_variant_id %}?variant={{ selected_variant_id }}{% endif %}"
+    class="button {{ class }}"
+    style="width: {{ width_value }} !important; flex: 0 0 {{ width_value }} !important; display: flex !important; margin-inline: auto !important; justify-content: {{ justify_value }}; {{ padding_style }}"
+    {% if data_testid %}
+      data-testid="{{ data_testid }}"
+    {% endif %}
+  >
+    {% if display_icon %}
+      <span
+        aria-hidden="true"
+        class="svg-wrapper add-to-cart-icon"
+      >
+        {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
+      </span>
+    {% endif %}
+    {{- button_text -}}
+  </a>
+{% else %}
+  <add-to-cart-component
+    ref="addToCartButtonContainer"
+    data-product-variant-media="{{ product_variant_media }}"
+    data-add-to-cart-animation="{{ settings.add_to_cart_animation }}"
+  >
+    <button
+      {% if id != blank %}
+        id="{{ id }}"
+      {% endif %}
+      type="submit"
+      name="add"
+      ref="addToCartButton"
+      on:click="/handleClick"
+      class="button {{ class }}"
+      style="width: {{ width_value }} !important; flex: 0 0 {{ width_value }} !important; display: flex !important; margin-inline: auto !important; justify-content: {{ justify_value }}; {{ padding_style }}"
+      {% if data_testid %}
+        data-testid="{{ data_testid }}"
+      {% endif %}
+      {% unless can_add_to_cart %}
+        disabled
+      {% endunless %}
+    >
+      {% if can_add_to_cart and display_icon %}
+        <span
+          aria-hidden="true"
+          class="svg-wrapper add-to-cart-icon"
+        >
+          {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
+        </span>
+      {% endif %}
+      {{- button_text -}}
+      {% comment %} checkmark burst markup {% endcomment %}
+      <span class="add-to-cart__added">
+        <span class="svg-wrapper add-to-cart__added-icon">
+          {{- 'icon-checkmark-burst.svg' | inline_asset_content -}}
+        </span>
+      </span>
+    </button>
+  </add-to-cart-component>
+{% endif %}

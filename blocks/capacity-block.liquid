@@ -1,0 +1,45 @@
+{% liquid
+  assign product = closest.product
+  assign capacity_raw = product.metafields.custom.capacity_seating.value
+  assign capacity = capacity_raw | replace: ' Person', 'P'
+%}
+
+{%- if capacity != blank -%}
+  <div
+    class="custom-capacity"
+    style="--capacity-text-color: {{ block.settings.text_color | default: '#5c5c5c' }};"
+    {{ block.shopify_attributes }}
+  >
+    <span>{{ capacity }}</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+      <path d="M5 21c0-4 3-7 7-7s7 3 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .custom-capacity {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--capacity-text-color, #5c5c5c);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Capacity Badge",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#5c5c5c"
+    }
+  ],
+  "presets": [{ "name": "Capacity Badge" }]
+}
+{% endschema %}

@@ -1,0 +1,45 @@
+{% liquid
+  assign product = closest.product
+  assign raw_value = product.metafields.custom.tech_specs
+  assign items = raw_value | split: '|'
+%}
+
+{%- if raw_value != blank -%}
+  <div class="custom-tech-specs-{{ block.id }}" {{ block.shopify_attributes }}>
+    {%- for item in items -%}
+      <span class="custom-tech-specs__item">{{ item | strip | upcase }}</span>
+      {%- unless forloop.last -%}
+        <span class="custom-tech-specs__divider">|</span>
+      {%- endunless -%}
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .custom-tech-specs-{{ block.id }} {
+    font-size: 16px;
+    color: {{ block.settings.text_color | default: '#5c5c5c' }};
+    margin: 4px 0 0;
+  }
+
+  .custom-tech-specs-{{ block.id }} .custom-tech-specs__divider {
+    opacity: 0.5;
+    margin: 0 6px;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Tech specs",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#5c5c5c"
+    }
+  ],
+  "presets": [{ "name": "Tech specs" }]
+}
+{% endschema %}

@@ -1,0 +1,105 @@
+{%- doc -%}
+  Renders a health-benefit card that opens a native <dialog> modal with more
+  detail. No Alpine.js / jQuery — just a small custom element wrapping the
+  native <dialog> element for open/close behavior.
+
+  @param {string} title
+  @param {object} [image]
+  @param {string} [description] - richtext HTML
+  @param {string} [references] - richtext HTML
+  @param {string} [dialog_id] - unique id for this card's dialog (e.g. block.id)
+{%- enddoc -%}
+
+<health-benefit-card class="hb-card">
+  <button
+    type="button"
+    class="hb-card__trigger"
+    data-open
+    aria-haspopup="dialog"
+    aria-controls="hb-dialog-{{ dialog_id }}"
+  >
+    <span class="hb-card__overlay">
+      <span class="hb-card__name">{{ title }}</span>
+    </span>
+
+    {% if image != blank %}
+      {{
+        image
+        | image_url: width: 1500
+        | image_tag:
+          class: 'hb-card__image',
+          loading: 'lazy',
+          width: 400,
+          height: 400,
+          widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+          alt: title
+      }}
+    {% else %}
+      {{ 'image' | placeholder_svg_tag: 'hb-card__image placeholder-svg' }}
+    {% endif %}
+  </button>
+
+  <dialog id="hb-dialog-{{ dialog_id }}" class="hb-dialog">
+    <div class="hb-dialog__inner">
+      <button type="button" class="hb-dialog__close" data-close aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12.7813 12.5313L20.4688 20.2188M20.4688 12.5313L12.7813 20.2188M32 16.375C32 18.3941 31.6023 20.3934 30.8296 22.2588C30.057 24.1241 28.9245 25.8191 27.4968 27.2468C26.0691 28.6745 24.3741 29.807 22.5088 30.5796C20.6434 31.3523 18.6441 31.75 16.625 31.75C14.6059 31.75 12.6066 31.3523 10.7412 30.5796C8.87586 29.807 7.18093 28.6745 5.75323 27.2468C4.32553 25.8191 3.19302 24.1241 2.42035 22.2588C1.64769 20.3934 1.25 18.3941 1.25 16.375C1.25 12.2973 2.86986 8.38661 5.75323 5.50323C8.6366 2.61986 12.5473 1 16.625 1C20.7027 1 24.6134 2.61986 27.4968 5.50323C30.3801 8.38661 32 12.2973 32 16.375Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div class="hb-dialog__body">
+        <div class="hb-dialog__media">
+          {% if image != blank %}
+            {{
+              image
+              | image_url: width: 1500
+              | image_tag:
+                loading: 'lazy',
+                width: 400,
+                height: 400,
+                widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+                alt: title
+            }}
+          {% else %}
+            {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+          {% endif %}
+        </div>
+
+        <div class="hb-dialog__content">
+          <h3 class="hb-dialog__title">{{ title }}</h3>
+          <div class="hb-dialog__description">{{ description }}</div>
+          {% if references != blank %}
+            <div class="hb-dialog__references">
+              <p class="hb-dialog__references-title">References</p>
+              {{ references }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </dialog>
+</health-benefit-card>
+
+{% javascript %}
+  class HealthBenefitCard extends HTMLElement {
+    connectedCallback() {
+      this.trigger = this.querySelector('[data-open]');
+      this.dialog = this.querySelector('dialog');
+      this.closeBtn = this.querySelector('[data-close]');
+      if (!this.trigger || !this.dialog) return;
+
+      this.trigger.addEventListener('click', () => this.dialog.showModal());
+      if (this.closeBtn) {
+        this.closeBtn.addEventListener('click', () => this.dialog.close());
+      }
+      // Clicking the backdrop (not the panel itself) closes the dialog.
+      this.dialog.addEventListener('click', (event) => {
+        if (event.target === this.dialog) this.dialog.close();
+      });
+    }
+  }
+
+  if (!customElements.get('health-benefit-card')) {
+    customElements.define('health-benefit-card', HealthBenefitCard);
+  }
+{% endjavascript %}

@@ -1,0 +1,533 @@
+{% comment %}
+  Manuals & Spec Sheets Accordion
+  ------------------------------------------------------------
+  Two-level native <details>/<summary> accordion, no JS:
+    Category (e.g. "Saunas")
+      -> Document Group (e.g. "Rise Saunas")
+           -> individual document links (User Manual, Spec Sheet, etc.)
+
+  Since Shopify blocks can't natively reference another specific
+  block, each "Document Group" block is linked to its parent
+  "Category" block by matching title text (trimmed, case-insensitive).
+  If you rename a Category, make sure any Document Group blocks
+  pointing to it (via their own "Category" field) get updated to
+  match, or they'll stop showing up under it.
+
+  STATIC vs DYNAMIC (per Document Group block):
+  - Static: manually enter up to 8 label + link pairs directly.
+  - Dynamic: pick a product, and the section pulls its manual/spec
+    sheet links automatically from that product's metafields.
+    Expects: product.metafields.custom.user_manual_url and
+    product.metafields.custom.spec_sheet_url (both a URL or
+    single-line-text metafield). If your store uses different
+    metafield keys, update the two references in the Liquid below
+    (search for "metafields.custom.user_manual_url" and
+    "metafields.custom.spec_sheet_url").
+{% endcomment %}
+
+<style>
+  #shopify-section-{{ section.id }} .manuals-accordion {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    background-color: {{ section.settings.background_color | default: 'transparent' }};
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__heading {
+    font-size: 22px;
+    margin: 0 0 20px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category {
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 4px;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    font-size: 16px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category-chevron svg {
+    transition: transform 0.2s ease;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category[open] > summary .manuals-accordion__category-chevron svg {
+    transform: rotate(180deg);
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__category-content {
+    padding-bottom: 8px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group {
+    border-top: 1px solid #eee;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group:first-child {
+    border-top: none;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 8px 12px 20px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 14px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group-chevron {
+    transition: transform 0.2s ease;
+    color: #d9776b;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__group[open] > summary .manuals-accordion__group-chevron {
+    transform: rotate(90deg);
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__docs {
+    list-style: none;
+    margin: 0;
+    padding: 0 8px 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__docs a {
+    font-size: 13px;
+    color: #d9776b;
+    text-decoration: underline;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__docs a:hover {
+    color: #c4645a;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__empty {
+    padding: 8px 8px 12px 20px;
+    font-size: 13px;
+    color: #888;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__search-wrap {
+    margin-bottom: 20px;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__search-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__search-input:focus {
+    outline: none;
+    border-color: #d9776b;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__no-results {
+    padding: 16px 4px;
+    font-size: 14px;
+    color: #888;
+  }
+
+  #shopify-section-{{ section.id }} .manuals-accordion__docs li[hidden],
+  #shopify-section-{{ section.id }} .manuals-accordion__group[hidden],
+  #shopify-section-{{ section.id }} .manuals-accordion__category[hidden] {
+    display: none;
+  }
+</style>
+
+<div class="manuals-accordion">
+ 
+  {%- if section.settings.show_search -%}
+    <div class="manuals-accordion__search-wrap">
+      <input
+        type="search"
+        class="manuals-accordion__search-input"
+        placeholder="Search manuals & documents"
+        aria-label="Search manuals & documents"
+      >
+    </div>
+    <p class="manuals-accordion__no-results" hidden>No manuals or documents match your search.</p>
+  {%- endif -%}
+
+   {%- if section.settings.heading != blank -%}
+        <h2 class="manuals-accordion__heading">{{ section.settings.heading }}</h2>
+    {%- endif -%}
+
+  {%- for block in section.blocks -%}
+    {%- if block.type == 'category' -%}
+      {%- liquid
+        assign category_title_normalized = block.settings.category_title | strip | downcase
+      -%}
+      <details class="manuals-accordion__category" {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
+        <summary>
+          <span>{{ block.settings.category_title }}</span>
+          <span class="svg-wrapper manuals-accordion__category-chevron">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 5.5L7 9.5L3 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
+
+        <div class="manuals-accordion__category-content">
+          {%- assign has_group = false -%}
+          {%- for group_block in section.blocks -%}
+            {%- if group_block.type == 'document_group' -%}
+              {%- assign group_category_normalized = group_block.settings.category | strip | downcase -%}
+              {%- if group_category_normalized == category_title_normalized -%}
+                {%- assign has_group = true -%}
+                <details class="manuals-accordion__group" {{ group_block.shopify_attributes }}>
+                  <summary>
+                    <span>{{ group_block.settings.group_title }}</span>
+                    <span class="manuals-accordion__group-chevron">›</span>
+                  </summary>
+
+                  <ul class="manuals-accordion__docs">
+                    {%- if group_block.settings.mode == 'dynamic' -%}
+                      {%- assign dyn_product = group_block.settings.product -%}
+                      {%- assign dyn_manual = dyn_product.metafields.custom.user_manual_url -%}
+                      {%- assign dyn_spec = dyn_product.metafields.custom.spec_sheet_url -%}
+                      {%- if dyn_manual != blank -%}
+                        <li><a href="{{ dyn_manual }}" target="_blank" rel="noopener">User Manual</a></li>
+                      {%- endif -%}
+                      {%- if dyn_spec != blank -%}
+                        <li><a href="{{ dyn_spec }}" target="_blank" rel="noopener">Spec Sheet</a></li>
+                      {%- endif -%}
+                      {%- if dyn_manual == blank and dyn_spec == blank -%}
+                        <li class="manuals-accordion__empty">
+                          {%- if dyn_product == blank -%}
+                            No product selected yet.
+                          {%- else -%}
+                            No documents found on the selected product's metafields.
+                          {%- endif -%}
+                        </li>
+                      {%- endif -%}
+                    {%- else -%}
+                      {%- assign any_static_doc = false -%}
+                      {%- for i in (1..8) -%}
+                        {%- assign label_key = 'doc_' | append: i | append: '_label' -%}
+                        {%- assign url_key = 'doc_' | append: i | append: '_url' -%}
+                        {%- assign doc_label = group_block.settings[label_key] -%}
+                        {%- assign doc_url = group_block.settings[url_key] -%}
+                        {%- if doc_label != blank and doc_url != blank -%}
+                          {%- assign any_static_doc = true -%}
+                          <li><a href="{{ doc_url }}" target="_blank" rel="noopener">{{ doc_label }}</a></li>
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- unless any_static_doc -%}
+                        <li class="manuals-accordion__empty">No documents added yet.</li>
+                      {%- endunless -%}
+                    {%- endif -%}
+                  </ul>
+                </details>
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+
+          {%- unless has_group -%}
+            <p class="manuals-accordion__empty">No document groups added to this category yet.</p>
+          {%- endunless -%}
+        </div>
+      </details>
+    {%- endif -%}
+  {%- endfor -%}
+</div>
+
+{%- if section.settings.show_search -%}
+  <script>
+    (function () {
+      var sectionId = {{ section.id | json }};
+      var root = document.getElementById('shopify-section-' + sectionId);
+      if (!root) return;
+
+      var input = root.querySelector('.manuals-accordion__search-input');
+      var noResults = root.querySelector('.manuals-accordion__no-results');
+      var categories = Array.prototype.slice.call(root.querySelectorAll('.manuals-accordion__category'));
+      if (!input || categories.length === 0) return;
+
+      // Remember the original open/closed state so clearing the
+      // search restores exactly how it looked on page load, rather
+      // than leaving everything open or closed.
+      var originalState = categories.map(function (category) {
+        var groups = Array.prototype.slice.call(category.querySelectorAll('.manuals-accordion__group'));
+        return {
+          category: category,
+          categoryOpen: category.open,
+          groups: groups.map(function (group) {
+            return { group: group, groupOpen: group.open };
+          })
+        };
+      });
+
+      function normalize(str) {
+        return (str || '').toLowerCase();
+      }
+
+      function restoreOriginalState() {
+        originalState.forEach(function (entry) {
+          entry.category.hidden = false;
+          entry.category.open = entry.categoryOpen;
+          entry.groups.forEach(function (g) {
+            g.group.hidden = false;
+            g.group.open = g.groupOpen;
+            Array.prototype.forEach.call(g.group.querySelectorAll('.manuals-accordion__docs li'), function (li) {
+              li.hidden = false;
+            });
+          });
+        });
+        if (noResults) noResults.hidden = true;
+      }
+
+      function applySearch(rawTerm) {
+        var term = normalize(rawTerm);
+
+        if (term === '') {
+          restoreOriginalState();
+          return;
+        }
+
+        var anyCategoryVisible = false;
+
+        categories.forEach(function (category) {
+          var categorySummary = category.querySelector(':scope > summary');
+          var categoryTitle = normalize(categorySummary ? categorySummary.textContent : '');
+          var categoryMatches = categoryTitle.indexOf(term) !== -1;
+          var anyGroupVisible = false;
+
+          var groups = Array.prototype.slice.call(category.querySelectorAll('.manuals-accordion__group'));
+          groups.forEach(function (group) {
+            var groupSummary = group.querySelector(':scope > summary');
+            var groupTitle = normalize(groupSummary ? groupSummary.textContent : '');
+            var groupMatches = categoryMatches || groupTitle.indexOf(term) !== -1;
+            var anyDocVisible = false;
+
+            var docs = Array.prototype.slice.call(group.querySelectorAll('.manuals-accordion__docs li'));
+            docs.forEach(function (li) {
+              var docMatches = groupMatches || normalize(li.textContent).indexOf(term) !== -1;
+              li.hidden = !docMatches;
+              if (docMatches) anyDocVisible = true;
+            });
+
+            var showGroup = groupMatches || anyDocVisible;
+            group.hidden = !showGroup;
+            if (showGroup) {
+              group.open = true;
+              anyGroupVisible = true;
+            }
+          });
+
+          var showCategory = categoryMatches || anyGroupVisible;
+          category.hidden = !showCategory;
+          if (showCategory) {
+            category.open = true;
+            anyCategoryVisible = true;
+          }
+        });
+
+        if (noResults) noResults.hidden = anyCategoryVisible;
+      }
+
+      input.addEventListener('input', function () {
+        applySearch(input.value);
+      });
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Manuals accordion",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Manuals & Spec Sheets"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "info": "Leave blank for no background (transparent)."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search bar",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        {
+          "type": "text",
+          "id": "category_title",
+          "label": "Category title",
+          "default": "Category name"
+        }
+      ]
+    },
+    {
+      "type": "document_group",
+      "name": "Document group",
+      "settings": [
+        {
+          "type": "text",
+          "id": "category",
+          "label": "Category",
+          "info": "Must exactly match a Category block's title above (not case-sensitive) for this group to appear nested under it."
+        },
+        {
+          "type": "text",
+          "id": "group_title",
+          "label": "Group title",
+          "default": "Product name"
+        },
+        {
+          "type": "select",
+          "id": "mode",
+          "label": "Source",
+          "options": [
+            { "value": "static", "label": "Static (enter links manually)" },
+            { "value": "dynamic", "label": "Dynamic (pull from a product's metafields)" }
+          ],
+          "default": "static"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product",
+          "info": "Only used when Source above is set to Dynamic. Pulls from that product's user_manual_url / spec_sheet_url metafields."
+        },
+        { "type": "header", "content": "Static documents (used when Source is Static)" },
+        { "type": "text", "id": "doc_1_label", "label": "Document 1 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_1_url", "label": "Document 1 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_2_label", "label": "Document 2 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_2_url", "label": "Document 2 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_3_label", "label": "Document 3 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_3_url", "label": "Document 3 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_4_label", "label": "Document 4 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_4_url", "label": "Document 4 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_5_label", "label": "Document 5 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_5_url", "label": "Document 5 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_6_label", "label": "Document 6 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_6_url", "label": "Document 6 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_7_label", "label": "Document 7 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_7_url", "label": "Document 7 link", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "text", "id": "doc_8_label", "label": "Document 8 label", "visible_if": "{{ block.settings.mode == 'static' }}" },
+        { "type": "url", "id": "doc_8_url", "label": "Document 8 link", "visible_if": "{{ block.settings.mode == 'static' }}" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Manuals accordion",
+      "blocks": [
+        { "type": "category", "settings": { "category_title": "Saunas" } },
+        {
+          "type": "document_group",
+          "settings": {
+            "category": "Saunas",
+            "group_title": "Rise Saunas",
+            "mode": "static",
+            "doc_1_label": "User Manual (1-3 Person)",
+            "doc_1_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/KIVA_Manual_Rise_Infrared_Pages.pdf?v=1749735721",
+            "doc_2_label": "Spec Sheet — 1 Person",
+            "doc_2_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Rise_1P.pdf?v=1759882038",
+            "doc_3_label": "Spec Sheet — 2 Person",
+            "doc_3_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Rise_2P.pdf?v=1759882163",
+            "doc_4_label": "Spec Sheet — 3 Person",
+            "doc_4_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Rise_3P.pdf?v=1759882221",
+            "doc_5_label": "User Manual (4 Person)",
+            "doc_5_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/KIVA_Manual_Rise_Infrared_4P_Pages.pdf?v=1749729275",
+            "doc_6_label": "Spec Sheet — 4 Person",
+            "doc_6_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/rise4p.pdf?v=1759882419"
+          }
+        },
+        {
+          "type": "document_group",
+          "settings": {
+            "category": "Saunas",
+            "group_title": "Ritual Saunas",
+            "mode": "static",
+            "doc_1_label": "User Manual (2-3 Person Timber Front)",
+            "doc_1_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Kiva_Ritual_2_3_Person_Traditional_Sauna_User_Manual.pdf?v=1783563300",
+            "doc_2_label": "User Manual (6 Person Timber Front)",
+            "doc_2_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/KIVA_Manual_Ritual_Outdoor_Sauna_v3.pdf?v=1773116557",
+            "doc_3_label": "Spec Sheet (6 Person Timber Front)",
+            "doc_3_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/ritual_outdoor.pdf?v=1762835478"
+          }
+        },
+        {
+          "type": "document_group",
+          "settings": {
+            "category": "Saunas",
+            "group_title": "Radiance Saunas",
+            "mode": "static",
+            "doc_1_label": "User Manual (Pro 2-4 Person)",
+            "doc_1_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Kiva_Radiance_Pro_Infrared_Sauna_User_Manual.pdf?v=1783564705"
+          }
+        },
+        {
+          "type": "document_group",
+          "settings": {
+            "category": "Saunas",
+            "group_title": "Retreat Saunas",
+            "mode": "static",
+            "doc_1_label": "User Manual (2-3 Person Outdoor)",
+            "doc_1_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/KIVA_Manual_Retreat_Outdoor_Sauna_v2_-1.pdf?v=1760338014",
+            "doc_2_label": "Spec Sheet (2-3 Person Outdoor)",
+            "doc_2_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Spec_sheet_re-do_RETREAT_OUTDOOR_1.pdf?v=1758683608"
+          }
+        },
+        {
+          "type": "document_group",
+          "settings": {
+            "category": "Saunas",
+            "group_title": "Reset Saunas",
+            "mode": "static",
+            "doc_1_label": "User Manual (2-4 Person Traditional)",
+            "doc_1_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/KIVA_Manual_Reset_Trad_Sauna_Pages.pdf?v=1749735304",
+            "doc_2_label": "Harvia Heater User Manual",
+            "doc_2_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/PRINT_SW_SWE_FISVENDERUETFRPLESIT_Y05-0365_30092024_1.pdf?v=1759880629",
+            "doc_3_label": "Spec Sheet — 2 Person",
+            "doc_3_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Spec_sheet_re-do_RESET_2P.pdf?v=1758682727",
+            "doc_4_label": "Spec Sheet — 3 Person",
+            "doc_4_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Spec_sheet_re-do_RESET_3P.pdf?v=1758682605",
+            "doc_5_label": "Spec Sheet — 4 Person",
+            "doc_5_url": "https://cdn.shopify.com/s/files/1/0601/6647/1855/files/Spec_sheet_re-do_RESET_4P.pdf?v=1758682607"
+          }
+        },
+        { "type": "category", "settings": { "category_title": "Ice Baths" } },
+        { "type": "category", "settings": { "category_title": "Red Light Therapy" } },
+        { "type": "category", "settings": { "category_title": "LED Face Mask" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

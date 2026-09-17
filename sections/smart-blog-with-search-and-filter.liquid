@@ -1,0 +1,476 @@
+<style>
+  .jm-wrap {
+    --jm-font-body: var(--font-body--family, 'Inter', sans-serif);
+    --jm-font-heading: var(--font-heading--family, 'Inter', sans-serif);
+    font-family: var(--jm-font-body);
+    color: rgb(var(--color-foreground, 26 26 26));
+    background: rgb(var(--color-background, 255 255 255));
+  }
+
+  .jm-container {
+    max-width: var(--page-width, 1400px);
+    margin: 0 auto;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .jm-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .jm-heading {
+    font-family: var(--jm-font-heading); font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 600; letter-spacing: -0.01em; margin: 0;
+  }
+
+  .jm-search {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid rgb(var(--color-border, 229 229 229)); border-radius: 100px;
+    padding: 10px 18px; max-width: 320px; width: 100%;
+    background: rgb(var(--color-background, 255 255 255));
+  }
+  .jm-search svg { width: 16px; height: 16px; flex-shrink: 0; color: rgba(var(--color-foreground, 26 26 26), 0.55); }
+  .jm-search input[type="text"] {
+    border: none; background: none; outline: none; width: 100%;
+    font-size: 0.875rem; font-family: var(--jm-font-body); color: rgb(var(--color-foreground, 26 26 26));
+  }
+  .jm-search input[type="text"]::placeholder { color: rgba(var(--color-foreground, 26 26 26), 0.5); }
+
+  .jm-tabs {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    margin-bottom: 32px;
+    scrollbar-width: none;
+  }
+  .jm-tabs::-webkit-scrollbar { display: none; }
+  .jm-tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.01em;
+    color: rgba(var(--color-foreground, 26 26 26), 0.7); text-decoration: none; white-space: nowrap;
+    background: rgba(var(--color-foreground, 26 26 26), 0.06);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .jm-tab:hover { background: rgba(var(--color-foreground, 26 26 26), 0.12); color: rgb(var(--color-foreground, 26 26 26)); }
+  .jm-tab.active {
+    background: rgb(var(--color-foreground, 26 26 26));
+    color: rgb(var(--color-background, 255 255 255));
+  }
+
+  .jm-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  }
+  .jm-card {
+    display: flex; flex-direction: column; gap: 12px; text-decoration: none;
+    color: rgb(var(--color-foreground, 26 26 26));
+  }
+  .jm-card[hidden] { display: none; }
+  .jm-card-img {
+    aspect-ratio: 4 / 5; border-radius: 2px; overflow: hidden; background: rgba(var(--color-foreground, 26 26 26), 0.06);
+  }
+  .jm-card-img img, .jm-card-img svg {
+    width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease;
+  }
+  .jm-card:hover .jm-card-img img { transform: scale(1.04); }
+  .jm-card-date {
+    font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(var(--color-foreground, 26 26 26), 0.55);
+  }
+  .jm-card-title {
+    font-family: var(--jm-font-heading); font-size: 1.0625rem; font-weight: 600;
+    line-height: 1.3; margin: 0;
+  }
+
+  .jm-empty {
+    grid-column: 1 / -1; text-align: center; color: rgba(var(--color-foreground, 26 26 26), 0.55);
+    padding: 60px 0; font-size: 0.9375rem;
+  }
+
+  @media (max-width: 989px) {
+    .jm-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 749px) {
+    .jm-container { padding-left: 20px; padding-right: 20px; }
+    .jm-header { flex-direction: column; align-items: flex-start; }
+    .jm-search { max-width: 100%; }
+    .jm-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .jm-card-title { font-size: 0.9375rem; }
+  }
+  .jm-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap; margin-top: 40px;
+  }
+  .jm-page {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 40px; height: 40px; padding: 0 12px; border-radius: 100px;
+    font-size: 0.875rem; font-weight: 600; text-decoration: none;
+    color: rgba(var(--color-foreground, 26 26 26), 0.7);
+    background: rgba(var(--color-foreground, 26 26 26), 0.05);
+    transition: background 0.15s ease, color 0.15s ease;
+    border: none; font-family: inherit; cursor: pointer;
+  }
+  button.jm-page:hover, a.jm-page:hover {
+    background: rgba(var(--color-foreground, 26 26 26), 0.1);
+    color: rgb(var(--color-foreground, 26 26 26));
+  }
+  .jm-page--current {
+    background: rgb(var(--color-foreground, 26 26 26));
+    color: rgb(var(--color-background, 255 255 255));
+  }
+  .jm-page--dots {
+    background: none; color: rgba(var(--color-foreground, 26 26 26), 0.4);
+    min-width: auto; padding: 0 4px;
+  }
+  .jm-page--arrow svg { width: 16px; height: 16px; }
+
+  @media (max-width: 749px) {
+    .jm-pagination { gap: 6px; margin-top: 28px; }
+    .jm-page { min-width: 36px; height: 36px; padding: 0 10px; font-size: 0.8125rem; }
+  }
+</style>
+
+{%- liquid
+  assign target_blog = blog
+  if section.settings.blog != blank
+    assign target_blog = section.settings.blog
+  endif
+-%}
+
+<div class="jm-wrap color-{{ section.settings.color_scheme }}">
+  <div
+    class="jm-container"
+    style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;"
+  >
+    {%- if target_blog == blank -%}
+      <p class="jm-empty">
+        No blog is available to display. If this section is on a page other than the Blog template, pick one under
+        "Blog" in this section's settings.
+      </p>
+    {%- else -%}
+      <div class="jm-header">
+        <h1 class="jm-heading">{{ section.settings.heading | default: target_blog.title }}</h1>
+        <div class="jm-search" role="search">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            id="jm-search-input-{{ section.id }}"
+            placeholder="{{ section.settings.search_placeholder | default: 'Search articles...' }}"
+            aria-label="Search articles on this page"
+            autocomplete="off"
+          >
+        </div>
+      </div>
+
+      <div class="jm-dynamic" id="jm-dynamic-{{ section.id }}">
+        <div class="jm-tabs" role="tablist">
+          <a href="{{ target_blog.url }}" class="jm-tab active" data-tag="">
+            {{ section.settings.all_tab_label | default: 'All Articles' }}
+          </a>
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'tag_filter' and block.settings.tag != blank -%}
+              <a
+                href="{{ target_blog.url }}/tagged/{{ block.settings.tag | url_encode }}"
+                class="jm-tab"
+                data-tag="{{ block.settings.tag | downcase | escape }}"
+                {{ block.shopify_attributes }}
+              >
+                {{ block.settings.label | default: block.settings.tag }}
+              </a>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        <div class="jm-grid" id="jm-grid-{{ section.id }}">
+          {%- for article in target_blog.articles -%}
+            <a
+              href="{{ article.url }}"
+              class="jm-card"
+              data-title="{{ article.title | escape }}"
+              data-content="{{ article.content | strip_html | escape }}"
+              data-tags="|{{ article.tags | join: '|' | downcase | escape }}|"
+            >
+              <div class="jm-card-img">
+                {%- if article.image -%}
+                  <img
+                    src="{{ article.image | image_url: width: 600 }}"
+                    alt="{{ article.title | escape }}"
+                    loading="lazy"
+                    width="600"
+                    height="750"
+                  >
+                {%- else -%}
+                  {{ 'lifestyle-1' | placeholder_svg_tag }}
+                {%- endif -%}
+              </div>
+              <span class="jm-card-date">{{ article.published_at | date: '%B %d, %Y' }}</span>
+              <h3 class="jm-card-title">{{ article.title }}</h3>
+            </a>
+          {%- else -%}
+            <p class="jm-empty">No articles yet.</p>
+          {%- endfor -%}
+        </div>
+
+        <p class="jm-empty" id="jm-no-search-results-{{ section.id }}" hidden>No articles match that.</p>
+
+        <nav class="jm-pagination" id="jm-pagination-{{ section.id }}" role="navigation" aria-label="Pagination"></nav>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var DEBUG_TAG = '[Journal Filter]';
+    var sectionId = '{{ section.id }}';
+    var dynamicEl = document.getElementById('jm-dynamic-' + sectionId);
+    var searchInput = document.getElementById('jm-search-input-' + sectionId);
+    var pageSize = {{ section.settings.articles_per_page | default: 12 }};
+    if (!dynamicEl) return;
+
+    var grid = dynamicEl.querySelector('.jm-grid');
+    var noResults = dynamicEl.querySelector('[id^="jm-no-search-results-"]');
+    var paginationEl = dynamicEl.querySelector('[id^="jm-pagination-"]');
+    var allCards = grid ? Array.prototype.slice.call(grid.querySelectorAll('.jm-card')) : [];
+
+    var selectedTag = ''; // '' means "All Articles"
+    var currentPage = 1;
+
+    console.log(DEBUG_TAG, 'Loaded', allCards.length, 'articles total (all pages, no longer capped by "Articles per page" —',
+      'that setting now only controls how many show PER SCREEN, not how many are searchable/filterable).');
+
+    // ── Which cards match the current search text + selected tag,
+    // regardless of pagination. This runs against ALL articles now,
+    // not just whichever page happened to be server-rendered.
+    function getFilteredCards() {
+      var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      return allCards.filter(function (card) {
+        var title = (card.getAttribute('data-title') || '').toLowerCase();
+        var content = (card.getAttribute('data-content') || '').toLowerCase();
+        var tags = (card.getAttribute('data-tags') || '').toLowerCase();
+        var matchesSearch = query === '' || title.indexOf(query) !== -1 || content.indexOf(query) !== -1;
+        // tags string is stored as |tag one|tag two| — check for the
+        // selected tag wrapped in pipes so "tech" doesn't false-match
+        // inside "biotech".
+        var matchesTag = selectedTag === '' || tags.indexOf('|' + selectedTag + '|') !== -1;
+        return matchesSearch && matchesTag;
+      });
+    }
+
+    // ── Builds a compact page-number list with "..." gaps for large
+    // page counts, e.g. [1, '...', 4, 5, 6, '...', 12].
+    function buildPageParts(totalPages, current) {
+      var parts = [];
+      for (var i = 1; i <= totalPages; i++) {
+        var isEdge = i === 1 || i === totalPages;
+        var isNearCurrent = i >= current - 1 && i <= current + 1;
+        if (isEdge || isNearCurrent) {
+          parts.push(i);
+        } else if (parts[parts.length - 1] !== '...') {
+          parts.push('...');
+        }
+      }
+      return parts;
+    }
+
+    function renderPagination(totalPages) {
+      if (!paginationEl) return;
+      paginationEl.innerHTML = '';
+      if (totalPages <= 1) return;
+
+      if (currentPage > 1) {
+        paginationEl.appendChild(makeArrowButton('Previous page', 'M15 18l-6-6 6-6', currentPage - 1));
+      }
+
+      buildPageParts(totalPages, currentPage).forEach(function (part) {
+        if (part === '...') {
+          var dots = document.createElement('span');
+          dots.className = 'jm-page jm-page--dots';
+          dots.textContent = '...';
+          paginationEl.appendChild(dots);
+        } else if (part === currentPage) {
+          var cur = document.createElement('span');
+          cur.className = 'jm-page jm-page--current';
+          cur.setAttribute('aria-current', 'page');
+          cur.textContent = part;
+          paginationEl.appendChild(cur);
+        } else {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'jm-page';
+          btn.textContent = part;
+          btn.addEventListener('click', function () { goToPage(part); });
+          paginationEl.appendChild(btn);
+        }
+      });
+
+      if (currentPage < totalPages) {
+        paginationEl.appendChild(makeArrowButton('Next page', 'M9 18l6-6-6-6', currentPage + 1));
+      }
+    }
+
+    function makeArrowButton(label, pathD, targetPage) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'jm-page jm-page--arrow';
+      btn.setAttribute('aria-label', label);
+      btn.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="' + pathD + '"/></svg>';
+      btn.addEventListener('click', function () { goToPage(targetPage); });
+      return btn;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      render('page ' + page);
+      if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Single entry point: recompute the filtered set, hide everything,
+    // show just the current page's slice of the FILTERED results (not
+    // the full unfiltered set), and rebuild pagination controls to match
+    // the filtered count.
+    function render(source) {
+      var filtered = getFilteredCards();
+      var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      allCards.forEach(function (card) { card.hidden = true; });
+
+      var start = (currentPage - 1) * pageSize;
+      filtered.slice(start, start + pageSize).forEach(function (card) { card.hidden = false; });
+
+      if (noResults) noResults.hidden = filtered.length !== 0;
+
+      renderPagination(totalPages);
+
+      console.log(
+        DEBUG_TAG, 'render() —', source,
+        '| selectedTag:', JSON.stringify(selectedTag),
+        '| matched:', filtered.length, 'of', allCards.length,
+        '| showing page', currentPage, 'of', totalPages
+      );
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        currentPage = 1;
+        render('search input');
+      });
+    }
+
+    // ── Tag chips: fully client-side, no navigation. Clicking sets the
+    // active tag, resets to page 1 of the new filtered set, and re-renders.
+    dynamicEl.querySelectorAll('.jm-tab').forEach(function (tab) {
+      tab.addEventListener('click', function (e) {
+        e.preventDefault();
+        selectedTag = (tab.getAttribute('data-tag') || '').toLowerCase();
+
+        dynamicEl.querySelectorAll('.jm-tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+
+        currentPage = 1;
+        render('chip click: ' + tab.textContent.trim());
+      });
+    });
+
+    render('initial load');
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Journal (search + filter)",
+  "tag": "section",
+  "class": "journal-search-filter-section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "info": "Defaults to the blog's own title if left blank." },
+    {
+      "type": "blog",
+      "id": "blog",
+      "label": "Blog",
+      "info": "Only needed if this section is placed on a template other than the Blog page (e.g. a custom page or the homepage). Leave blank when using it on the actual Blog template — it auto-detects the blog being viewed."
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    { "type": "text", "id": "all_tab_label", "label": "\"All\" tab label", "default": "All Articles" },
+    { "type": "text", "id": "search_placeholder", "label": "Search placeholder text", "default": "Search articles..." },
+    {
+      "type": "range",
+      "id": "articles_per_page",
+      "label": "Articles per page",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tag_filter",
+      "name": "Filter tab",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Tab label", "info": "e.g. \"Infrared Saunas\"" },
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Blog tag",
+          "info": "Must match a tag applied to your articles in Shopify Admin — spelling and spacing exactly, though letter case doesn't matter."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Journal (search + filter)",
+      "blocks": [
+        { "type": "tag_filter", "settings": { "label": "Saunas", "tag": "Saunas" } },
+        { "type": "tag_filter", "settings": { "label": "Infrared Saunas", "tag": "Infrared Saunas" } },
+        { "type": "tag_filter", "settings": { "label": "Traditional Saunas", "tag": "Traditional Saunas" } },
+        { "type": "tag_filter", "settings": { "label": "Outdoor Saunas", "tag": "Outdoor Saunas" } },
+        { "type": "tag_filter", "settings": { "label": "Ice Baths", "tag": "Ice Baths" } },
+        { "type": "tag_filter", "settings": { "label": "Red Light Therapy", "tag": "Red Light Therapy" } },
+        { "type": "tag_filter", "settings": { "label": "LED Masks", "tag": "LED Masks" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

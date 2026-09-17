@@ -1,0 +1,309 @@
+{%- doc -%}
+  Renders an accordion (FAQ style) content block — Specifications /
+  Product Details / Delivery & Installation / Warranty & Support /
+  Payment & FAQs — sourced from a single product_tab_items_horizon
+  metaobject entry, referenced via the product's
+  custom.product_tabs_horizon metafield.
+
+  Each item is its own full-width row, stacked vertically. Each row has
+  a label + chevron that rotates from pointing right (closed) to
+  pointing down (open) when clicked, expanding that item's content
+  directly beneath ITS OWN row, independent of the others. Starts fully
+  collapsed.
+
+  All 5 fields are Rich Text type — rendered via metafield_tag directly,
+  no custom text processing. If a merchant uses the rich text editor's
+  own bullet-list button, it renders as a real <ul><li> list correctly;
+  no need to reparse it ourselves.
+{%- enddoc -%}
+
+{% liquid
+  assign product = closest.product
+  assign tabs_entry = product.metafields.custom.product_tabs_horizon.value
+  assign scope = 'pt-' | append: block.id
+  assign heading_color = block.settings.heading_color
+  assign chevron_color = block.settings.chevron_color
+%}
+
+{% if tabs_entry %}
+  {% liquid
+    assign tab_1_label = block.settings.tab_1_label
+    assign tab_2_label = block.settings.tab_2_label
+    assign tab_3_label = block.settings.tab_3_label
+    assign tab_4_label = block.settings.tab_4_label
+    assign tab_5_label = block.settings.tab_5_label
+
+    # Matches the Product Tab Items (Horizon) metaobject fields (rich text type)
+    assign tab_1_content = tabs_entry.specifications_rich
+    assign tab_2_content = tabs_entry.product_details_rich
+    assign tab_3_content = tabs_entry.delivery_installation_rich
+    assign tab_4_content = tabs_entry.warranty_support_rich
+    assign tab_5_content = tabs_entry.payment_faqs_rich
+  %}
+
+  {% capture tab_1_html %}{{ tab_1_content | metafield_tag }}{% endcapture %}
+  {% capture tab_2_html %}{{ tab_2_content | metafield_tag }}{% endcapture %}
+  {% capture tab_3_html %}{{ tab_3_content | metafield_tag }}{% endcapture %}
+  {% capture tab_4_html %}{{ tab_4_content | metafield_tag }}{% endcapture %}
+  {% capture tab_5_html %}{{ tab_5_content | metafield_tag }}{% endcapture %}
+
+  <div
+    class="{{ scope }} product-tabs"
+    style="--tabs-heading-color: {{ heading_color | default: 'inherit' }}; --tabs-chevron-color: {{ chevron_color | default: 'var(--ember, #c0392b)' }};"
+    {{ block.shopify_attributes }}
+  >
+    {% if tab_1_content != blank %}
+      <div class="product-tabs__item">
+        <button type="button" class="product-tabs__row-button" data-tab-index="0" aria-expanded="false">
+          <span>{{ tab_1_label | default: 'Specifications' }}</span>
+          <span class="product-tabs__chevron-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="product-tabs__panel" data-tab-panel="0">
+          <div class="product-tabs__rich-text">{{ tab_1_html }}</div>
+        </div>
+      </div>
+    {% endif %}
+    {% if tab_2_content != blank %}
+      <div class="product-tabs__item">
+        <button type="button" class="product-tabs__row-button" data-tab-index="1" aria-expanded="false">
+          <span>{{ tab_2_label | default: 'Product Details' }}</span>
+          <span class="product-tabs__chevron-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="product-tabs__panel" data-tab-panel="1">
+          <div class="product-tabs__rich-text">{{ tab_2_html }}</div>
+        </div>
+      </div>
+    {% endif %}
+    {% if tab_3_content != blank %}
+      <div class="product-tabs__item">
+        <button type="button" class="product-tabs__row-button" data-tab-index="2" aria-expanded="false">
+          <span>{{ tab_3_label | default: 'Delivery & Installation' }}</span>
+          <span class="product-tabs__chevron-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="product-tabs__panel" data-tab-panel="2">
+          <div class="product-tabs__rich-text">{{ tab_3_html }}</div>
+        </div>
+      </div>
+    {% endif %}
+    {% if tab_4_content != blank %}
+      <div class="product-tabs__item">
+        <button type="button" class="product-tabs__row-button" data-tab-index="3" aria-expanded="false">
+          <span>{{ tab_4_label | default: 'Warranty & Support' }}</span>
+          <span class="product-tabs__chevron-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="product-tabs__panel" data-tab-panel="3">
+          <div class="product-tabs__rich-text">{{ tab_4_html }}</div>
+        </div>
+      </div>
+    {% endif %}
+    {% if tab_5_content != blank %}
+      <div class="product-tabs__item">
+        <button type="button" class="product-tabs__row-button" data-tab-index="4" aria-expanded="false">
+          <span>{{ tab_5_label | default: 'Payment & FAQs' }}</span>
+          <span class="product-tabs__chevron-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="product-tabs__panel" data-tab-panel="4">
+          <div class="product-tabs__rich-text">{{ tab_5_html }}</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% elsif request.design_mode %}
+  {% comment %}
+    Editor-only diagnostic — never shows on the live storefront. Helps
+    pin down exactly why nothing rendered instead of the block just
+    silently disappearing.
+  {% endcomment %}
+  <div style="padding: 16px; border: 1px dashed #c0392b; background: #fdf0ee; color: #7a1f14; font-size: 13px; line-height: 1.5;">
+    <strong>Product Tabs Row — nothing to show.</strong><br>
+    {% if product == blank %}
+      No product in context here (closest.product is blank). This block needs to be placed
+      somewhere that has product context, e.g. inside the Product Information section on a
+      product page.
+    {% else %}
+      <code>{{ product.title }}</code> doesn't have a linked entry in
+      <code>custom.product_tabs_horizon</code> — either that metafield is empty on this
+      product, or it isn't pointing at a "Product Tab Items (Horizon)" metaobject entry.
+      Check the product's metafields in the admin and confirm one is selected/saved there.
+    {% endif %}
+  </div>
+{% endif %}
+
+{% stylesheet %}
+  .product-tabs {
+    --tabs-accent: var(--ember, #c0392b);
+  }
+
+  /* Each .product-tabs__item is its own full-width row, stacked
+     vertically — genuine FAQ layout, not a tab strip. Row button spans
+     full width with the label on the left and the chevron on the
+     right; its panel sits directly beneath that same row, independent
+     of the others, animated via a grid-rows trick (display:none/block
+     can't be transitioned). Chevron points right when closed, rotates
+     to point down when open. */
+  .product-tabs__item {
+    border-bottom: 1px solid rgb(var(--color-foreground-rgb, 0 0 0) / 0.12);
+  }
+  .product-tabs__item:first-child {
+    border-top: 1px solid rgb(var(--color-foreground-rgb, 0 0 0) / 0.12);
+  }
+
+  .product-tabs__row-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: var(--padding-md, 16px) 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--tabs-heading-color, var(--color-foreground, currentColor));
+    transition: color 0.2s ease;
+  }
+
+  .product-tabs__row-button[aria-expanded="true"] {
+    color: var(--tabs-accent);
+  }
+
+  .product-tabs__chevron-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-left: 12px;
+    color: var(--tabs-chevron-color, var(--tabs-accent));
+    transition: transform 0.25s ease, color 0.2s ease;
+  }
+  .product-tabs__chevron-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .product-tabs__row-button[aria-expanded="true"] .product-tabs__chevron-icon {
+    transform: rotate(90deg);
+  }
+
+  .product-tabs__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+  }
+  .product-tabs__panel.is-active {
+    grid-template-rows: 1fr;
+  }
+  .product-tabs__rich-text {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .product-tabs__panel.is-active .product-tabs__rich-text {
+    padding-bottom: var(--padding-md, 16px);
+  }
+
+  /* ============ SHARED RICH TEXT / BULLET STYLING ============ */
+  .product-tabs__rich-text ul {
+    margin: 0;
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: disc;
+  }
+
+  .product-tabs__rich-text li {
+    line-height: 1.5;
+  }
+
+  .product-tabs__rich-text a {
+    color: var(--tabs-accent);
+    text-decoration: underline;
+  }
+
+  .product-tabs__rich-text p {
+    margin: 0 0 8px;
+  }
+
+  .product-tabs__rich-text p:last-child {
+    margin-bottom: 0;
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    function initAccordion(root) {
+      root.querySelectorAll('.product-tabs__row-button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var index = btn.dataset.tabIndex;
+          var panel = root.querySelector('[data-tab-panel="' + index + '"]');
+          if (!panel) return;
+          var willOpen = !panel.classList.contains('is-active');
+          btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+          panel.classList.toggle('is-active', willOpen);
+        });
+      });
+    }
+
+    function init() {
+      document.querySelectorAll('.product-tabs').forEach(function (root) {
+        if (root.dataset.bound === 'true') return;
+        root.dataset.bound = 'true';
+        initAccordion(root);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product Tabs Row",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading text color",
+      "info": "Leave blank to inherit the theme's default text color (active state still uses the accent color below)."
+    },
+    {
+      "type": "color",
+      "id": "chevron_color",
+      "label": "Chevron color",
+      "info": "Leave blank to match the accent color."
+    },
+    {
+      "type": "header",
+      "content": "Row labels"
+    },
+    { "type": "text", "id": "tab_1_label", "label": "Row 1 label", "default": "Specifications" },
+    { "type": "text", "id": "tab_2_label", "label": "Row 2 label", "default": "Product Details" },
+    { "type": "text", "id": "tab_3_label", "label": "Row 3 label", "default": "Delivery & Installation" },
+    { "type": "text", "id": "tab_4_label", "label": "Row 4 label", "default": "Warranty & Support" },
+    { "type": "text", "id": "tab_5_label", "label": "Row 5 label", "default": "Payment & FAQs" }
+  ],
+  "presets": [
+    { "name": "Product Tabs Row" }
+  ]
+}
+{% endschema %}

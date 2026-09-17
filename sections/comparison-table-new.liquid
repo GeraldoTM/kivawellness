@@ -1,0 +1,681 @@
+{%- comment -%}
+  product-comparison.liquid — shopper-driven version.
+
+  Products are no longer merchant-configured blocks. Instead, this section
+  reads the shopper's selection (added via compare-toggle-button.liquid on
+  product cards, tracked by compare-bar.liquid) from:
+    1. The URL query string (?products=handle-one,handle-two) if present
+       — this is what the sticky bar's "Compare" button links to, so the
+       selection survives being shared/bookmarked.
+    2. Otherwise, localStorage (window.CompareManager), for when someone
+       lands here directly after building a selection while browsing.
+
+  For each selected handle, it fetches that product's data fragment via
+  Shopify's Section Rendering API:
+    /products/{handle}?section_id=product-comparison-card
+  which renders product-comparison-card.liquid scoped to that product,
+  giving real metafield data without needing a Storefront API token.
+
+  Requires compare-bar.liquid to be included site-wide (for
+  window.CompareManager) and product-comparison-card.liquid to exist as
+  its own section file.
+{%- endcomment -%}
+
+<style>
+  .pc-wrap {
+    --pc-font-body: var(--font-body--family, 'Inter', sans-serif);
+    --pc-font-heading: var(--font-heading--family, 'Inter', sans-serif);
+    --pc-color-bg: {{ section.settings.background_color | default: '#ffffff' }};
+    --pc-color-fg: var(--color-foreground, #1a1a1a);
+    --pc-color-border: var(--color-border, #e0e0e0);
+    --pc-color-muted: #888888;
+    --pc-color-accent: {{ section.settings.accent_color | default: '#c0392b' }};
+    --pc-color-accent-hover: {{ section.settings.accent_color_hover | default: '#a93226' }};
+    --pc-color-tag-bg: #f5f5f0;
+    --pc-color-tag-border: #d0cfc8;
+    --pc-color-header-bg: #f9f9f7;
+    --pc-color-drawer-bg: {{ section.settings.background_color | default: '#ffffff' }};
+    --pc-color-group-label: #555;
+    --pc-radius: 4px;
+    --pc-col-label: 200px;
+    --pc-transition: 0.2s ease;
+    --pc-product-count: 1;
+
+    font-family: var(--pc-font-body);
+    color: var(--pc-color-fg);
+    background: var(--pc-color-bg);
+  }
+
+  .pc-page-header { padding: 48px 0 32px; }
+  .pc-page-header h1 {
+    font-family: var(--pc-font-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    line-height: 1.1;
+  }
+  .pc-page-header p { font-size: 0.9375rem; color: var(--pc-color-muted); margin: 0; }
+
+  .pc-selection-bar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 0 24px; justify-content: flex-end;
+  }
+  .pc-selection-count { font-size: 0.875rem; color: var(--pc-color-muted); }
+  .pc-selection-count strong { color: var(--pc-color-fg); }
+  .pc-btn-compare {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--pc-color-fg); color: #fff; border: none;
+    border-radius: var(--pc-radius); padding: 10px 20px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.01em; transition: background var(--pc-transition);
+  }
+  .pc-btn-compare:hover { background: #333; }
+  .pc-btn-compare svg { width: 16px; height: 16px; }
+
+  .pc-empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--pc-color-muted);
+  }
+  .pc-empty h2 { font-family: var(--pc-font-heading); font-size: 1.5rem; color: var(--pc-color-fg); margin: 0 0 8px; }
+  .pc-empty a {
+    display: inline-flex; margin-top: 16px; background: var(--pc-color-fg); color: #fff;
+    text-decoration: none; border-radius: var(--pc-radius); padding: 10px 20px;
+    font-size: 0.875rem; font-weight: 600;
+  }
+
+  .pc-loading { text-align: center; padding: 64px 24px; color: var(--pc-color-muted); font-size: 0.875rem; }
+
+  .pc-table-outer {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--pc-color-border); border-radius: var(--pc-radius);
+    cursor: grab;
+  }
+  .pc-table-outer.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+  .pc-table {
+    display: grid;
+    grid-template-columns: var(--pc-col-label) repeat(var(--pc-product-count), minmax(180px, 1fr));
+    min-width: 700px;
+  }
+
+  .pc-product-header-row { display: contents; }
+  .pc-label-spacer {
+    background: var(--pc-color-header-bg);
+    border-bottom: 1px solid var(--pc-color-border);
+    padding: 24px 20px; display: flex; align-items: flex-end;
+  }
+  .pc-label-spacer span {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--pc-color-muted);
+  }
+
+  .pc-product-card {
+    background: var(--pc-color-header-bg);
+    border-left: 1px solid var(--pc-color-border);
+    border-bottom: 1px solid var(--pc-color-border);
+    padding: 20px 16px 24px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; position: relative; text-align: center;
+  }
+  .pc-product-remove {
+    position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 1px solid var(--pc-color-border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--pc-color-muted); padding: 0;
+  }
+  .pc-product-remove svg { width: 11px; height: 11px; }
+  .pc-product-img {
+    width: 120px; height: 100px; object-fit: cover;
+    border-radius: var(--pc-radius); background: #ece9e4;
+  }
+  .pc-product-img-placeholder {
+    width: 120px; height: 100px; border-radius: var(--pc-radius);
+    background: linear-gradient(135deg, #e8e4dc 0%, #d4cfc4 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pc-product-img-placeholder svg { width: 40px; height: 40px; opacity: 0.25; }
+  .pc-product-name {
+    font-family: var(--pc-font-heading); font-size: 1.125rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; margin: 0; line-height: 1.2;
+  }
+  .pc-product-tagline { font-size: 0.8125rem; color: var(--pc-color-muted); margin: 0; line-height: 1.4; }
+  .pc-product-price {
+    font-size: 0.8125rem; font-weight: 600; color: var(--pc-color-muted);
+    text-transform: uppercase; letter-spacing: 0.05em; margin: 0;
+  }
+  .pc-product-price strong { color: var(--pc-color-fg); font-size: 1rem; }
+  .pc-btn-view {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--pc-color-accent);
+    background: none; border: none; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; padding: 0; text-decoration: none; transition: color var(--pc-transition);
+  }
+  .pc-btn-view:hover { color: var(--pc-color-accent-hover); }
+  .pc-btn-view svg {
+    width: 13px !important; height: 13px !important;
+    flex-shrink: 0; display: block;
+    transition: transform var(--pc-transition);
+  }
+  .pc-btn-view:hover svg { transform: translateX(2px); }
+
+  .pc-row { display: contents; }
+  .pc-row-label {
+    display: flex; flex-direction: column; justify-content: center; gap: 2px;
+    padding: 14px 20px; border-bottom: 1px solid var(--pc-color-border);
+    background: var(--pc-color-bg);
+  }
+  .pc-row-label strong { font-size: 0.8125rem; font-weight: 600; color: var(--pc-color-fg); }
+  .pc-row-label small { font-size: 0.75rem; color: var(--pc-color-muted); display: block; }
+  .pc-row-value {
+    display: flex; align-items: center; justify-content: center; padding: 14px 16px;
+    border-left: 1px solid var(--pc-color-border); border-bottom: 1px solid var(--pc-color-border);
+    font-size: 0.875rem; text-align: center; line-height: 1.4;
+    color: var(--pc-color-fg); background: var(--pc-color-bg);
+  }
+  .pc-row:hover .pc-row-label, .pc-row:hover .pc-row-value { background: #fafaf8; }
+
+  .pc-trust-row { display: flex; gap: 32px; padding: 32px 0; flex-wrap: wrap; }
+  .pc-trust-item { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px; }
+  .pc-trust-icon { width: 40px; height: 40px; flex-shrink: 0; color: var(--pc-color-muted); }
+  .pc-trust-title { font-size: 0.875rem; font-weight: 700; color: var(--pc-color-fg); margin: 0 0 2px; }
+  .pc-trust-desc { font-size: 0.8125rem; color: var(--pc-color-muted); margin: 0; }
+
+  /* ============ DRAWER ============ */
+  .pc-drawer-overlay {
+    position: fixed; inset: 0; background: rgba(20,18,15,0.4); z-index: 200;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    backdrop-filter: blur(1px);
+  }
+  .pc-drawer-overlay.is-open { opacity: 1; pointer-events: all; }
+  .pc-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 95vw);
+    background: var(--pc-color-drawer-bg);
+    z-index: 201; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -8px 0 32px rgba(0,0,0,0.14);
+  }
+  .pc-drawer.is-open { transform: translateX(0); }
+
+  .pc-drawer-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;
+    border-bottom: 1px solid var(--pc-color-border); flex-shrink: 0;
+  }
+  .pc-drawer-header h2 {
+    font-family: var(--pc-font-heading); font-size: 0.8125rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; margin: 0;
+  }
+  .pc-drawer-close {
+    background: none; border: none; cursor: pointer; padding: 6px; margin: -6px;
+    color: var(--pc-color-muted); display: flex; align-items: center; border-radius: 50%;
+  }
+  .pc-drawer-close:hover { background: var(--pc-color-header-bg); color: var(--pc-color-fg); }
+  .pc-drawer-close svg { width: 18px; height: 18px; }
+
+  .pc-drawer-tabs {
+    display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; cursor: grab;
+    border-bottom: 1px solid var(--pc-color-border); flex-shrink: 0;
+    padding: 0 8px; background: var(--pc-color-header-bg);
+  }
+  .pc-drawer-tabs.is-dragging { cursor: grabbing; user-select: none; }
+  .pc-drawer-tabs::-webkit-scrollbar { display: none; }
+  .pc-drawer-tab {
+    flex: 0 0 auto; min-width: 96px; white-space: nowrap;
+    padding: 14px 12px; background: none; border: none; border-bottom: 2px solid transparent;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; color: var(--pc-color-muted);
+  }
+  .pc-drawer-tab:hover { color: var(--pc-color-fg); }
+  .pc-drawer-tab.active { color: var(--pc-color-fg); border-bottom-color: var(--pc-color-accent); }
+
+  .pc-drawer-body { flex: 1; overflow-y: auto; padding: 8px 20px 20px; }
+  .pc-drawer-panel { display: flex; flex-direction: column; gap: 8px; }
+  .pc-drawer-panel[hidden] { display: none; }
+
+  .pc-drawer-group { border: 1px solid var(--pc-color-border); border-radius: 8px; overflow: hidden; background: var(--pc-color-bg); }
+  .pc-drawer-group + .pc-drawer-group { margin-top: 8px; }
+  .pc-drawer-group-header {
+    list-style: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; cursor: pointer; background: var(--pc-color-header-bg); user-select: none;
+  }
+  .pc-drawer-group-header::-webkit-details-marker { display: none; }
+  .pc-drawer-group-header::marker { content: ''; display: none; }
+  .pc-drawer-group-header:hover { background: #f2f0ec; }
+  .pc-drawer-group-title {
+    display: flex; align-items: center; gap: 10px; font-size: 0.8125rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--pc-color-fg);
+  }
+  .pc-drawer-group-icon { width: 18px !important; height: 18px !important; flex-shrink: 0; display: block; color: var(--pc-color-accent); }
+  .pc-drawer-group-chevron {
+    width: 16px !important; height: 16px !important; flex-shrink: 0; display: block; color: var(--pc-color-muted);
+    transition: transform 0.25s ease;
+  }
+  .pc-drawer-group[open] > .pc-drawer-group-header .pc-drawer-group-chevron { transform: rotate(180deg); }
+
+  .pc-drawer-group-body { padding: 4px 14px 10px; }
+  .pc-drawer-spec-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 9px 0; border-bottom: 1px solid #f0f0ee; font-size: 0.8125rem;
+  }
+  .pc-drawer-spec-row:last-child { border-bottom: none; }
+  .pc-drawer-spec-row--full { display: block; padding-top: 10px; }
+  .pc-drawer-spec-label { color: var(--pc-color-muted); flex-shrink: 0; }
+  .pc-drawer-spec-value { color: var(--pc-color-fg); font-weight: 600; text-align: right; }
+  .pc-drawer-spec-detail { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--pc-color-fg); }
+  .pc-drawer-check { width: 16px; height: 16px; color: #2e7d32; vertical-align: middle; }
+
+  .pc-drawer-cta { padding: 16px 20px 20px; border-top: 1px solid var(--pc-color-border); flex-shrink: 0; }
+  .pc-drawer-cta a {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    background: var(--pc-color-accent); color: #fff; text-decoration: none; border-radius: var(--pc-radius);
+    padding: 14px 20px; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; transition: background var(--pc-transition);
+  }
+  .pc-drawer-cta a:hover { background: var(--pc-color-accent-hover); }
+
+  @media (max-width: 749px) {
+    .pc-page-header { padding: 32px 0 20px; }
+    .pc-selection-bar { justify-content: flex-start; flex-wrap: wrap; }
+    .pc-table { grid-template-columns: 130px repeat(var(--pc-product-count), minmax(140px, 1fr)); }
+    .pc-row-label { padding: 12px 12px; }
+    .pc-row-value { padding: 12px 8px; font-size: 0.8125rem; }
+    .pc-trust-row { gap: 20px; padding: 24px 0; }
+    .pc-drawer { width: 100vw; }
+  }
+
+  .pc-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; padding-bottom: 80px; }
+</style>
+
+<div class="pc-wrap">
+  <div class="pc-container">
+    <div class="pc-page-header">
+      <h1>{{ section.settings.heading | default: 'Compare Products' }}</h1>
+      <p>{{ section.settings.subheading | default: 'Compare our models to find the right fit for you.' }}</p>
+    </div>
+
+    <div id="pc-loading" class="pc-loading">Loading comparison…</div>
+
+    <div id="pc-empty" class="pc-empty" hidden>
+      <h2>Nothing selected yet</h2>
+      <p>Add products to compare from any product or collection page.</p>
+      <a href="{{ routes.all_products_collection_url | default: '/collections/all' }}">Browse products</a>
+    </div>
+
+    <div id="pc-content" hidden>
+      <div class="pc-selection-bar">
+        <span class="pc-selection-count" id="pc-selection-count"></span>
+        <button class="pc-btn-compare" type="button" id="pc-open-drawer">
+          {{ section.settings.compare_button_text | default: 'Compare' }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="pc-table-outer">
+        <div class="pc-table" id="pc-table"></div>
+      </div>
+
+      {%- if section.settings.show_trust_badges -%}
+        <div class="pc-trust-row">
+          {%- for i in (1..3) -%}
+            {%- assign title_key = 'trust_title_' | append: i -%}
+            {%- assign desc_key = 'trust_desc_' | append: i -%}
+            {%- if section.settings[title_key] != blank -%}
+              <div class="pc-trust-item">
+                <svg class="pc-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                </svg>
+                <div>
+                  <p class="pc-trust-title">{{ section.settings[title_key] }}</p>
+                  <p class="pc-trust-desc">{{ section.settings[desc_key] }}</p>
+                </div>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<div class="pc-drawer-overlay" id="pc-overlay"></div>
+<div class="pc-drawer" id="pc-drawer" role="dialog" aria-modal="true" aria-label="Full comparison">
+  <div class="pc-drawer-header">
+    <h2>{{ section.settings.drawer_title | default: 'Full Specifications' }}</h2>
+    <button class="pc-drawer-close" id="pc-close-drawer" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+  <div class="pc-drawer-tabs" id="pc-drawer-tabs"></div>
+  <div class="pc-drawer-body" id="pc-drawer-body"></div>
+  <div class="pc-drawer-cta">
+    <a href="#" id="pc-drawer-cta-link">
+      View full product page
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ROWS = [
+    { key: 'best_for', label: 'Best For', sublabel: 'Who it is ideal for' },
+    { key: 'category', label: 'Type / Category', sublabel: 'Product type' },
+    { key: 'capacity', label: 'Capacity', sublabel: 'How much it holds/fits' },
+    { key: 'key_spec', label: 'Key Spec', sublabel: 'Primary performance figure' },
+    { key: 'power_system', label: 'Power / System', sublabel: 'What powers it' },
+    { key: 'material', label: 'Material', sublabel: 'What it is made from' },
+    { key: 'dimensions', label: 'Dimensions', sublabel: 'Size (W x D x H)' },
+    { key: 'environment', label: 'Environment', sublabel: 'Where it can be used' },
+    { key: 'warranty', label: 'Warranty', sublabel: 'Coverage period' }
+  ];
+
+  var DRAWER_GROUPS = [
+    {
+      key: 'heating', title: 'Heating',
+      icon: '<path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.4-1.8-1-2.5.7 2.3-1 3.5-2 3.5-1.2 0-2-1-1.7-2.3.5-2 .9-3.7-1.3-5.7Z"/><path d="M8.5 12.5c-1.5 1.6-2 3-2 4.5a5.5 5.5 0 0 0 11 0c0-2-1-3.7-2.3-5"/>',
+      fields: [
+        { label: 'Temperature Range', key: 'temperature_range' },
+        { label: 'Heater Type', key: 'heating_system' },
+        { label: 'Infrared Spectrum', key: 'infrared_spectrum' },
+        { label: 'Heating Elements', key: 'heating_elements' },
+        { label: 'Warm Up Time', key: 'warm_up_time' },
+        { label: 'Power Output', key: 'heater_power' }
+      ]
+    },
+    {
+      key: 'build', title: 'Build',
+      icon: '<path d="M14.7 6.3 17 4a2.1 2.1 0 0 1 3 3l-2.3 2.3"/><path d="m9 15-4.5 4.5a1.5 1.5 0 0 0 0 2.1 1.5 1.5 0 0 0 2.1 0L11 17"/><path d="m13 7 5.5 5.5"/><path d="M6.5 8.5 4 6a2.1 2.1 0 0 1 3-3l2.5 2.5"/><path d="m9 6 9 9-2 2-9-9Z"/>',
+      fields: [
+        { label: 'Timber', key: 'timber' },
+        { label: 'Exterior Dimensions (W x D x H)', key: 'exterior_dimensions' },
+        { label: 'Interior Dimensions (W x D x H)', key: 'interior_dimensions' },
+        { label: 'Weight', key: 'weight_kg', suffix: ' kg' },
+        { label: 'Glass', key: 'glass' },
+        { label: 'Ventilation', key: 'ventilation' },
+        { label: 'Seating', key: 'seating' }
+      ]
+    },
+    {
+      key: 'installation', title: 'Installation',
+      icon: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L2 19l3 3 7.3-7.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2Z"/>',
+      fields: [
+        { label: 'Power Connection', key: 'power_connection' },
+        { label: 'Electrician Required', key: 'electrician_required', bool: true },
+        { label: 'Assembly', key: 'assembly' },
+        { label: 'Installation Available', key: 'installation_available', bool: true },
+        { label: 'Floor Requirements', key: 'floor_requirements' }
+      ]
+    },
+    {
+      key: 'features', title: 'Features',
+      icon: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h-1"/><circle cx="13" cy="6" r="2"/><circle cx="7" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+      fields: [
+        { label: 'Digital Controls', key: 'digital_controls', bool: true },
+        { label: 'WiFi Control', key: 'wifi_control', bool: true },
+        { label: 'Interior Lighting', key: 'interior_lighting', bool: true },
+        { label: 'Bluetooth', key: 'bluetooth', bool: true },
+        { label: 'Chromotherapy', key: 'chromotherapy', bool: true },
+        { label: 'Airflow System', key: 'airflow_system' }
+      ]
+    },
+    {
+      key: 'warranty', title: 'Warranty',
+      icon: '<path d="M12 3 4 6.5v5c0 5 3.4 8.7 8 9.5 4.6-.8 8-4.5 8-9.5v-5Z"/><path d="m9.5 12 1.8 1.8L15 10"/>',
+      fields: [
+        { label: 'Warranty Summary', key: 'warranty_summary' },
+        { label: 'Structural Warranty', key: 'structural_warranty' },
+        { label: 'Heating Warranty', key: 'heating_warranty' },
+        { label: 'Component Warranty', key: 'component_warranty' },
+        { label: 'Commercial Warranty', key: 'commercial_warranty' },
+        { label: 'Warranty Detail', key: 'warranty_detail', full: true }
+      ]
+    }
+  ];
+
+  var CHECK_SVG = '<svg class="pc-drawer-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
+  }
+
+  function getSelectedHandles() {
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = params.get('products');
+    if (fromQuery) {
+      return fromQuery.split(',').map(function (h) { return h.trim(); }).filter(Boolean);
+    }
+    if (window.CompareManager) {
+      return window.CompareManager.getAll().map(function (p) { return p.handle; });
+    }
+    return [];
+  }
+
+  function fetchProductData(handle) {
+    return fetch('/products/' + handle + '?section_id=product-comparison-card')
+      .then(function (res) { return res.text(); })
+      .then(function (html) {
+        var match = html.match(/<script type="application\/json" id="pc-card-data"[^>]*>([\s\S]*?)<\/script>/);
+        if (!match) return null;
+        try {
+          return JSON.parse(match[1]);
+        } catch (e) {
+          return null;
+        }
+      })
+      .catch(function () { return null; });
+  }
+
+  function renderTable(products) {
+    var table = document.getElementById('pc-table');
+    table.style.setProperty('--pc-product-count', products.length);
+    document.querySelector('.pc-wrap').style.setProperty('--pc-product-count', products.length);
+
+    var html = '<div class="pc-product-header-row"><div class="pc-label-spacer"><span>{{ section.settings.column_label | default: "Key Features" }}</span></div>';
+
+    products.forEach(function (p) {
+      html += '<div class="pc-product-card" data-handle="' + escapeHtml(p.handle) + '">';
+      html += '<button type="button" class="pc-product-remove" data-remove-handle="' + escapeHtml(p.handle) + '" aria-label="Remove ' + escapeHtml(p.title) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+      if (p.image) {
+        html += '<img class="pc-product-img" src="' + p.image + '" alt="' + escapeHtml(p.title) + '" loading="lazy">';
+      } else {
+        html += '<div class="pc-product-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>';
+      }
+      html += '<p class="pc-product-name">' + escapeHtml(p.title) + '</p>';
+      if (p.tagline) html += '<p class="pc-product-tagline">' + escapeHtml(p.tagline) + '</p>';
+      if (p.price) html += '<p class="pc-product-price">From <strong>' + escapeHtml(p.price) + '</strong></p>';
+      html += '<a href="' + p.url + '" class="pc-btn-view">View product<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></a>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    ROWS.forEach(function (row) {
+      html += '<div class="pc-row"><div class="pc-row-label"><strong>' + row.label + '</strong><small>' + row.sublabel + '</small></div>';
+      products.forEach(function (p) {
+        var val = (p.rows && p.rows[row.key]) || '—';
+        html += '<div class="pc-row-value">' + escapeHtml(val) + '</div>';
+      });
+      html += '</div>';
+    });
+
+    table.innerHTML = html;
+
+    table.querySelectorAll('[data-remove-handle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (window.CompareManager) window.CompareManager.remove(btn.getAttribute('data-remove-handle'));
+        init();
+      });
+    });
+  }
+
+  function fieldValue(field, data) {
+    if (!data) return null;
+    var v = data[field.key];
+    if (field.bool) return v ? CHECK_SVG : null;
+    if (v == null || v === '') return null;
+    return escapeHtml(v) + (field.suffix || '');
+  }
+
+  function renderDrawer(products) {
+    var tabsEl = document.getElementById('pc-drawer-tabs');
+    var bodyEl = document.getElementById('pc-drawer-body');
+
+    tabsEl.innerHTML = products.map(function (p, i) {
+      return '<button class="pc-drawer-tab' + (i === 0 ? ' active' : '') + '" data-product-index="' + i + '">' + escapeHtml(p.title).toUpperCase() + '</button>';
+    }).join('');
+
+    bodyEl.innerHTML = products.map(function (p, i) {
+      var panelHtml = '<div class="pc-drawer-panel" data-panel-index="' + i + '"' + (i === 0 ? '' : ' hidden') + '>';
+      DRAWER_GROUPS.forEach(function (group) {
+        var groupData = p.drawer ? p.drawer[group.key] : null;
+        panelHtml += '<details class="pc-drawer-group" open><summary class="pc-drawer-group-header"><span class="pc-drawer-group-title"><svg class="pc-drawer-group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + group.icon + '</svg>' + group.title + '</span><svg class="pc-drawer-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary><div class="pc-drawer-group-body">';
+        group.fields.forEach(function (field) {
+          var val = fieldValue(field, groupData);
+          if (field.full) {
+            if (val) panelHtml += '<div class="pc-drawer-spec-row pc-drawer-spec-row--full"><p class="pc-drawer-spec-detail">' + val + '</p></div>';
+          } else {
+            panelHtml += '<div class="pc-drawer-spec-row"><span class="pc-drawer-spec-label">' + field.label + '</span><span class="pc-drawer-spec-value">' + (val || '—') + '</span></div>';
+          }
+        });
+        panelHtml += '</div></details>';
+      });
+      panelHtml += '</div>';
+      return panelHtml;
+    }).join('');
+
+    var tabs = tabsEl.querySelectorAll('.pc-drawer-tab');
+    var panels = bodyEl.querySelectorAll('.pc-drawer-panel');
+    var ctaLink = document.getElementById('pc-drawer-cta-link');
+    if (ctaLink && products[0]) ctaLink.setAttribute('href', products[0].url);
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var index = tab.getAttribute('data-product-index');
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel-index') !== index; });
+        if (ctaLink && products[index]) ctaLink.setAttribute('href', products[index].url);
+      });
+    });
+  }
+
+  function enableDragScroll(el) {
+    if (!el) return;
+    var isDown = false, startX = 0, startScrollLeft = 0;
+    el.addEventListener('mousedown', function (e) {
+      isDown = true; el.classList.add('is-dragging'); startX = e.pageX; startScrollLeft = el.scrollLeft;
+    });
+    function stopDrag() { isDown = false; el.classList.remove('is-dragging'); }
+    el.addEventListener('mouseleave', stopDrag);
+    el.addEventListener('mouseup', stopDrag);
+    el.addEventListener('mousemove', function (e) {
+      if (!isDown) return;
+      var delta = e.pageX - startX;
+      if (Math.abs(delta) > 3) { e.preventDefault(); el.scrollLeft = startScrollLeft - delta; }
+    });
+  }
+
+  function wireDrawerOpenClose() {
+    var overlay = document.getElementById('pc-overlay');
+    var drawer = document.getElementById('pc-drawer');
+    var openBtn = document.getElementById('pc-open-drawer');
+    var closeBtn = document.getElementById('pc-close-drawer');
+    if (!drawer || drawer.dataset.wired) return;
+    drawer.dataset.wired = 'true';
+
+    function openDrawer() { overlay.classList.add('is-open'); drawer.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { overlay.classList.remove('is-open'); drawer.classList.remove('is-open'); document.body.style.overflow = ''; }
+
+    if (openBtn) openBtn.addEventListener('click', openDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (overlay) overlay.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+  }
+
+  function init() {
+    var loading = document.getElementById('pc-loading');
+    var empty = document.getElementById('pc-empty');
+    var content = document.getElementById('pc-content');
+
+    var handles = getSelectedHandles();
+
+    if (handles.length === 0) {
+      loading.hidden = true;
+      content.hidden = true;
+      empty.hidden = false;
+      return;
+    }
+
+    loading.hidden = false;
+    empty.hidden = true;
+    content.hidden = true;
+
+    Promise.all(handles.map(fetchProductData)).then(function (results) {
+      var products = results.filter(Boolean);
+      loading.hidden = true;
+
+      if (products.length === 0) {
+        empty.hidden = false;
+        return;
+      }
+
+      content.hidden = false;
+      document.getElementById('pc-selection-count').innerHTML =
+        '<strong>' + products.length + '</strong> product' + (products.length !== 1 ? 's' : '') + ' shown';
+
+      renderTable(products);
+      renderDrawer(products);
+      enableDragScroll(document.querySelector('.pc-table-outer'));
+      enableDragScroll(document.getElementById('pc-drawer-tabs'));
+      wireDrawerOpenClose();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('compare:change', init);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Product Comparison New",
+  "tag": "section",
+  "class": "product-comparison-section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Compare Products" },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Compare our models to find the right fit for you."
+    },
+    { "type": "text", "id": "column_label", "label": "Left column label", "default": "Key Features" },
+    { "type": "text", "id": "compare_button_text", "label": "Compare button text", "default": "Compare" },
+    { "type": "text", "id": "drawer_title", "label": "Full comparison drawer title", "default": "Full Specifications" },
+    { "type": "color", "id": "background_color", "label": "Background color", "default": "#ffffff" },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#c0392b" },
+    { "type": "color", "id": "accent_color_hover", "label": "Accent color (hover)", "default": "#a93226" },
+    { "type": "header", "content": "Trust badges (optional, up to 3)" },
+    { "type": "checkbox", "id": "show_trust_badges", "label": "Show trust badges", "default": true },
+    { "type": "text", "id": "trust_title_1", "label": "Badge 1 title" },
+    { "type": "text", "id": "trust_desc_1", "label": "Badge 1 description" },
+    { "type": "text", "id": "trust_title_2", "label": "Badge 2 title" },
+    { "type": "text", "id": "trust_desc_2", "label": "Badge 2 description" },
+    { "type": "text", "id": "trust_title_3", "label": "Badge 3 title" },
+    { "type": "text", "id": "trust_desc_3", "label": "Badge 3 description" }
+  ],
+  "presets": [
+    { "name": "Product Comparison New" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,545 @@
+<style>
+    .new-product-card .image-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: block;
+    }
+
+    .new-product-card .image-wrapper img,
+    .new-product-card .image-wrapper .kw-img-primary,
+    .new-product-card .image-wrapper .kw-img-hover {
+      max-height: 340px;
+      width: 100%;
+      object-fit: cover;
+      transition: opacity 0.4s ease, transform 0.5s ease-in-out;
+    }
+
+    .new-product-card .image-wrapper .kw-img-primary {
+      display: block;
+      opacity: 1;
+    }
+
+    .new-product-card .image-wrapper .kw-img-hover {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      height: 100%;
+      max-height: 340px;
+    }
+
+    .new-product-card .image-wrapper:hover .kw-img-primary {
+      opacity: 0;
+    }
+
+    .new-product-card .image-wrapper:hover .kw-img-hover {
+      opacity: 1;
+    }
+
+    .new-product-card .image-wrapper:not(:has(.kw-img-hover)):hover .kw-img-primary {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+
+    .new-product-card .image-wrapper{
+      position: relative;
+      overflow: hidden;
+    }
+
+    .new-product-card .product-card-image-bg{
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: 1.5fr 1fr;
+    }
+
+    .new-product-card .product-card-image-bg div:first-child{
+      background: red;
+    }
+
+    .new-product-card .product-card-image-bg div:last-child{
+      background: blue;
+    }
+
+
+    .new-product-card .image-wrapper:hover{
+      filter: brightness(0.95);
+    }
+
+    .new-product-card{
+      width: 100%;
+      border-radius: 5px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .title {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .new-product-card .info{
+      padding: 24px;
+      background: #fff;
+      flex-grow: 1;
+      /* background: #f9e4d1 */
+    }
+
+    .new-product-card .title{
+      color: #4F4540;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 140%;
+      width: 100%;
+      white-space: wrap;
+          text-align: center;
+    }
+
+    .new-product-card .title-price-wrapper{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .new-product-card .price{
+      color:  var(--stone);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 140%;
+      text-align: center;
+    }
+
+    .new-product-card .btn {
+      margin-top: 12px;
+      width: 100%;
+      font-weight: 700;
+    }
+
+    .new-product-card .sleep-tech.product-variant{
+      width: 100%;
+      border-color: #CA8767;
+      color: #CA8767;
+      border-radius: 8px;
+    }
+    .new-product-card .btn {
+      margin-bottom: 0;
+  }
+    .new-product-card .info {
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+  }
+    .new-product-card {
+      position: relative;
+  }
+    p.badges-call-col {
+      display: flex;
+      position: absolute;
+      top: 29px;
+      left: 0;
+      z-index: 99;
+      background: var(--ember);
+      color: #fff;
+      text-transform: uppercase;
+      border-radius: 30px;
+      padding: 7px 10px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      rotate: -45deg;
+      font-weight: 600;
+  }
+    .new-product-card .info .info-ps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+  }
+    .info-dim-cont p {
+      margin-bottom: 0;
+  }
+    .info-dim-cont {
+      {% comment %} border-bottom: 1px solid rgb(0 0 0 / 40%); {% endcomment %}
+      padding-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+  }
+    p.dim-pers {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+  }
+    .new-product-card .title {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-end;
+  }
+    .new-product-card .info .info-cont {
+      max-width: 320px;
+      margin: auto;
+      width: 100%;
+  }
+    .new-product-card .info .info-ps p.price > span {
+      display: ;
+      left: -6px;
+      position: relative;
+  }
+  .template-collection .yotpo-sr-bottom-line-summary svg.star-container {
+      width: 12px;
+      height: 12px;
+      margin-inline-end: 2.5px !important;
+  }
+  .template-collection .yotpo-sr-bottom-line-summary p.yotpo-sr-bottom-line-left-panel {
+      font-size: 14px !important;
+      margin-left: 2px !important;
+      margin-right: 0 !important;
+  }
+  .new-product-card .btn.is-sold-out {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .product-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: var(--ember);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+    @media  (min-width:715px){
+      .new-product-card .image-wrapper img{
+      width: 100%;
+    }
+      .new-product-card{
+      width: 100%;
+
+      }
+    }
+
+    @media (max-width: 480px) {
+    .new-product-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .new-product-card .info {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-grow: 1;
+      padding: 16px;
+    }
+
+    .new-product-card .info .info-cont {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      height: 100%;
+      width: 100%;
+    }
+
+    .new-product-card .title {
+      font-size: 16px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      min-height: calc(1.4em * 3);
+    }
+
+    .new-product-card .title-price-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .new-product-card .price {
+      font-size: 16px;
+      margin: 4px 0;
+      text-align: center;
+    }
+
+    .new-product-card .info-dim-cont {
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .new-product-card .info-ps {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .new-product-card .btn {
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    p.dim-pers {
+      margin: 0 auto;
+      font-size: 12px;
+    }
+
+    p.info-dim {
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 6px;
+      min-height: 24px;
+      text-align: center;
+    }
+
+    .yotpo-widget-instance {
+      min-height: 33px;
+    }
+
+    .product-badge {
+        top: 8px;
+        left: 8px;
+    }
+  }
+</style>
+
+{% liquid
+  assign available = product.variants[0].available
+  assign id = product.variants[0].id
+  assign price = product.price
+  for variant in product.variants
+    if variant.available
+      assign available = true
+      assign id = variant.id
+      assign price = variant.price
+      break
+    endif
+  endfor
+%}
+<div class="new-product-card">
+  {% comment %} {% if product.metafields.custom.badges != blank %}<p class="badges-call-col">{{product.metafields.custom.badges}}</p>{% endif %} {% endcomment %}
+  {%- assign hover_img = product.metafields.custom.hover_image.value -%}
+
+  {% comment %} 7-27-2026 Made implementations to add hover image function to the code.  {% endcomment %}
+  <a class="image-wrapper" href="{{ product.url }}">
+    {% if product.metafields.custom.badges_new != blank %}
+      <span class="product-badge">{{ product.metafields.custom.badges_new }}</span>
+    {% endif %}
+
+    {% assign image_media = product.media | where: 'media_type', 'image' | first %}
+    {%- if image_media != blank %}
+      {{
+        image_media.preview_image
+        | image_url: width: 1500
+        | image_tag:
+          class: 'kw-img-primary',
+          loading: 'lazy',
+          width: 'min(370px, 90vw)',
+          height: 370,
+          widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+          alt: product.title
+        | escape
+      }}
+    {%- endif -%}
+
+    {%- if hover_img != blank -%}
+      <img
+        class="kw-img-hover"
+        src="{{ hover_img | image_url: width: 750, format: 'webp' }}"
+        srcset="
+          {{ hover_img | image_url: width: 375, format: 'webp' }} 375w,
+          {{ hover_img | image_url: width: 750, format: 'webp' }} 750w,
+          {{ hover_img | image_url: width: 1100, format: 'webp' }} 1100w
+        "
+        sizes="(max-width: 480px) 90vw, 370px"
+        alt="{{ product.title | escape }} - hover view"
+        width="370"
+        height="370"
+        loading="lazy"
+      >
+    {%- endif -%}
+  </a>
+  <div class="info">
+    <div class="info-cont">
+      <a href="{{ product.url }}" class="title-price-wrapper">
+        <p class="title">{{ product.title }}</p>
+      </a>
+
+      {% if collection.title contains 'Saunas' %}
+        <div class="info-dim-cont">
+          {% comment %} <p class="info-dim">{{ product.metafields.custom.dimensions }}</p> {% endcomment %}
+           <p class="info-dim">{{ product.metafields.custom.heater_warranty }}</p>
+          <p class="dim-pers">
+            {{ product.metafields.custom.capacity }}
+            <svg width="11" height="10" viewBox="0 0 11 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.0271 1C4.43453 1 3.86624 1.21071 3.44723 1.58579C3.02823 1.96086 2.79283 2.46957 2.79283 3C2.79283 3.53043 3.02823 4.03914 3.44723 4.41421C3.86624 4.78929 4.43453 5 5.0271 5C5.61966 5 6.18796 4.78929 6.60696 4.41421C7.02597 4.03914 7.26136 3.53043 7.26136 3C7.26136 2.46957 7.02597 1.96086 6.60696 1.58579C6.18796 1.21071 5.61966 1 5.0271 1ZM1.6757 3C1.6757 2.20435 2.02879 1.44129 2.6573 0.87868C3.28581 0.31607 4.13825 0 5.0271 0C5.91594 0 6.76839 0.31607 7.3969 0.87868C8.0254 1.44129 8.3785 2.20435 8.3785 3C8.3785 3.79565 8.0254 4.55871 7.3969 5.12132C6.76839 5.68393 5.91594 6 5.0271 6C4.13825 6 3.28581 5.68393 2.6573 5.12132C2.02879 4.55871 1.6757 3.79565 1.6757 3ZM2.79283 8C2.34841 8 1.92219 8.15804 1.60793 8.43934C1.29368 8.72064 1.11713 9.10218 1.11713 9.5C1.11713 9.63261 1.05828 9.75979 0.953532 9.85355C0.848781 9.94732 0.706707 10 0.558566 10C0.410425 10 0.268352 9.94732 0.1636 9.85355C0.0588488 9.75979 0 9.63261 0 9.5C0 8.83696 0.294244 8.20107 0.818002 7.73223C1.34176 7.26339 2.05213 7 2.79283 7H7.26136C8.00207 7 8.71244 7.26339 9.23619 7.73223C9.75995 8.20107 10.0542 8.83696 10.0542 9.5C10.0542 9.63261 9.99535 9.75979 9.8906 9.85355C9.78584 9.94732 9.64377 10 9.49563 10C9.34749 10 9.20541 9.94732 9.10066 9.85355C8.99591 9.75979 8.93706 9.63261 8.93706 9.5C8.93706 9.10218 8.76052 8.72064 8.44626 8.43934C8.13201 8.15804 7.70579 8 7.26136 8H2.79283Z" fill="#0D0D0D"/>
+            </svg>
+          </p>
+        </div>
+      {% elsif collection.title contains 'Red Light Therapy Devices' %}
+        <div class="info-dim-cont">
+          {% comment %} <p class="info-dim">{{ product.metafields.custom.dimensions }}</p>
+          <p class="dim-pers">
+            <svg width="18" height="18" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_673_4901)">
+                  <path d="M26.1854 8.29416L15.1991 13.792L4.21289 8.29416L15.1991 2.80579L26.1854 8.29416Z" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M26.1855 18.2816V8.29407" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4.21289 18.2816V8.46533" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.1992 27.1942V17.3494" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M13.4219 18.9855L15.2006 17.1973L16.9793 18.9855" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M26.1854 21.7059L15.1991 27.1943L4.21289 21.7059" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M24.3594 20.5835L26.7849 21.2684L26.1001 23.6939" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.03882 20.574L3.61328 21.2588L4.29814 23.6844" stroke="#CA8767" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+              <defs>
+                <clipPath id="clip0_673_4901">
+                <rect width="30" height="30" fill="white" transform="translate(0.199219)"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </p> {% endcomment %}
+        </div>
+      {% endif %}
+      {% if collection.title contains 'Saunas' %}
+        <div class="info-ps">
+          <p class="price">
+            {{ price | money_without_trailing_zeros }}
+            {%- unless product.price_varies == false and product.compare_at_price_varies %}
+              {%- if product.compare_at_price > price %}
+                &nbsp;
+                <span class="self-center text-xs line-through">
+                  {% if settings.currency_code_enabled %}
+                    {{ product.compare_at_price | money_with_currency }}
+                  {% else %}
+                    {{ product.compare_at_price | money_without_trailing_zeros }}
+                  {% endif %}
+                </span>
+              {%- endif -%}
+            {%- endunless -%}
+          </p>
+          <div
+            class="yotpo-widget-instance"
+            data-yotpo-instance-id="1122810"
+            data-yotpo-product-id="{{product.id}}"
+            data-yotpo-cart-product-id="{{item.product.id}}"
+            data-yotpo-section-id="{{template.name}}"
+          ></div>
+        </div>
+      {% else %}
+        <p class="price">
+          {{ price | money_without_trailing_zeros }}
+          {%- unless product.price_varies == false and product.compare_at_price_varies %}
+            {%- if product.compare_at_price > price %}
+              &nbsp;
+              <span class="self-center text-xs line-through">
+                {% if settings.currency_code_enabled %}
+                  {{ product.compare_at_price | money_with_currency }}
+                {% else %}
+                  {{ product.compare_at_price | money_without_trailing_zeros }}
+                {% endif %}
+              </span>
+            {%- endif -%}
+          {%- endunless -%}
+        </p>
+        <div
+          class="yotpo-widget-instance"
+          data-yotpo-instance-id="1122810"
+          data-yotpo-product-id="{{product.id}}"
+          data-yotpo-cart-product-id="{{item.product.id}}"
+          data-yotpo-section-id="{{template.name}}"
+        ></div>
+      {% endif %}
+    </div>
+    {% if available %}
+      <a class="btn btn-secondary" href="{{ product.url }}"> Shop Now </a>
+    {% else %}
+      <a class="btn btn-secondary is-sold-out" href="{{ product.url }}"> Sold Out </a>
+    {% endif %}
+
+    {% comment %}
+      {% assign collection_title = product.collections.first.title %}
+      {% if collection_title == "Sleep Tech" %}
+        <form id="add-item-form" action="/cart/add" method="post" data-productid="{{product.id}}">
+                  <input type="hidden" id="quantity" name="quantity" value="1"/>
+                   <label for="variant" class="font-semibold pb-2 block">Choose size:</label>
+                    <select name="id" id="variant" class="sleep-tech product-variant">
+                      {% for variant in product.variants %}
+                        <option value="{{ variant.id }}" data-price="{{ variant.price | money }}">{{ variant.title }}</option>
+                      {% endfor %}
+                    </select>
+                 <button class="btn btn-primary" type="submit">
+                    {% assign productTags = product.tags | join: ', ' %}
+                    {% if productTags contains 'p-backorder' %}
+                      {% assign btnLabel = "Pre-Order" %}
+                    {% elsif productTags contains 'sd_preorder' %}
+                      {% assign btnLabel = "Pre-Order" %}
+                    {% else %}
+                      {% assign btnLabel = 'Quick Add'%}
+                    {% endif %}
+
+                   <span>{{ btnLabel }}</span>
+                 </button>
+          </form>
+      {% else %}
+         {% if available %}
+              <form id="add-item-form" action="/cart/add" method="post" data-productid="{{product.id}}">
+                  <input type="hidden" name='id' value="{{ id }}" data-productid="{{product.id}}" />
+                  <input type="hidden" id="quantity" name="quantity" value="1"/>
+                 <button class="btn btn-secondary" type="submit">
+                    {% assign productTags = product.tags | join: ', ' %}
+                    {% if productTags contains 'p-backorder' %}
+                      {% assign btnLabel = "Pre-Order" %}
+                    {% elsif productTags contains 'sd_preorder' %}
+                      {% assign btnLabel = "Pre-Order" %}
+                    {% else %}
+                      {% assign btnLabel = 'products.product.add_to_cart' | t %}
+                    {% endif %}
+
+                   <span>{{ btnLabel }}</span>
+                 </button>
+              </form>
+            {% else %}
+               <button class="btn {% if collection_title == "Sleep Tech" %}btn-primary {% else %} btn-secondary{% endif %}" style="cursor: not-allowed;">
+                 {{ 'products.product.sold_out' | t }}
+               </button>
+            {% endif %}
+      {% endif %}
+    {% endcomment %}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.sleep-tech.product-variant').forEach(function (variantSelect) {
+    variantSelect.addEventListener('change', function () {
+      var selectedOption = this.options[this.selectedIndex];
+      var price = selectedOption.getAttribute('data-price');
+      var priceContainer = this.parentNode.parentNode.querySelector('.price');
+      priceContainer.textContent = price;
+    });
+  });
+</script>

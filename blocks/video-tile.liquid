@@ -1,0 +1,132 @@
+{%- doc -%}
+  Renders a merchant-uploaded video as a grid tile. On mobile it spans a
+  full 2-column row via CSS grid-column. Includes an optional text "chip"
+  positioned at the left with no background or border — just plain text.
+{%- enddoc -%}
+
+<li
+  class="product-grid__item collection-video-tile"
+  data-insert-position="{{ block.settings.insert_position }}"
+  {{ block.shopify_attributes }}
+>
+  {%- if block.settings.link != blank -%}
+    <a href="{{ block.settings.link }}" class="collection-video-tile__link">
+  {%- endif -%}
+
+  <div class="collection-video-tile__wrapper">
+    {%- if block.settings.video != blank -%}
+      {{
+        block.settings.video
+        | video_tag:
+          autoplay: block.settings.autoplay,
+          loop: block.settings.loop,
+          muted: block.settings.autoplay,
+          controls: false,
+          class: 'collection-video-tile__media'
+      }}
+    {%- elsif block.settings.video_url != blank -%}
+      <video
+        class="collection-video-tile__media"
+        src="{{ block.settings.video_url }}"
+        {% if block.settings.autoplay %}
+          autoplay muted playsinline
+        {% endif %}
+        {% if block.settings.loop %}
+          loop
+        {% endif %}
+      ></video>
+    {%- endif -%}
+
+    {%- if block.settings.chip_text != blank -%}
+      <span class="collection-video-tile__chip">{{ block.settings.chip_text }}</span>
+    {%- endif -%}
+  </div>
+
+  {%- if block.settings.link != blank -%}</a>{%- endif -%}
+</li>
+
+{% stylesheet %}
+  /* Mobile: video takes a full 2-column row in the grid */
+  @media screen and (max-width: 749px) {
+    .collection-video-tile {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Desktop: behaves like a normal single grid cell, no special span */
+  @media screen and (min-width: 750px) {
+    .collection-video-tile {
+      grid-column: auto;
+    }
+  }
+
+  .collection-video-tile__link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .collection-video-tile__wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .collection-video-tile__media {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  /* Chip: plain text, no background, no border — just positioned left */
+  .collection-video-tile__chip {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background: none;
+    border: none;
+    padding: 0;
+    pointer-events: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Video tile",
+  "settings": [
+    { "type": "video", "id": "video", "label": "Video (uploaded)" },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL (fallback)",
+      "info": "Only used if no video is uploaded above."
+    },
+    { "type": "url", "id": "link", "label": "Optional link" },
+    {
+      "type": "text",
+      "id": "chip_text",
+      "label": "Chip label text",
+      "info": "Plain text shown at the bottom-left of the video, no background or border."
+    },
+    { "type": "checkbox", "id": "autoplay", "label": "Autoplay (muted)", "default": true },
+    { "type": "checkbox", "id": "loop", "label": "Loop", "default": true },
+    {
+      "type": "range",
+      "id": "insert_position",
+      "label": "Position in grid",
+      "info": "Appears after this many products. 0 = before the first product.",
+      "min": 0,
+      "max": 36,
+      "step": 1,
+      "default": 4
+    }
+  ]
+}
+{% endschema %}

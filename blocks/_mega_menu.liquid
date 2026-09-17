@@ -1,0 +1,962 @@
+{%- comment -%}
+  ============================================================
+  CUSTOM BLOCK: Mega Menu — flat, all-categories-at-once variant
+  ------------------------------------------------------------
+  No tabs, no per-category dropdown switching. Hovering/focusing
+  the top-level nav item (e.g. "Saunas") reveals ONE panel that
+  shows every category as its own column with its links listed
+  underneath, all visible at the same time — nothing to click or
+  hover to reveal more. That's the only "dropdown" left: the
+  standard top-level hover-to-reveal-submenu behavior already
+  used everywhere else in this menu, unchanged.
+
+  FEATURED IMAGES: exactly 2, static, not tied to any category —
+  they don't change based on anything, they're just always there
+  alongside the columns. Settings are feat_1_image/_title/_link
+  and feat_2_image/_title/_link. Hidden individually if missing
+  an image or a title (the link is optional — with no link, the
+  card renders as a plain non-clickable div instead of an <a>).
+  The show_featured_titles toggle hides the title caption under
+  both images at once (the image itself still shows either way).
+
+  FIX: featured titles were occasionally invisible (white text on
+  the panel's cream background) because .megamenu__featured-title
+  had no explicit color — it was inheriting whatever text color
+  contrast-override computed for the block's background_color/
+  text_color settings, which is meant for the menu LINK text, not
+  this panel (whose background is a fixed #fdf8ee regardless of
+  those settings). Now explicitly colored via the same
+  --megamenu-title-color variable already used for column titles,
+  so it can never end up white-on-cream.
+
+  KNOWN LIMITATION: sub-links render as a single flat list per
+  category. The "Shop by Type" / "Shop by Size" heading split
+  some references use requires grouping data Shopify's menu
+  structure does not provide — it's a flat list of child links,
+  not sub-grouped.
+  ============================================================
+{%- endcomment -%}
+
+{% liquid
+  assign block_settings = block.settings
+  assign effective_submenu_color = block_settings.background_color | default: settings.page_background_color
+%}
+
+{% case variant %}
+  {% when 'mobile' %}
+    <div
+      class="header__drawer"
+      ref="headerDrawerContainer"
+      data-hydration-key="header-drawer-mobile"
+      {{ block.shopify_attributes }}
+    >
+      {% render 'header-drawer',
+        linklist: block_settings.menu,
+        data_header_drawer_type: 'mobile-drawer',
+        block: block,
+        section: section
+      %}
+    </div>
+
+  {% when 'navigation_bar' %}
+    {% if block_settings.navigation_bar == true %}
+      {% render 'contrast-override',
+        background_color: block_settings.background_color_navigation_bar,
+        text_color: block_settings.text_color_navigation_bar,
+        section_id: block.id
+      %}
+      <div
+        class="menu-list menu-list--mobile{% if transparent == blank %} color-custom-{{ block.id }}{% endif %}"
+        style="--menu-horizontal-gap: 15px; --mobile-nav-margin: auto;"
+        data-hydration-key="header-menu-mobile-navigation-bar"
+      >
+        <div class="menu-list__scroll-container">
+          <ul class="menu-list__list list-unstyled" role="list">
+            {% for link in block_settings.menu.links %}
+              <li>
+                <a
+                  href="{{ link.url }}"
+                  id="MenuItem-{{ link.handle }}"
+                  class="menu-list__item"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- link.title -}}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    {% liquid
+      assign block_settings = block.settings
+      assign category_title_color = block_settings.category_title_color | default: '#000000'
+
+      render 'contrast-override', background_color: block_settings.background_color, text_color: block_settings.text_color, section_id: block.id
+
+      assign background_color_classes = ''
+      assign background_color_setting_id = 'background_color_' | append: section.settings.menu_row
+      assign current_background_color = block_settings.background_color | default: settings.page_background_color
+      assign parent_background_color = section.settings[background_color_setting_id] | default: settings.page_background_color
+
+      if parent_background_color != current_background_color or block_settings.text_color != blank
+        assign background_color_classes = ' color-custom-' | append: block.id
+      endif
+
+      if parent_background_color.rgb == current_background_color.rgb
+        assign background_color_classes = background_color_classes | append: ' background-matches-parent'
+      endif
+
+      # 2 static featured images, shown once alongside the columns —
+      # not per-category, don't change based on anything. Each is
+      # optionally linked via feat_{slot}_link. Only the IMAGE is
+      # required for a slot to render — title is optional and only
+      # shown (as a caption) when both show_featured_titles is on and
+      # a title was actually entered; a missing title no longer hides
+      # the whole slot.
+      assign featured_html = ''
+      assign featured_count = 0
+      for slot in (1..2)
+        assign f_img_key = 'feat_' | append: slot | append: '_image'
+        assign f_title_key = 'feat_' | append: slot | append: '_title'
+        assign f_link_key = 'feat_' | append: slot | append: '_link'
+        assign f_image = block_settings[f_img_key]
+        assign f_title = block_settings[f_title_key]
+        assign f_link = block_settings[f_link_key]
+
+        if f_image != blank
+          assign featured_count = featured_count | plus: 1
+          capture single_featured
+            if f_link != blank
+              echo '<a href="'
+              echo f_link
+              echo '" class="megamenu__featured-card">'
+            else
+              echo '<div class="megamenu__featured-card">'
+            endif
+            echo '<div class="megamenu__featured-image"><img src="'
+            echo f_image | image_url: width: 400
+            echo '" alt="'
+            echo f_title | default: 'Featured' | escape
+            echo '" loading="lazy" width="'
+            echo f_image.width
+            echo '" height="'
+            echo f_image.height
+            echo '"></div>'
+            if block_settings.show_featured_titles and f_title != blank
+              echo '<p class="megamenu__featured-title">'
+              echo f_title
+              echo '</p>'
+            endif
+            if f_link != blank
+              echo '</a>'
+            else
+              echo '</div>'
+            endif
+          endcapture
+          assign featured_html = featured_html | append: single_featured
+        endif
+      endfor
+    %}
+
+    {% capture children %}
+      {% for link in block_settings.menu.links %}
+        <li
+          role="presentation"
+          class="menu-list__list-item"
+          on:focus="/activate"
+          on:blur="/deactivate"
+          on:pointerenter="/activate"
+          on:pointerleave="/deactivate"
+        >
+          <a
+            href="{{ link.url }}"
+            data-skip-node-update="true"
+            class="menu-list__link{% if link.active %} menu-list__link--active{% endif %}"
+            {%- if link.links != blank -%}
+              aria-controls="submenu-{{ forloop.index }}"
+              aria-haspopup="true"
+              aria-expanded="false"
+            {%- endif -%}
+            {% if link.current %}
+              aria-current="page"
+            {% endif %}
+            ref="menuitem"
+          >
+            <span class="menu-list__link-title">{{- link.title -}}</span>
+          </a>
+          {%- if link.links != blank -%}
+            <div class="menu-list__submenu{{ background_color_classes }}" ref="submenu[]">
+              <div
+                id="submenu-{{ forloop.index }}"
+                class="menu-list__submenu-inner"
+                style="{% render 'submenu-font-styles', settings: block_settings %}"
+              >
+                <div
+                  class="megamenu{% if featured_count == 0 %} megamenu--no-featured{% endif %}"
+                  style="--megamenu-title-color: {{ category_title_color }};"
+                >
+                  <div class="megamenu__columns">
+                    {% for category in link.links %}
+                      <div class="megamenu__column">
+                        <p class="megamenu__column-title">{{ category.title }}</p>
+                        <div class="megamenu__column-links">
+                          {% for sub_link in category.links %}
+                            <a href="{{ sub_link.url }}" class="megamenu__dropdown-link">{{ sub_link.title }}</a>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  {% if featured_count > 0 %}
+                    <div class="megamenu__featured-row">
+                      {{ featured_html }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {%- endif -%}
+        </li>
+      {% endfor %}
+      <li
+        class="menu-list__list-item"
+        role="presentation"
+        slot="more"
+        on:focus="/activate"
+        on:blur="/deactivate"
+        on:pointerenter="/activate"
+        on:pointerleave="/deactivate"
+      >
+        <button
+          role="listitem"
+          class="menu-list__link button-unstyled"
+          aria-haspopup="true"
+          aria-expanded="false"
+          ref="menuitem"
+        >
+          <span class="menu-list__link-title">{{ 'actions.more' | t }}</span>
+        </button>
+      </li>
+    {% endcapture %}
+
+    <header-menu
+      ref="headerMenu"
+      class="header-menu"
+      {{ block.shopify_attributes }}
+      data-hydration-key="header-menu"
+    >
+      <div class="header-menu__inner">
+        <nav
+          class="menu-list"
+          aria-label="{{ 'accessibility.header_navigation_label' | t }}"
+          style="{% render 'menu-font-styles', settings: block_settings, menu_type: 'mega_menu' %}"
+        >
+          {% assign class = 'overflow-menu' | append: background_color_classes %}
+          {% render 'overflow-list',
+            class: class,
+            ref: 'overflowMenu',
+            children: children,
+            minimum-items: 2,
+            data-testid: 'header-menu-overflow-list',
+            attributes: 'data-skip-node-update'
+          %}
+        </nav>
+      </div>
+
+      <script src="{{ 'header-menu.js' | asset_url }}" type="module" fetchpriority="low"></script>
+    </header-menu>
+{% endcase %}
+
+{% style %}
+  .header__underlay {
+    --color-submenu: rgb({{ effective_submenu_color.rgb }});
+  }
+{% endstyle %}
+
+{% stylesheet %}
+   /* ============================================================
+      BASE MENU STYLES
+      ============================================================ */
+
+   .header__drawer {
+     --header-drawer-min-height: 60px;
+     display: flex;
+     min-height: var(--header-drawer-min-height);
+     align-items: center;
+   }
+
+   #header-component[data-menu-style='drawer'] .header__drawer {
+     display: flex;
+     min-height: var(--header-drawer-min-height);
+   }
+
+   @media screen and (min-width: 750px) {
+     #header-component[data-menu-style='menu'] .header__drawer {
+       display: none;
+       min-height: 0;
+     }
+   }
+
+   .header--compact .header__drawer {
+     min-height: var(--minimum-touch-target);
+   }
+
+   .menu-list--mobile {
+     &.menu-list {
+       display: grid;
+     }
+
+     & .menu-list__list {
+       width: max-content;
+       margin-inline: auto;
+       gap: var(--menu-horizontal-gap);
+     }
+
+     & li {
+       width: max-content;
+       padding-block: var(--padding-sm);
+     }
+
+     & li:first-of-type {
+       padding-inline-start: var(--menu-horizontal-gap);
+     }
+
+     & li:last-of-type {
+       padding-inline-end: var(--menu-horizontal-gap);
+     }
+
+     & a {
+       color: var(--color-foreground);
+     }
+   }
+
+   .menu-list__scroll-container {
+     position: relative;
+     overflow-x: auto;
+     mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+     padding-block: var(--padding-2xs);
+   }
+
+   .menu-list {
+     --menu-horizontal-gap: var(--gap-xl);
+     --menu-vertical-gap: var(--gap-xl);
+
+     display: flex;
+     height: 100%;
+   }
+
+   .menu-list__list {
+     display: flex;
+     justify-content: var(--grid-area-alignment);
+   }
+
+   .menu-list__list-item {
+     flex-shrink: 0;
+     white-space: nowrap;
+     display: flex;
+     align-items: center;
+     height: 100%;
+   }
+
+   .menu-list__list-item[aria-hidden='true'] {
+     visibility: hidden;
+   }
+
+   .menu-list__link {
+     font-family: var(--menu-top-level-font-family);
+     font-style: var(--menu-top-level-font-style);
+     font-weight: var(--menu-top-level-font-weight);
+     font-size: var(--menu-top-level-font-size);
+     line-height: var(--menu-top-level-font-line-height);
+     text-transform: var(--menu-top-level-font-case);
+     color: var(--menu-top-level-font-color);
+     text-decoration: none;
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     cursor: pointer;
+     height: 100%;
+     margin-block: 0;
+
+     &::after {
+       content: '';
+       position: absolute;
+       display: none;
+       top: var(--header-padding);
+       height: var(--box-height);
+       left: 0;
+       right: 0;
+     }
+
+     &[data-safety-box='true']::after {
+       display: block;
+     }
+
+     &:hover,
+     &:focus {
+       color: var(--menu-top-level-font-color);
+     }
+
+     @media screen and (min-width: 750px) {
+       font-size: var(--menu-top-level-font-size-desktop);
+     }
+   }
+
+   .menu-list__link-title {
+     padding-inline: calc(var(--gap-xl) / 2);
+   }
+   [slot='overflow'] .menu-list__link-title {
+     padding-inline: 0;
+   }
+
+   .menu-list__list-item:not([slot='overflow']) {
+     flex-direction: column;
+   }
+   .menu-list__list-item[slot='more']:has(.menu-list__link[aria-expanded='true'])::after {
+     content: '';
+     width: 100%;
+     height: var(--header-padding);
+     margin-bottom: calc(-1 * var(--header-padding));
+   }
+
+   [slot='overflow'] > .menu-list__link::after {
+     content: none;
+   }
+
+   .menu-list:where(:has(.menu-list__list-item:hover)),
+   .menu-list:where(:has(.menu-list__list-item:focus-within)),
+   .menu-list:where(:has(.menu-list__list-item:not([aria-hidden='true']) .menu-list__link--active)) {
+     .menu-list__link {
+       color: rgb(var(--menu-top-level-font-color-rgb) / var(--opacity-subdued-text));
+     }
+   }
+
+   .menu-list:not(:has(.menu-list__list-item:hover)) .menu-list__link--active,
+   .menu-list .menu-list__list-item:where(:hover, :focus-within) .menu-list__link,
+   .menu-list .menu-list__list-item:is([slot='more'], [slot='overflow']) .menu-list__link[aria-expanded='true'] {
+     color: var(--menu-top-level-font-color);
+   }
+
+   .overflow-menu::part(list) {
+     --focus-outline-size: calc(var(--focus-outline-offset) + var(--focus-outline-width));
+
+     gap: 0;
+     margin-inline: calc(-1 * var(--menu-horizontal-gap) / 2);
+   }
+
+   .overflow-menu {
+     background-color: transparent !important;
+     padding: var(--focus-outline-size);
+     margin: calc(-1 * var(--focus-outline-size));
+   }
+
+   .menu-list__submenu,
+   .overflow-menu::part(overflow) {
+     --submenu-padding-block-start: var(--padding-3xl);
+     --submenu-padding-block-end: var(--padding-3xl);
+
+     background-color: transparent;
+   }
+
+   .header__row[style*='--border-bottom-width: 0px'] {
+     .menu-list__submenu.background-matches-parent,
+     .overflow-menu.background-matches-parent::part(overflow) {
+       --submenu-padding-block-start: 0px;
+     }
+   }
+
+   .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu,
+   .overflow-menu::part(overflow) {
+     --submenu-content-opacity: 0;
+     --submenu-content-animation: opacity calc(var(--submenu-animation-speed) * 0.75) var(--animation-easing);
+
+     visibility: hidden;
+     position: absolute;
+     width: 100%;
+     left: 0;
+     top: calc(100% - 1px + var(--border-bottom-width) - (var(--full-open-header-height) - var(--submenu-height)));
+     z-index: var(--layer-header-menu);
+     padding-inline: var(--padding-inline);
+     clip-path: rect(var(--header-height) 100% var(--full-open-header-height) 0);
+     transition: clip-path var(--submenu-animation-speed) var(--ease-out-cubic);
+   }
+
+   [data-submenu-overlap-bottom-row] {
+     .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu,
+     .overflow-menu::part(overflow) {
+       clip-path: rect(var(--top-row-height) 100% var(--full-open-header-height) 0);
+     }
+   }
+
+   .menu-list__list-item:has([aria-expanded='true']) > .menu-list__submenu,
+   .overflow-menu:has([slot="overflow"] [aria-expanded='true'])::part(overflow-list),
+   .menu-list__submenu:is(:hover),
+   .overflow-menu::part(overflow):hover {
+     --submenu-content-opacity: 1;
+
+     visibility: visible;
+   }
+
+   .overflow-menu::part(overflow) {
+     --menu-top-level-font-size: var(--font-size--xlarge);
+
+     display: grid;
+     grid-template-columns: var(--full-page-grid-with-margins);
+   }
+
+   .overflow-menu::part(overflow-list) {
+     position: relative;
+     display: grid;
+     grid-template-columns: minmax(auto, 200px) 1fr;
+     grid-template-areas: 'left right';
+     grid-template-rows: max-content;
+     grid-gap: 0;
+     grid-column: 2;
+   }
+
+   .menu-list__list-item:is([slot='overflow']) {
+     --menu-top-level-font-color: var(--color-foreground);
+     --menu-top-level-font-color-rgb: var(--color-foreground-rgb);
+
+     display: contents;
+     white-space: normal;
+
+     .menu-list__link {
+       grid-area: left;
+       grid-row: auto;
+       height: min-content;
+       font-size: var(--font-size--xl);
+       transition: var(--submenu-content-animation);
+     }
+
+     .menu-list__submenu {
+       visibility: hidden;
+       grid-row: 1;
+       grid-area: right;
+       grid-row-end: span calc(var(--overflow-count) + 1);
+       padding-inline-start: var(--menu-horizontal-gap);
+     }
+
+     .menu-list__submenu-inner {
+       transform: none;
+       grid-column: unset;
+       padding-block: 0;
+     }
+
+     .menu-list__link[aria-expanded='true'] + .menu-list__submenu {
+       visibility: visible;
+     }
+   }
+
+   .header-menu {
+     height: 100%;
+   }
+
+   .menu-list__submenu-inner {
+     position: relative;
+     display: flex;
+     justify-content: space-between;
+     flex-wrap: wrap;
+   }
+
+   .menu-list__submenu-inner,
+   .overflow-menu::part(overflow-list) {
+     padding-block-start: var(--submenu-padding-block-start);
+     padding-block-end: var(--submenu-padding-block-end);
+     padding-inline: var(--section-padding-inline);
+     opacity: var(--submenu-content-opacity);
+     transition: var(--submenu-content-animation);
+     transform: translateY(calc(var(--full-open-header-height) - var(--submenu-height)));
+
+     max-height: calc(80vh - var(--header-height));
+     overflow-y: auto;
+     overflow-x: hidden;
+     scrollbar-width: thin;
+     scrollbar-color: rgb(var(--color-foreground-rgb) / var(--opacity-40)) transparent;
+     background: #fdf8ee;
+   }
+
+   .menu-list__list-item:not(:has([aria-expanded='true'])) > .menu-list__submenu product-component {
+     display: none;
+   }
+
+   /* ============================================================
+      MEGA MENU STYLES — flat columns, all categories visible at once
+      ============================================================ */
+
+   .megamenu {
+     position: relative;
+     display: block;
+     width: 100%;
+     padding: 40px 32px;
+     padding-right: 600px;
+     background: #fdf8ee;
+   }
+
+   @media (min-width: 1500px){
+     .megamenu {
+        padding: 40px 200px;
+        padding-right: 600px;
+      }
+   }
+
+   .megamenu--no-featured {
+     padding-right: 32px;
+   }
+
+   .megamenu__columns {
+     display: flex;
+     flex-wrap: nowrap;
+     align-items: flex-start;
+     gap: 10px;
+     overflow-x: auto;
+     -webkit-overflow-scrolling: touch;
+     /* Drag-to-scroll (see the script below) still works fully — this
+        only changes what the cursor looks like, not the behavior. */
+     cursor: default;
+     padding-bottom: 14px;
+     /* Firefox */
+     scrollbar-width: thin;
+     scrollbar-color: var(--ember, #c0392b) transparent;
+   }
+   /* Chrome / Safari / Edge */
+   .megamenu__columns::-webkit-scrollbar {
+     height: 4px;
+   }
+   .megamenu__columns::-webkit-scrollbar-track {
+     background: transparent;
+   }
+   .megamenu__columns::-webkit-scrollbar-thumb {
+     background-color: var(--ember, #c0392b);
+     border-radius: 4px;
+   }
+   .megamenu__columns.is-dragging {
+     user-select: none;
+   }
+
+   .megamenu__column {
+     display: flex;
+     flex-direction: column;
+     gap: 2px;
+     min-width: 85px;
+     flex-shrink: 0;
+   }
+
+   .megamenu__column-title {
+     margin: 0 0 8px;
+     font-size: 0.65rem;
+     font-weight: 600;
+     text-transform: none;
+     color: var(--megamenu-title-color, #000000);
+   }
+
+   .megamenu__column-links {
+     display: flex;
+     flex-direction: column;
+   }
+
+   .megamenu__dropdown-link {
+     display: block;
+     text-decoration: none;
+     letter-spacing: 0.01em;
+     color: inherit;
+     font-size: 0.55rem;
+     padding: 4px 0;
+     transition: opacity 0.15s ease;
+   }
+
+   .megamenu__dropdown-link:hover {
+     opacity: 0.65;
+   }
+
+   /* Absolutely positioned so it never competes for space with the
+      columns above — it can't get pushed below them if the columns
+      wrap onto more lines, and it can't end up with blank space next
+      to it if the columns don't fill the reserved left-hand width. */
+   .megamenu__featured-row {
+     position: absolute;
+     top: 40px;
+     right: 32px;
+     display: flex;
+     gap: 24px;
+   }
+
+   /* 5% smaller than before (300px -> 285px). Also fixes a pre-existing
+      mismatch where flex-basis (300px) and width (250px) disagreed —
+      flex-basis wins in a row-direction flex container, so the card was
+      actually rendering at 300px regardless of the width value. Both
+      are now the same number. */
+   .megamenu__featured-card {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     flex: 0 0 285px;
+     width: 285px;
+     text-decoration: none;
+     color: inherit;
+   }
+
+   .megamenu__featured-image {
+     aspect-ratio: 1;
+     overflow: hidden;
+   }
+
+   .megamenu__featured-image img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+     display: block;
+   }
+
+   /* FIX: was unstyled, so it inherited whatever text color
+      contrast-override happened to compute for the block's own
+      background_color/text_color settings (meant for the menu link
+      text elsewhere) — which could be white, invisible against this
+      panel's fixed cream background. Explicitly colored via the same
+      variable the column titles already use, so it can't go white
+      here regardless of those settings. */
+   .megamenu__featured-title {
+     margin: 0;
+     font-size: 0.8125rem;
+     font-weight: 600;
+     text-align: center;
+     letter-spacing: 0.02em;
+     color: var(--megamenu-title-color, #000000);
+   }
+
+   @media screen and (max-width: 989px) {
+     .megamenu {
+       padding-right: 32px;
+     }
+
+     .megamenu__columns {
+       flex-direction: column;
+       flex-wrap: nowrap;
+       overflow-x: visible;
+       cursor: auto;
+       gap: 20px;
+       padding-bottom: 0;
+     }
+
+     .megamenu__featured-row {
+       position: static;
+       margin-top: 24px;
+       justify-content: flex-start;
+       flex-wrap: wrap;
+     }
+
+     .megamenu__featured-card {
+       flex: 0 0 209px;
+       width: 209px;
+     }
+   }
+{% endstylesheet %}
+
+{% javascript %}
+  (function () {
+    // Click-and-drag horizontal scrolling for the column row, for when it
+    // doesn't fit in the space left beside the (untouched) featured
+    // images. Small mouse movements still register as a normal link
+    // click — dragging only kicks in past a small movement threshold.
+    // This behavior is unchanged; only the CSS cursor was removed above.
+    function enableDragScroll(el) {
+      var isDown = false;
+      var startX = 0;
+      var startScrollLeft = 0;
+
+      el.addEventListener('mousedown', function (e) {
+        isDown = true;
+        el.classList.add('is-dragging');
+        startX = e.pageX;
+        startScrollLeft = el.scrollLeft;
+      });
+
+      function stopDrag() {
+        isDown = false;
+        el.classList.remove('is-dragging');
+      }
+
+      el.addEventListener('mouseleave', stopDrag);
+      el.addEventListener('mouseup', stopDrag);
+
+      el.addEventListener('mousemove', function (e) {
+        if (!isDown) return;
+        var delta = e.pageX - startX;
+        if (Math.abs(delta) > 3) {
+          e.preventDefault();
+          el.scrollLeft = startScrollLeft - delta;
+        }
+      });
+    }
+
+    function initMegamenuDragScroll() {
+      document.querySelectorAll('.megamenu__columns:not([data-drag-scroll-init])').forEach(function (el) {
+        el.setAttribute('data-drag-scroll-init', 'true');
+        enableDragScroll(el);
+      });
+    }
+
+    initMegamenuDragScroll();
+    document.addEventListener('shopify:section:load', initMegamenuDragScroll);
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Mega Menu",
+  "tag": null,
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "t:settings.menu"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "default": "{{ settings.color_palette.background }}"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:settings.text_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_font_primary_size",
+      "label": "t:settings.top_level_size",
+      "options": [
+        { "value": "0.625rem", "label": "10px" },
+        { "value": "0.75rem", "label": "12px" },
+        { "value": "0.875rem", "label": "14px" },
+        { "value": "1rem", "label": "16px" },
+        { "value": "1.125rem", "label": "18px" }
+      ],
+      "default": "1rem"
+    },
+    {
+      "type": "select",
+      "id": "menu_font_style",
+      "label": "t:settings.submenu_size",
+      "options": [
+        { "value": "regular", "label": "t:options.small" },
+        { "value": "inverse", "label": "t:options.medium" },
+        { "value": "inverse_large", "label": "t:options.large" }
+      ],
+      "default": "inverse"
+    },
+    {
+      "type": "select",
+      "id": "type_font_primary_link",
+      "label": "t:settings.font",
+      "options": [
+        { "value": "body", "label": "t:options.body" },
+        { "value": "subheading", "label": "t:options.subheading" },
+        { "value": "heading", "label": "t:options.heading" },
+        { "value": "accent", "label": "t:options.accent" }
+      ],
+      "default": "heading"
+    },
+    {
+      "type": "select",
+      "id": "type_case_primary_link",
+      "label": "t:settings.text_case",
+      "options": [
+        { "value": "none", "label": "t:options.default" },
+        { "value": "uppercase", "label": "t:options.uppercase" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "header",
+      "content": "Category column heading color"
+    },
+    {
+      "type": "color",
+      "id": "category_title_color",
+      "label": "Column heading color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Featured images (2, static)"
+    },
+    {
+      "type": "paragraph",
+      "content": "Always shown together alongside the category columns — not tied to any single category, nothing to hover or click to reveal them. Leave the link blank to make a card non-clickable."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_featured_titles",
+      "label": "Show titles under featured images",
+      "default": true,
+      "info": "Turn off to show just the images with no caption underneath."
+    },
+    { "type": "image_picker", "id": "feat_1_image", "label": "Image 1" },
+    { "type": "text", "id": "feat_1_title", "label": "Title 1" },
+    { "type": "url", "id": "feat_1_link", "label": "Link 1" },
+    { "type": "image_picker", "id": "feat_2_image", "label": "Image 2" },
+    { "type": "text", "id": "feat_2_title", "label": "Title 2" },
+    { "type": "url", "id": "feat_2_link", "label": "Link 2" },
+
+    {
+      "type": "header",
+      "content": "t:content.mobile_layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation_bar",
+      "label": "t:settings.navigation_bar"
+    },
+    {
+      "type": "color",
+      "id": "background_color_navigation_bar",
+      "label": "t:settings.navigation_bar_background_color",
+      "default": "{{ settings.color_palette.background }}",
+      "visible_if": "{{ block.settings.navigation_bar }}"
+    },
+    {
+      "type": "color",
+      "id": "text_color_navigation_bar",
+      "label": "t:settings.navigation_bar_text_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.navigation_bar }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_accordion",
+      "label": "t:settings.accordion",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_accordion_expand_first",
+      "label": "t:settings.expand_first_group",
+      "default": false,
+      "visible_if": "{{ block.settings.drawer_accordion == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer_dividers",
+      "label": "t:settings.dividers",
+      "default": false
+    }
+  ],
+  "presets": [{ "name": "Mega Menu" }]
+}
+{% endschema %}

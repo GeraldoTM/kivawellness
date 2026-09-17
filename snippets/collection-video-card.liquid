@@ -1,0 +1,83 @@
+{%- doc -%}
+  Renders a single merchant-uploaded video as a grid tile, sized identically
+  to a product card since it's rendered as a plain sibling <li> in the
+  collection grid by the section that calls this snippet.
+{%- enddoc -%}
+
+{%- if section.settings.video_link != blank -%}
+  <a href="{{ section.settings.video_link }}" class="collection-video-card__link">
+{%- endif -%}
+
+<div
+  class="collection-video-card__wrapper"
+  style="--video-aspect-ratio: {{ section.settings.video_aspect_ratio | default: '16/9' }};"
+>
+  {%- if section.settings.video != blank -%}
+    {{
+      section.settings.video
+      | video_tag:
+        autoplay: section.settings.video_autoplay,
+        loop: section.settings.video_loop,
+        muted: section.settings.video_autoplay,
+        controls: false,
+        class: 'collection-video-card__media'
+    }}
+  {%- elsif section.settings.video_url != blank -%}
+    <video
+      class="collection-video-card__media"
+      src="{{ section.settings.video_url }}"
+      {% if section.settings.video_autoplay %}
+        autoplay muted playsinline
+      {% endif %}
+      {% if section.settings.video_loop %}
+        loop
+      {% endif %}
+    ></video>
+  {%- endif -%}
+
+  {%- if section.settings.video_chip_text != blank -%}
+    <span class="collection-video-card__chip">{{ section.settings.video_chip_text }}</span>
+  {%- endif -%}
+</div>
+
+{%- if section.settings.video_link != blank -%}</a>{%- endif -%}
+
+{% stylesheet %}
+  .collection-video-card__link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .collection-video-card__wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .collection-video-card__media {
+    display: block;
+    width: 100%;
+    aspect-ratio: var(--video-aspect-ratio, 16 / 9);
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .collection-video-card__chip {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background: none;
+    border: none;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .collection-video-card--span-2 {
+    grid-column: span 2;
+  }
+{% endstylesheet %}
