@@ -1,0 +1,451 @@
+<style>
+    /* =========================
+     PAGE WRAPPER
+  ========================= */
+    .showroom-page {
+      {% comment %} background: radial-gradient(circle at top left, #f3e6df, #ffffff 55%); {% endcomment %}
+       background: #c3cdc5;
+      padding: clamp(24px, 5vw, 64px) 12px;
+    }
+
+    .showroom-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(24px, 4vw, 48px);
+    }
+
+    /* =========================
+     HEADER
+  ========================= */
+    .showroom-header {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .showroom-header h2 {
+      font-size: clamp(22px, 5vw, 34px);
+      margin-bottom: clamp(8px, 2vw, 12px);
+    }
+
+    .showroom-header p {
+      font-size: clamp(13px, 3vw, 15px);
+    }
+
+    /* =========================
+     GRID LAYOUT
+  ========================= */
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(20px, 4vw, 40px);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 980px) {
+      .top-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: stretch;
+      }
+    }
+
+    /* =========================
+     CARD BASE
+  ========================= */
+    .showroom-card,
+    .showroom-form {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+      border-radius: 26px;
+      padding: clamp(16px, 3vw, 28px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2vw, 18px);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .showroom-card h3,
+    .showroom-form h3 {
+      font-size: clamp(18px, 4vw, 24px);
+    }
+
+    .showroom-tag {
+      display: inline-block;
+      font-size: clamp(9px, 2vw, 11px);
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 100px;
+      background: #bd8d77;
+      color: #fff;
+      width: fit-content;
+    }
+
+    /* =========================
+     TEXT & META
+  ========================= */
+    .showroom-meta p,
+    .showroom-desc {
+      font-size: clamp(12px, 2.5vw, 14px);
+      line-height: 1.6;
+    }
+
+    .showroom-desc {
+      margin-top: 4px;
+    }
+
+    /* =========================
+     PRODUCTS
+  ========================= */
+    .showroom-products {
+      overflow: hidden;
+    }
+
+    .showroom-products ul {
+      display: flex;
+      gap: 8px;
+      padding: 0;
+      margin: 10px 0 0;
+      flex-wrap: wrap;
+    }
+
+    .showroom-products li {
+      list-style: none;
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      background: #f2f2f2;
+    }
+
+    @media (max-width: 768px) {
+      .showroom-products ul {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+      }
+      .showroom-products li {
+        flex: 0 0 auto;
+      }
+    }
+
+    .booking-box {
+      margin-top: auto;
+      padding: clamp(12px, 2.5vw, 18px);
+      border-radius: 20px;
+      background: linear-gradient(135deg, #bd8d77, #e6c0aa);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .booking-box p {
+      margin: 0;
+      font-size: clamp(12px, 2.5vw, 14px);
+      font-weight: 500;
+    }
+
+    .booking-box a {
+      align-self: flex-start;
+      background: #fff;
+      padding: 10px 22px;
+      border-radius: 100px;
+      text-decoration: none;
+      font-weight: 600;
+      color: #000;
+      font-size: clamp(12px, 2.5vw, 14px);
+    }
+
+    /* =========================
+     FORM
+  ========================= */
+    .showroom-form input,
+    .showroom-form textarea {
+      width: 100%;
+      padding: clamp(10px, 2.5vw, 14px);
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      font-size: clamp(12px, 2.5vw, 14px);
+      margin-top: 1rem;
+      box-sizing: border-box;
+    }
+
+    .showroom-form textarea {
+      resize: vertical;
+    }
+
+    .showroom-form button {
+      margin-top: auto;
+      padding: clamp(10px, 2.5vw, 14px);
+      border-radius: 100px;
+      background: #bd8d77;
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      font-size: clamp(12px, 2.5vw, 14px);
+    }
+
+    /* =========================
+     SYDNEY ROW
+  ========================= */
+    .sydney-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .sydney-row .showroom-card {
+      max-width: 920px;
+      width: 100%;
+    }
+
+    /* =========================
+     MEDIA / MAP
+  ========================= */
+    .showroom-container img,
+    .showroom-container iframe {
+      width: 100%;
+      height: auto;
+      border-radius: 26px;
+      display: block;
+    }
+
+    /* =========================
+     EQUAL HEIGHT COLUMNS (MAP + IMAGE)
+  ========================= */
+    .top-row.equal-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: stretch;
+    }
+
+    .top-row.equal-cols > div {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .top-row.equal-cols > div iframe,
+    .top-row.equal-cols > div img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 26px;
+    }
+
+    /* =========================
+     MOBILE REFINEMENTS
+  ========================= */
+    @media (max-width: 768px) {
+      .showroom-page {
+        padding: 16px 12px;
+        background: #c3cdc5 !important;
+      }
+      .showroom-card,
+      .showroom-form {
+        padding: 16px;
+      }
+      .top-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    .showroom-card {
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .showroom-products {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .showroom-products ul {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      padding: 0;
+      margin: 10px 0 0;
+    }
+
+    .showroom-products li {
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 480px) {
+      .showroom-card {
+        padding: 12px;
+      }
+      .showroom-header h2 {
+        font-size: clamp(18px, 5vw, 24px);
+      }
+      .showroom-header p {
+        font-size: clamp(12px, 3vw, 14px);
+      }
+    }
+</style>
+
+<section class="showroom-page">
+  <div class="showroom-container">
+    <div class="showroom-header">
+      <h2>Book an Appointment – Visit a Showroom</h2>
+      <p>Explore our saunas and ice baths in person and receive personalised guidance from our wellness specialists.</p>
+    </div>
+
+    <div class="top-row">
+      <!-- GOLD COAST -->
+      <div class="showroom-card">
+        <h3>Kiva Wellness Gold Coast Showroom</h3>
+        <span class="showroom-tag">Official Showroom</span>
+
+        <div class="showroom-meta">
+          <p><strong>Address:</strong> 4/73 Township Drive, Burleigh Heads QLD 4220</p>
+          <p><strong>Hours:</strong> Monday–Friday, 9:00am–4:00pm AEST (excluding public holidays)</p>
+          <p><strong>Phone:</strong> 1800 945 229</p>
+        </div>
+
+        <p class="showroom-desc">
+          Visit our <strong>official Kiva Wellness showroom</strong> to explore our full range, experience the quality
+          firsthand, and receive personalised support from our in-house team.
+        </p>
+
+        <div class="showroom-products">
+          <p><strong>Products Currently on Display:</strong></p>
+          <ul>
+            <li>Rise 2 Person Infrared Sauna</li>
+            <li>Rise 3 Person Infrared Sauna</li>
+            <li>Radiance 2 Person Full-Spectrum Sauna</li>
+            <li>Radiance 3 Person Full-Spectrum Sauna</li>
+            <li>Reset 3 Person Traditional Sauna</li>
+            <li>Retreat Outdoor Infrared Sauna</li>
+            <li>Ritual 4–6 Person Outdoor Traditional Sauna</li>
+            <li>Kaldr Ice Bath with Chiller (Black)</li>
+            <li>Energise Ice Bath with 1.5Hp Chiller</li>
+            <li>Radiance Sauna Red Light Therapy Upgrade Panel</li>
+          </ul>
+        </div>
+
+        <div class="booking-box">
+          <p>
+            <strong>Do You Need to Book?</strong><br>
+            Weekdays: Walk-ins welcome (9am–4pm AEST)<br>
+            Weekends: Appointment required
+          </p>
+          <a href="tel:1800 945 229">Call or Text: 1800 945 229</a>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div class="showroom-form">
+        <h3>Book an Appointment</h3>
+
+        {%- form 'contact' -%}
+          <input type="text" name="contact[name]" required placeholder="Full Name">
+          <input type="email" name="contact[email]" required placeholder="Email Address">
+          <input type="tel" name="contact[phone]" placeholder="Phone Number">
+          <textarea
+            rows="6"
+            name="contact[body]"
+            required
+            placeholder="Which showroom would you like to visit?"
+          ></textarea>
+          <button type="submit">Submit Enquiry</button>
+        {%- endform -%}
+      </div>
+    </div>
+
+    <!-- SYDNEY SHOWROOM STATIC ROW -->
+    <div class="sydney-row">
+      <div class="showroom-card">
+        <h3>Sydney Showroom</h3>
+        <span class="showroom-tag">Authorised Retail Partner</span>
+
+        <div class="showroom-meta">
+          <p><strong>Address:</strong> Unit 3/17 Smith Street, Emu Plains, NSW 2750</p>
+          <p>
+            <strong>Display Hours:</strong><br>
+            Monday–Friday: 9:00am–4:00pm AEST (excluding public holidays)<br>
+            Weekends: By appointment
+          </p>
+          <p><strong>Phone:</strong><a href="tel:040682292">0406 822 292</a></p>
+        </div>
+
+        <p class="showroom-desc">
+          Select Kiva Wellness products are available to view in Sydney through our Authorised Retail Partner, Sydney
+          Wellness Co.<br>
+          <strong>Please note:</strong> This location is not operated by Kiva Wellness, but the Sydney Wellness Co. team
+          can assist with product viewings and general information.
+        </p>
+
+        <div class="showroom-products">
+          <p><strong>Products Currently on Display:</strong></p>
+          <ul>
+            <li>Retreat Outdoor Infrared Sauna</li>
+            <li>Kaldr Ice Bath (with 0.8 HP Chiller)</li>
+            <li>Radiance 4 Person Full Spectrum Sauna</li>
+            <li>Rise 3 Person Infrared Sauna</li>
+            <li>Radiance 2 Person Full-Spectrum Sauna</li>
+            <li>Energise Ice Bath with 1Hp Chiller</li>
+            <li>Reset 4 Person Traditional Sauna</li>
+          </ul>
+        </div>
+        <div class="booking-box">
+          <p>
+            <strong>Do You Need to Book?</strong><br>
+            Weekdays: Walk-ins welcome (9am–4pm AEST)<br>
+            Weekends: Appointment required
+          </p>
+          <a href="tel:0406 822 292">Call or Text: 0406 822 292</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP + IMAGE ROW -->
+    <div class="top-row equal-cols">
+      <div>{{ section.settings.map }}</div>
+      <div>
+        {%- if section.settings.image != blank -%}
+          <img src="{{ section.settings.image | img_url: 'master' }}" loading="lazy">
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Showroom Page",
+  "tag": "section",
+  "class": "section showroom-page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Form Heading",
+      "default": "Book an Appointment"
+    },
+    {
+      "type": "liquid",
+      "id": "map",
+      "label": "Map Embed"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Showroom Page"
+    }
+  ]
+}
+{% endschema %}
