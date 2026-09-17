@@ -1,0 +1,339 @@
+{%- comment -%}
+  Retail Partners (Stockists) — separate section, same visual design as
+  the existing Showroom Page (showroom-card/tag/meta/desc/products
+  classes reused verbatim). Each store is its own block; blocks sharing
+  the same "State" value are grouped under one heading automatically, in
+  whichever order you arrange the blocks in the sidebar — so reordering
+  or adding a new state just means dropping the block in the right spot.
+
+  Replaces the old single hardcoded ".sydney-row" (which only ever
+  supported one fixed card) with a generalized ".partner-row" that works
+  for any number of stores per state.
+{%- endcomment -%}
+
+<style>
+  .retail-partners-page {
+    background: #c3cdc5;
+    padding: clamp(24px, 5vw, 64px) 12px;
+  }
+
+  .retail-partners-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(24px, 4vw, 48px);
+  }
+
+  .retail-partners-header {
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .retail-partners-header h2 {
+    font-size: clamp(22px, 5vw, 34px);
+    margin-bottom: clamp(8px, 2vw, 12px);
+  }
+  .retail-partners-header p {
+    font-size: clamp(13px, 3vw, 15px);
+  }
+
+  /* State group heading */
+  .state-group__heading {
+    font-size: clamp(16px, 3.5vw, 20px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 4px;
+  }
+
+  /* Generalized single-card centered row — replaces the old one-off
+     .sydney-row, works for any number of stores. */
+  .partner-row {
+    display: flex;
+    justify-content: center;
+  }
+  .partner-row .showroom-card {
+    max-width: 920px;
+    width: 100%;
+  }
+
+  /* Card base — reused verbatim from the original showroom-page design */
+  .showroom-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+    border-radius: 26px;
+    padding: clamp(16px, 3vw, 28px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vw, 18px);
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .showroom-card h3 {
+    font-size: clamp(18px, 4vw, 24px);
+    margin: 0;
+  }
+
+  .showroom-tag {
+    display: inline-block;
+    font-size: clamp(9px, 2vw, 11px);
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: #bd8d77;
+    color: #fff;
+    width: fit-content;
+  }
+
+  .showroom-meta p,
+  .showroom-desc {
+    font-size: clamp(12px, 2.5vw, 14px);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .showroom-desc {
+    margin-top: 4px;
+  }
+
+  .showroom-products {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .showroom-products ul {
+    display: flex;
+    gap: 8px;
+    padding: 0;
+    margin: 10px 0 0;
+    flex-wrap: nowrap;
+  }
+  .showroom-products li {
+    list-style: none;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    background: #f2f2f2;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .retail-partners-page {
+      padding: 16px 12px;
+      background: #c3cdc5 !important;
+    }
+    .showroom-card {
+      padding: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .showroom-card {
+      padding: 12px;
+    }
+    .retail-partners-header h2 {
+      font-size: clamp(18px, 5vw, 24px);
+    }
+    .retail-partners-header p {
+      font-size: clamp(12px, 3vw, 14px);
+    }
+  }
+</style>
+
+<section class="retail-partners-page">
+  <div class="retail-partners-container">
+    {%- if section.settings.heading != blank or section.settings.subheading != blank -%}
+      <div class="retail-partners-header">
+        {%- if section.settings.heading != blank -%}<h2>{{ section.settings.heading }}</h2>{%- endif -%}
+        {%- if section.settings.subheading != blank -%}<p>{{ section.settings.subheading }}</p>{%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- assign previous_state = '' -%}
+    {%- for block in section.blocks -%}
+      {%- if block.settings.state != previous_state -%}
+        <h3 class="state-group__heading">{{ block.settings.state }}</h3>
+        {%- assign previous_state = block.settings.state -%}
+      {%- endif -%}
+
+      <div class="partner-row" {{ block.shopify_attributes }}>
+        <div class="showroom-card">
+          <h3>{{ block.settings.store_name }}</h3>
+          {%- if block.settings.tag_text != blank -%}
+            <span class="showroom-tag">{{ block.settings.tag_text }}</span>
+          {%- endif -%}
+
+          <div class="showroom-meta">
+            {%- if block.settings.address != blank -%}
+              <p><strong>Address:</strong> {{ block.settings.address }}</p>
+            {%- endif -%}
+            {%- if block.settings.phone != blank -%}
+              <p><strong>Phone:</strong> <a href="tel:{{ block.settings.phone | remove: ' ' }}">{{ block.settings.phone }}</a></p>
+            {%- endif -%}
+          </div>
+
+          {%- if block.settings.description != blank -%}
+            <p class="showroom-desc">{{ block.settings.description }}</p>
+          {%- endif -%}
+
+          {%- if block.settings.products_on_display != blank -%}
+            <div class="showroom-products">
+              <p><strong>On Display:</strong></p>
+              <ul>
+                {%- assign products = block.settings.products_on_display | newline_to_br | strip_newlines | split: '<br />' -%}
+                {%- for product in products -%}
+                  {%- assign trimmed_product = product | strip -%}
+                  {%- if trimmed_product != blank -%}
+                    <li>{{ trimmed_product }}</li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Retail Partners",
+  "tag": "section",
+  "class": "section retail-partners-page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Where to See Us In Person"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Visit one of our retail partners to experience our range firsthand."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "store",
+      "name": "Store",
+      "settings": [
+        {
+          "type": "text",
+          "id": "state",
+          "label": "State",
+          "info": "Stores with the same State (exact text match) are grouped under one heading — arrange blocks in this order in the sidebar.",
+          "default": "VICTORIA"
+        },
+        { "type": "text", "id": "store_name", "label": "Store name", "default": "Store Name" },
+        {
+          "type": "text",
+          "id": "tag_text",
+          "label": "Badge text",
+          "info": "e.g. \"Official Showroom\" or \"Authorised Retail Partner\"",
+          "default": "Authorised Retail Partner"
+        },
+        {
+          "type": "textarea",
+          "id": "address",
+          "label": "Address"
+        },
+        { "type": "text", "id": "phone", "label": "Phone (optional)" },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description (optional)"
+        },
+        {
+          "type": "textarea",
+          "id": "products_on_display",
+          "label": "Products on display",
+          "info": "One product per line — each becomes its own pill."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Retail Partners",
+      "blocks": [
+        {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "Sapphire Spas",
+            "tag_text": "Authorised Retail Partner",
+            "address": "70 Mary Street, Pakenham VIC 3810",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "Willy Pools",
+            "tag_text": "Authorised Retail Partner",
+            "address": "10 Literary Way, Williamstown VIC 3016",
+            "products_on_display": "Radiance 2P\nRed Light Therapy"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "VICTORIA",
+            "store_name": "SwimCo Aquatics",
+            "tag_text": "Authorised Retail Partner",
+            "address": "45 Terra Cotta Drive, Nunawading VIC 3131",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "NEW SOUTH WALES",
+            "store_name": "Gym Direct",
+            "tag_text": "Authorised Retail Partner",
+            "address": "Bankstown Aerodrome, 5 Starkie Drive, Bankstown Aerodrome NSW 2198",
+            "products_on_display": "Radiance 2P"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "NEW SOUTH WALES",
+            "store_name": "Mid West Pools & Spas",
+            "tag_text": "Authorised Retail Partner",
+            "address": "Unit 1, 12 Sydney Road, Mudgee NSW 2850",
+            "products_on_display": "Radiance 2P\nRise 2P\nRise 3P\nRitual 2P\nRitual 6P"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "QUEENSLAND",
+            "store_name": "Kiva Wellness",
+            "tag_text": "Official Showroom",
+            "address": "4/73 Township Drive, Burleigh Heads QLD 4220",
+            "products_on_display": "Our full range of Saunas\nIce Baths\nSleep Tech\nRed Light Therapy"
+          }
+        },
+        {
+          "type": "store",
+          "settings": {
+            "state": "QUEENSLAND",
+            "store_name": "Brisbane Spa Super Centre",
+            "tag_text": "Authorised Retail Partner",
+            "address": "819 Beaudesert Road, Archerfield QLD 4108",
+            "products_on_display": "Rise 2P\nRadiance 3P"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
