@@ -61,6 +61,7 @@
     },
     "image_banner_jbKjqg": {
       "type": "image-banner",
+      "disabled": true,
       "name": "Image Banner",
       "settings": {
         "image_desktop": "shopify://shop_images/kiva-kaldr-ice-bath-black.jpg",
@@ -168,6 +169,7 @@
         "text_k3jxdb",
         "button_modified_LDM8Ae"
       ],
+      "disabled": true,
       "name": "t:names.rich_text_section",
       "settings": {
         "content_direction": "column",
@@ -341,6 +343,7 @@
         "text_FjHGtX",
         "text_Tpyq4F"
       ],
+      "disabled": true,
       "name": "t:names.rich_text_section",
       "settings": {
         "content_direction": "column",
@@ -420,6 +423,7 @@
         "text_tH3Kwc",
         "image_7LLL64"
       ],
+      "disabled": true,
       "name": "Column grid",
       "settings": {
         "color_scheme": "",
@@ -517,6 +521,7 @@
         "text_7RMRUX",
         "button_modified_ctxmKg"
       ],
+      "disabled": true,
       "name": "t:names.rich_text_section",
       "settings": {
         "content_direction": "column",
@@ -662,6 +667,7 @@
         "text_9A7Eg3",
         "text_LLMGjm"
       ],
+      "disabled": true,
       "name": "Sliding announcement bar",
       "settings": {
         "background_color": "#000000",
