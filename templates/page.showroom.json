@@ -1,1 +1,690 @@
-{"sections":{"main":{"type":"main-page","blocks":{"heading":{"type":"text","name":"t:names.title","settings":{"text":"<h1>{{ closest.page.title }}<\/h1>","width":"100%","max_width":"normal","alignment":"left","type_preset":"h2","font":"var(--font-body--family)","font_size":"1rem","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"page-content":{"type":"page-content","settings":{"text_color":""},"blocks":{}}},"block_order":["heading","page-content"],"disabled":true,"settings":{"content_direction":"column","gap":32,"background_color":"{{ settings.color_palette.background }}","padding-block-start":40,"padding-block-end":80}},"image_banner_jbKjqg":{"type":"image-banner","name":"Image Banner","settings":{"image_desktop":"shopify:\/\/shop_images\/kiva-kaldr-ice-bath-black.jpg","heading":"FIND A SHOWROOM","button_label":"","button_link":"","button_position_vertical":"bottom","button_position_horizontal":"center","button_bg_color":"#1a1a1a","button_text_color":"#ffffff","button_radius":4,"overlay_opacity":20,"height_mobile":320,"height_desktop":600}},"section_GeJTdG":{"type":"section","blocks":{"text_bWghw3":{"type":"text","name":"t:names.heading","settings":{"text":"<h3>Experience Kiva Wellness in Person<br\/><\/h3>","width":"fit-content","max_width":"normal","alignment":"left","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"text_k3jxdb":{"type":"text","name":"t:names.text","settings":{"text":"<p><br\/>Visit selected Kiva Wellness display locations across Australia and experience our products in person.<\/p>","width":"100%","max_width":"none","alignment":"center","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"button_modified_LDM8Ae":{"type":"button-modified","name":"Custom button","settings":{"label":"FIND A SHOWROOM","action":"link","link":"","open_in_new_tab":false,"background_color":"#1a1a1a","text_color":"#ffffff","border_color":"#1a1a1a","hover_background_color":"","hover_text_color":"","hover_border_color":"","border_radius":4,"border_width":0,"font_size":15,"font_weight":"600","padding_vertical":12,"padding_horizontal":24,"width":"fit-content","custom_width":100},"blocks":{}}},"block_order":["text_bWghw3","text_k3jxdb","button_modified_LDM8Ae"],"name":"t:names.rich_text_section","settings":{"content_direction":"column","vertical_on_mobile":true,"horizontal_alignment":"flex-start","vertical_alignment":"center","align_baseline":false,"horizontal_alignment_flex_direction_column":"center","vertical_alignment_flex_direction_column":"center","gap":25,"section_width":"page-width","section_height":"small","section_height_custom":50,"background_media":"none","background_color":"#fdf8ee","video_position":"cover","background_image_position":"cover","toggle_overlay":false,"overlay_color":"#00000026","overlay_style":"solid","gradient_direction":"to top","border":"none","border_width":1,"border_opacity":100,"border_color":"","border_radius":0,"padding-block-start":48,"padding-block-end":48}},"text_image_YDe6Rf":{"type":"text-image","name":"Text with image","settings":{"color_scheme":"","image":"shopify:\/\/shop_images\/ritual-outdoor-sauna-lifestyle.jpg","image_position":"right","heading":"KIVA WELLNESS × REECE","text":"<p><strong>Experience Kiva Wellness at Reece<\/strong><br\/><\/p><p>Kiva Wellness is now available to experience at selected Reece showrooms across Australia. Explore our materials, craftsmanship and features of our Radiance Sauna in person.<\/p>","text_alignment":"center","button_label":"","button_link":"","min_height":500,"padding_top":60,"padding_bottom":60}},"column_grid_with_bg_GJWUGH":{"type":"column-grid-with-bg","blocks":{"text_CC6ca4":{"type":"text","settings":{"background_color":"#fdf8ee","heading":"","heading_color":"","text":"<p>REECE BATHROOM LIFE<br\/>BUNDALL, QLD<br\/>42 Upton Street<br\/>Bundall QLD 4217<\/p>","text_color":"","text_alignment":"left"}},"text_WgDxTE":{"type":"text","settings":{"background_color":"#dfd7ed","heading":"","heading_color":"","text":"<p>REECE BATHROOM LIFE<br\/>ST LEONARDS, NSW<br\/>S10 Herbert Street<br\/>St Leonards NSW 2065<\/p>","text_color":"","text_alignment":"left"}},"text_FYiw9T":{"type":"text","settings":{"background_color":"#fdf8ee","heading":"","heading_color":"","text":"<p>REECE BATHROOM LIFE<br\/>RICHMOND, VIC<br\/>421-427 Bridge Rdoad<br\/>Richmond VIC 3121<\/p>","text_color":"","text_alignment":"left"}},"text_zqrjDd":{"type":"text","settings":{"background_color":"#dfd7ed","heading":"","heading_color":"","text":"<p>REECE CONCEPT STORE<br\/>ARMADALE VIC<br\/>COMING SOON<br\/>Armadale VIC 3143<\/p>","text_color":"","text_alignment":"left"}}},"block_order":["text_CC6ca4","text_WgDxTE","text_FYiw9T","text_zqrjDd"],"name":"Column grid","settings":{"color_scheme":"","layout":"row","gap":0,"full_width":true,"padding_top":0,"padding_bottom":0}},"section_Ud6FDb":{"type":"section","blocks":{"text_FjHGtX":{"type":"text","name":"t:names.heading","settings":{"text":"<h3>More Place to Experience Kiva Wellness<\/h3>","width":"fit-content","max_width":"normal","alignment":"left","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"text_Tpyq4F":{"type":"text","name":"t:names.text","settings":{"text":"<p>You can also find selected Kiva products on display at our own showroom partners across Australia<\/p>","width":"100%","max_width":"none","alignment":"center","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}}},"block_order":["text_FjHGtX","text_Tpyq4F"],"name":"t:names.rich_text_section","settings":{"content_direction":"column","vertical_on_mobile":true,"horizontal_alignment":"flex-start","vertical_alignment":"center","align_baseline":false,"horizontal_alignment_flex_direction_column":"center","vertical_alignment_flex_direction_column":"center","gap":10,"section_width":"page-width","section_height":"custom","section_height_custom":17,"background_media":"none","background_color":"{{ settings.color_palette.background }}","video_position":"cover","background_image_position":"cover","toggle_overlay":false,"overlay_color":"#00000026","overlay_style":"solid","gradient_direction":"to top","border":"none","border_width":1,"border_opacity":100,"border_color":"","border_radius":0,"padding-block-start":0,"padding-block-end":0}},"column_grid_with_bg_RG3A8H":{"type":"column-grid-with-bg","blocks":{"text_ztaX4h":{"type":"text","settings":{"background_color":"#c3cdc5","heading":"QUEENSLAND","heading_color":"","text":"<p><strong>Kiva Wellness<\/strong><br\/>4\/73 Township Drive,<br\/>Burleigh Heads QLD 4220<br\/>On Display:<br\/>Ourfull range of Saunas,<br\/>Ice Baths, Sleep Tech and Red Light Therapy<\/p><p><br\/><strong>Brisbane Spa Super Centre<\/strong><br\/>819 Beaudesert Road<br\/>Archerfield QLD 4108<br\/>On Display:<br\/>Rise 2P · Radiance 3P<br\/><br\/><\/p>","text_color":"","text_alignment":"left"}},"text_MXRJUg":{"type":"text","settings":{"background_color":"#fdf8ee","heading":"NEW SOUTH WALES","heading_color":"","text":"<p><strong>Gym Direct<\/strong><br\/>Gym Direct<br\/>Bankstown Aerodrome<br\/>5 Starkie Drive,<br\/>Bankstown Aerodrome NSW 2198<br\/>On Display:<br\/>Radiance 2P<\/p><p><strong>Mid West Pools & Spas<\/strong><br\/>Unit 1, 12 Sydney Road,<br\/>Mudgee NSW 2850<br\/>On Display:<br\/>Radiance 2P · Rise 2P · Rise 3P · Ritual 2P · Ritual 6P<br\/><br\/><br\/><br\/><\/p>","text_color":"","text_alignment":"left"}},"text_tH3Kwc":{"type":"text","settings":{"background_color":"#fdf8ee","heading":"VICTORIA","heading_color":"","text":"<p><strong>Sapphire Spas<\/strong><br\/>70 Mary Street,<br\/>Pakenham VIC 3810<br\/>On Display:<br\/>Radiance 2P<\/p><p><strong>Willy Pools<\/strong><br\/>10 Literary Way,<br\/>Williamstown VIC 3016<br\/>On Display:<br\/>Radiance 2P & Red Light Therapy<\/p><p><strong>SwimCo Aquatics<\/strong><br\/>45 Terra Cotta Drive<br\/>Nunawading VIC 3131<br\/>On Display:<br\/>Radiance 2P<\/p>","text_color":"","text_alignment":"left"}},"image_7LLL64":{"type":"image","settings":{"background_color":"","image":"shopify:\/\/shop_images\/ritual-6-person-outdoor-sauna-lifestyle.jpg"}}},"block_order":["text_ztaX4h","text_MXRJUg","text_tH3Kwc","image_7LLL64"],"name":"Column grid","settings":{"color_scheme":"","layout":"grid","gap":0,"full_width":true,"padding_top":0,"padding_bottom":0}},"section_mEDENW":{"type":"section","blocks":{"text_VRXWkA":{"type":"text","name":"t:names.heading","settings":{"text":"<h3>Can't Visit Us in Person?<\/h3>","width":"fit-content","max_width":"normal","alignment":"left","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"text_7RMRUX":{"type":"text","name":"t:names.text","settings":{"text":"<p>We can help you choose from wherever you are.<br\/><\/p>","width":"100%","max_width":"none","alignment":"center","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}},"button_modified_ctxmKg":{"type":"button-modified","name":"Custom button","settings":{"label":"CHAT TO AN EXPERT","action":"link","link":"","open_in_new_tab":false,"background_color":"{{ settings.color_palette.background }}","text_color":"{{ settings.color_palette.foreground }}","border_color":"#1a1a1a","hover_background_color":"","hover_text_color":"","hover_border_color":"","border_radius":0,"border_width":1,"font_size":15,"font_weight":"600","padding_vertical":12,"padding_horizontal":24,"width":"fit-content","custom_width":100},"blocks":{}}},"block_order":["text_VRXWkA","text_7RMRUX","button_modified_ctxmKg"],"name":"t:names.rich_text_section","settings":{"content_direction":"column","vertical_on_mobile":true,"horizontal_alignment":"flex-start","vertical_alignment":"center","align_baseline":false,"horizontal_alignment_flex_direction_column":"center","vertical_alignment_flex_direction_column":"center","gap":25,"section_width":"page-width","section_height":"custom","section_height_custom":25,"background_media":"none","background_color":"","video_position":"cover","background_image_position":"cover","toggle_overlay":false,"overlay_color":"#00000026","overlay_style":"solid","gradient_direction":"to top","border":"none","border_width":1,"border_opacity":100,"border_color":"","border_radius":0,"padding-block-start":48,"padding-block-end":48}},"section_UXrCtV":{"type":"section","blocks":{"text_9krgEW":{"type":"text","name":"t:names.heading","settings":{"text":"<h3>Find Kiva Wellness Near You<\/h3>","width":"fit-content","max_width":"normal","alignment":"left","type_preset":"rte","font":"var(--font-body--family)","font_size":"","line_height":"normal","letter_spacing":"normal","case":"none","wrap":"pretty","text_color":"","background":false,"background_color":"#00000026","corner_radius":0,"padding-block-start":0,"padding-block-end":0,"padding-inline-start":0,"padding-inline-end":0},"blocks":{}}},"block_order":["text_9krgEW"],"name":"t:names.rich_text_section","settings":{"content_direction":"column","vertical_on_mobile":true,"horizontal_alignment":"flex-start","vertical_alignment":"center","align_baseline":false,"horizontal_alignment_flex_direction_column":"center","vertical_alignment_flex_direction_column":"center","gap":25,"section_width":"page-width","section_height":"custom","section_height_custom":25,"background_media":"none","background_color":"#fdf8ee","video_position":"cover","background_image_position":"cover","toggle_overlay":false,"overlay_color":"#00000026","overlay_style":"solid","gradient_direction":"to top","border":"none","border_width":1,"border_opacity":100,"border_color":"","border_radius":0,"padding-block-start":48,"padding-block-end":48}},"showroom_locator_embed_FMXymR":{"type":"showroom-locator-embed","name":"Showroom Locator (Embed)","settings":{"heading":"Find Your Local Store","show_search":true,"map_embed_url":"https:\/\/www.google.com\/maps\/embed?pb=!1m18!1m12!1m3!1d3519.1345677158456!2d153.43439747516493!3d-28.11192979437425!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b9103c21e560ba3%3A0x9b4cd1a1aec445d3!2sKiva%20Wellness!5e0!3m2!1sen!2sph!4v1788416922239!5m2!1sen!2sph","google_maps_api_key":"","map_height":480,"default_zoom":5,"center_lat":"-25.2744","center_lng":"133.7751"}},"announcement_bar_G3ej69":{"type":"announcement-bar","blocks":{"text_wkPm6f":{"type":"text","settings":{"text":"WELLNESS SINCE 2016","link":""}},"text_nWUD6a":{"type":"text","settings":{"text":"AUSTRALIAN OWNED","link":""}},"text_9A7Eg3":{"type":"text","settings":{"text":"FREE SHIPPING AUSTRALIA WIDE","link":""}},"text_LLMGjm":{"type":"text","settings":{"text":"SWEAT NOW PAY LATER OPTIONS","link":""}}},"block_order":["text_wkPm6f","text_nWUD6a","text_9A7Eg3","text_LLMGjm"],"name":"Sliding announcement bar","settings":{"background_color":"#000000","text_color":"#ffffff","speed":12,"pause_on_hover":true,"show_separator":false,"item_spacing":40,"letter_spacing":0.5,"font_size":13,"padding_block":16}}},"order":["main","image_banner_jbKjqg","section_GeJTdG","text_image_YDe6Rf","column_grid_with_bg_GJWUGH","section_Ud6FDb","column_grid_with_bg_RG3A8H","section_mEDENW","section_UXrCtV","showroom_locator_embed_FMXymR","announcement_bar_G3ej69"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "t:names.title",
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}</h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "settings": {
+            "text_color": ""
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "background_color": "{{ settings.color_palette.background }}",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "image_banner_jbKjqg": {
+      "type": "image-banner",
+      "name": "Image Banner",
+      "settings": {
+        "image_desktop": "shopify://shop_images/kiva-kaldr-ice-bath-black.jpg",
+        "heading": "FIND A SHOWROOM",
+        "button_label": "",
+        "button_link": "",
+        "heading_font_size_mobile": 20,
+        "heading_font_size_desktop": 32,
+        "button_font_size_mobile": 13,
+        "button_font_size_desktop": 14,
+        "button_position_vertical": "bottom",
+        "button_position_horizontal": "center",
+        "button_bg_color": "#1a1a1a",
+        "button_text_color": "#ffffff",
+        "button_radius": 4,
+        "overlay_opacity": 20,
+        "height_mobile": 320,
+        "height_desktop": 600
+      }
+    },
+    "section_GeJTdG": {
+      "type": "section",
+      "blocks": {
+        "text_bWghw3": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<h3>Experience Kiva Wellness in Person<br/></h3>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_k3jxdb": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p><br/>Visit selected Kiva Wellness display locations across Australia and experience our products in person.</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "button_modified_LDM8Ae": {
+          "type": "button-modified",
+          "name": "Custom button",
+          "settings": {
+            "label": "FIND A SHOWROOM",
+            "action": "link",
+            "link": "",
+            "open_in_new_tab": false,
+            "show_chevron": false,
+            "background_color": "#1a1a1a",
+            "text_color": "#ffffff",
+            "border_color": "#1a1a1a",
+            "hover_background_color": "",
+            "hover_text_color": "",
+            "hover_border_color": "",
+            "border_radius": 4,
+            "border_width": 0,
+            "font_size": 15,
+            "font_weight": "600",
+            "padding_vertical": 12,
+            "padding_horizontal": 24,
+            "width": "fit-content",
+            "custom_width": 100
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_bWghw3",
+        "text_k3jxdb",
+        "button_modified_LDM8Ae"
+      ],
+      "name": "t:names.rich_text_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 25,
+        "section_width": "page-width",
+        "section_height": "small",
+        "section_height_custom": 50,
+        "background_media": "none",
+        "background_color": "#fdf8ee",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "text_image_YDe6Rf": {
+      "type": "text-image",
+      "name": "Text with image",
+      "settings": {
+        "color_scheme": "",
+        "image": "shopify://shop_images/ritual-outdoor-sauna-lifestyle.jpg",
+        "image_position": "right",
+        "heading": "KIVA WELLNESS × REECE",
+        "text": "<p><strong>Experience Kiva Wellness at Reece</strong><br/></p><p>Kiva Wellness is now available to experience at selected Reece showrooms across Australia. Explore our materials, craftsmanship and features of our Radiance Sauna in person.</p>",
+        "text_alignment": "center",
+        "button_label": "",
+        "button_link": "",
+        "min_height": 500,
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "column_grid_with_bg_GJWUGH": {
+      "type": "column-grid-with-bg",
+      "blocks": {
+        "text_CC6ca4": {
+          "type": "text",
+          "settings": {
+            "background_color": "#fdf8ee",
+            "heading": "",
+            "heading_color": "",
+            "text": "<p>REECE BATHROOM LIFE<br/>BUNDALL, QLD<br/>42 Upton Street<br/>Bundall QLD 4217</p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "text_WgDxTE": {
+          "type": "text",
+          "settings": {
+            "background_color": "#dfd7ed",
+            "heading": "",
+            "heading_color": "",
+            "text": "<p>REECE BATHROOM LIFE<br/>ST LEONARDS, NSW<br/>S10 Herbert Street<br/>St Leonards NSW 2065</p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "text_FYiw9T": {
+          "type": "text",
+          "settings": {
+            "background_color": "#fdf8ee",
+            "heading": "",
+            "heading_color": "",
+            "text": "<p>REECE BATHROOM LIFE<br/>RICHMOND, VIC<br/>421-427 Bridge Rdoad<br/>Richmond VIC 3121</p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "text_zqrjDd": {
+          "type": "text",
+          "settings": {
+            "background_color": "#dfd7ed",
+            "heading": "",
+            "heading_color": "",
+            "text": "<p>REECE CONCEPT STORE<br/>ARMADALE VIC<br/>COMING SOON<br/>Armadale VIC 3143</p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        }
+      },
+      "block_order": [
+        "text_CC6ca4",
+        "text_WgDxTE",
+        "text_FYiw9T",
+        "text_zqrjDd"
+      ],
+      "name": "Column grid",
+      "settings": {
+        "color_scheme": "",
+        "layout": "row",
+        "gap": 0,
+        "full_width": true,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "section_Ud6FDb": {
+      "type": "section",
+      "blocks": {
+        "text_FjHGtX": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<h3>More Place to Experience Kiva Wellness</h3>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_Tpyq4F": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>You can also find selected Kiva products on display at our own showroom partners across Australia</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_FjHGtX",
+        "text_Tpyq4F"
+      ],
+      "name": "t:names.rich_text_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 10,
+        "section_width": "page-width",
+        "section_height": "custom",
+        "section_height_custom": 17,
+        "background_media": "none",
+        "background_color": "{{ settings.color_palette.background }}",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "column_grid_with_bg_RG3A8H": {
+      "type": "column-grid-with-bg",
+      "blocks": {
+        "text_ztaX4h": {
+          "type": "text",
+          "settings": {
+            "background_color": "#c3cdc5",
+            "heading": "QUEENSLAND",
+            "heading_color": "",
+            "text": "<p><strong>Kiva Wellness</strong><br/>4/73 Township Drive,<br/>Burleigh Heads QLD 4220<br/>On Display:<br/>Ourfull range of Saunas,<br/>Ice Baths, Sleep Tech and Red Light Therapy</p><p><br/><strong>Brisbane Spa Super Centre</strong><br/>819 Beaudesert Road<br/>Archerfield QLD 4108<br/>On Display:<br/>Rise 2P · Radiance 3P<br/><br/></p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "text_MXRJUg": {
+          "type": "text",
+          "settings": {
+            "background_color": "#fdf8ee",
+            "heading": "NEW SOUTH WALES",
+            "heading_color": "",
+            "text": "<p><strong>Gym Direct</strong><br/>Gym Direct<br/>Bankstown Aerodrome<br/>5 Starkie Drive,<br/>Bankstown Aerodrome NSW 2198<br/>On Display:<br/>Radiance 2P</p><p><strong>Mid West Pools & Spas</strong><br/>Unit 1, 12 Sydney Road,<br/>Mudgee NSW 2850<br/>On Display:<br/>Radiance 2P · Rise 2P · Rise 3P · Ritual 2P · Ritual 6P<br/><br/><br/><br/></p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "text_tH3Kwc": {
+          "type": "text",
+          "settings": {
+            "background_color": "#fdf8ee",
+            "heading": "VICTORIA",
+            "heading_color": "",
+            "text": "<p><strong>Sapphire Spas</strong><br/>70 Mary Street,<br/>Pakenham VIC 3810<br/>On Display:<br/>Radiance 2P</p><p><strong>Willy Pools</strong><br/>10 Literary Way,<br/>Williamstown VIC 3016<br/>On Display:<br/>Radiance 2P & Red Light Therapy</p><p><strong>SwimCo Aquatics</strong><br/>45 Terra Cotta Drive<br/>Nunawading VIC 3131<br/>On Display:<br/>Radiance 2P</p>",
+            "text_color": "",
+            "text_alignment": "left"
+          }
+        },
+        "image_7LLL64": {
+          "type": "image",
+          "settings": {
+            "background_color": ""
+          }
+        }
+      },
+      "block_order": [
+        "text_ztaX4h",
+        "text_MXRJUg",
+        "text_tH3Kwc",
+        "image_7LLL64"
+      ],
+      "name": "Column grid",
+      "settings": {
+        "color_scheme": "",
+        "layout": "grid",
+        "gap": 0,
+        "full_width": true,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "section_mEDENW": {
+      "type": "section",
+      "blocks": {
+        "text_VRXWkA": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<h3>Can't Visit Us in Person?</h3>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_7RMRUX": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>We can help you choose from wherever you are.<br/></p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "button_modified_ctxmKg": {
+          "type": "button-modified",
+          "name": "Custom button",
+          "settings": {
+            "label": "CHAT TO AN EXPERT",
+            "action": "link",
+            "link": "",
+            "open_in_new_tab": false,
+            "show_chevron": false,
+            "background_color": "{{ settings.color_palette.background }}",
+            "text_color": "{{ settings.color_palette.foreground }}",
+            "border_color": "#1a1a1a",
+            "hover_background_color": "",
+            "hover_text_color": "",
+            "hover_border_color": "",
+            "border_radius": 0,
+            "border_width": 1,
+            "font_size": 15,
+            "font_weight": "600",
+            "padding_vertical": 12,
+            "padding_horizontal": 24,
+            "width": "fit-content",
+            "custom_width": 100
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_VRXWkA",
+        "text_7RMRUX",
+        "button_modified_ctxmKg"
+      ],
+      "name": "t:names.rich_text_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 25,
+        "section_width": "page-width",
+        "section_height": "custom",
+        "section_height_custom": 25,
+        "background_media": "none",
+        "background_color": "",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "section_UXrCtV": {
+      "type": "section",
+      "blocks": {
+        "text_9krgEW": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<h3>Find Kiva Wellness Near You</h3>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_9krgEW"
+      ],
+      "disabled": true,
+      "name": "t:names.rich_text_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 25,
+        "section_width": "page-width",
+        "section_height": "custom",
+        "section_height_custom": 25,
+        "background_media": "none",
+        "background_color": "#fdf8ee",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "showroom_locator_embed_FMXymR": {
+      "type": "showroom-locator-embed",
+      "disabled": true,
+      "name": "Showroom Locator (Embed)",
+      "settings": {
+        "heading": "Find Your Local Store",
+        "show_search": true,
+        "map_height": 480,
+        "default_zoom": 5,
+        "center_lat": "-25.2744",
+        "center_lng": "133.7751"
+      }
+    },
+    "announcement_bar_G3ej69": {
+      "type": "announcement-bar",
+      "blocks": {
+        "text_wkPm6f": {
+          "type": "text",
+          "settings": {
+            "text": "WELLNESS SINCE 2016",
+            "link": ""
+          }
+        },
+        "text_nWUD6a": {
+          "type": "text",
+          "settings": {
+            "text": "AUSTRALIAN OWNED",
+            "link": ""
+          }
+        },
+        "text_9A7Eg3": {
+          "type": "text",
+          "settings": {
+            "text": "FREE SHIPPING AUSTRALIA WIDE",
+            "link": ""
+          }
+        },
+        "text_LLMGjm": {
+          "type": "text",
+          "settings": {
+            "text": "SWEAT NOW PAY LATER OPTIONS",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "text_wkPm6f",
+        "text_nWUD6a",
+        "text_9A7Eg3",
+        "text_LLMGjm"
+      ],
+      "name": "Sliding announcement bar",
+      "settings": {
+        "background_color": "#000000",
+        "text_color": "#ffffff",
+        "speed": 12,
+        "pause_on_hover": true,
+        "show_separator": false,
+        "item_spacing": 40,
+        "letter_spacing": 0.5,
+        "font_size": 13,
+        "padding_block": 16
+      }
+    }
+  },
+  "order": [
+    "main",
+    "image_banner_jbKjqg",
+    "section_GeJTdG",
+    "text_image_YDe6Rf",
+    "column_grid_with_bg_GJWUGH",
+    "section_Ud6FDb",
+    "column_grid_with_bg_RG3A8H",
+    "section_mEDENW",
+    "section_UXrCtV",
+    "showroom_locator_embed_FMXymR",
+    "announcement_bar_G3ej69"
+  ]
+}
