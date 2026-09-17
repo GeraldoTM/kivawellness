@@ -680,6 +680,14 @@
         "font_size": 13,
         "padding_block": 16
       }
+    },
+    "showroom_updated_nM4jm4": {
+      "type": "showroom-updated",
+      "name": "Showroom Page",
+      "settings": {
+        "heading": "Book an Appointment",
+        "map": ""
+      }
     }
   },
   "order": [
@@ -693,6 +701,7 @@
     "section_mEDENW",
     "section_UXrCtV",
     "showroom_locator_embed_FMXymR",
-    "announcement_bar_G3ej69"
+    "announcement_bar_G3ej69",
+    "showroom_updated_nM4jm4"
   ]
 }
